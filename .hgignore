@@ -1,0 +1,27 @@
+syntax: glob
+
+*.o
+*.lo
+
+config.status
+config.log
+config.h
+Makefile
+.deps/
+
+configure
+config.h.in
+Makefile.in
+aclocal.m4
+build-aux/
+#
+m4/
+autom4te.cache/
+
+# Common binary directories
+.libs/
+
+# Backup files
+*~
+*.~*
+*.orig

@@ -1,13 +1,12 @@
-#include <netinet/ip.h>
+#include "llmnr.h"
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LLMNR_PORT ((in_port_t)5355)
-
 static void run_service(void);
-static int llmnr_new_udp_socket(void);
 
 struct options {
     bool foreground;

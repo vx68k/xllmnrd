@@ -23,8 +23,9 @@
 #include "llmnr.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <syslog.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -49,8 +50,9 @@ int main(int argc, char **argv) {
 void run_service(void) {
     int so = llmnr_new_udp_socket();
     if (so < 0) {
-        perror(NULL);
-        return;
+        syslog(LOG_DAEMON | LOG_ERR, "Error: %m");
+        syslog(LOG_DAEMON | LOG_INFO, "Exiting");
+        exit(EXIT_FAILURE);
     }
 
     for (;;) {

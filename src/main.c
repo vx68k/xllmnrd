@@ -38,6 +38,8 @@ int main(int argc, char **argv) {
     if (options.foreground || daemon(false, false) == 0) {
         run_service();
     }
+    
+    return 0;
 }
 
 void run_service(void) {

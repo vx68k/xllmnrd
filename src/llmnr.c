@@ -23,7 +23,7 @@
 
 static const struct in6_addr in6addr_llmnr = {
     {
-        0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3
+        {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
     }
 };
 

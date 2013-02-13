@@ -20,6 +20,7 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <unistd.h>
 
 static const struct in6_addr in6addr_llmnr = {
     {

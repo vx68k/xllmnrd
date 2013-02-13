@@ -32,7 +32,7 @@ struct options {
 
 int main(int argc, char **argv) {
     struct options options = {
-        .foreground = false,
+        .foreground = true,
     };
 
     if (options.foreground || daemon(false, false) == 0) {

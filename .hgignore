@@ -6,6 +6,7 @@ syntax: glob
 config.status
 config.log
 config.h
+stamp-h1
 Makefile
 .deps/
 

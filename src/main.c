@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 }
 
 void run_service(void) {
-    int so = llmnr_new_udp_socket();
+    int so = llmnr_open_udp_socket();
     if (so < 0) {
         syslog(LOG_DAEMON | LOG_ERR, "Error: %m");
         syslog(LOG_DAEMON | LOG_INFO, "Exiting");

@@ -43,7 +43,7 @@ int llmnr_responder_create(llmnr_responder_t *responder) {
         malloc(sizeof(struct llmnr_responder));
     if (obj) {
         *obj = (struct llmnr_responder) {
-            .udp_socket = llmnr_new_udp_socket(),
+            .udp_socket = llmnr_open_udp_socket(),
         };
         if (obj->udp_socket >= 0) {
             *responder = obj;
@@ -66,7 +66,7 @@ int llmnr_responder_delete(llmnr_responder_t responder) {
     return -1;
 }
 
-int llmnr_new_udp_socket(void) {
+int llmnr_open_udp_socket(void) {
     int udp_socket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp_socket != -1) {
         struct sockaddr_in6 sin6 = {

@@ -25,12 +25,46 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
 
 static const struct in6_addr in6addr_llmnr = {
     {
         {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
     }
 };
+
+struct llmnr_responder {
+    int udp_socket;
+};
+
+int llmnr_responder_create(llmnr_responder_t *responder) {
+    struct llmnr_responder *obj =
+        malloc(sizeof(struct llmnr_responder));
+    if (obj) {
+        *obj = (struct llmnr_responder) {
+            .udp_socket = llmnr_new_udp_socket(),
+        };
+        if (obj->udp_socket >= 0) {
+            *responder = obj;
+            return 0;
+        }
+        
+        free(obj);
+    }
+    return -1;
+}
+
+int llmnr_responder_delete(llmnr_responder_t responder) {
+    if (responder) {
+        close(responder->udp_socket);
+        free(responder);
+        return 0;
+    }
+    
+    errno = EINVAL;
+    return -1;
+}
 
 int llmnr_new_udp_socket(void) {
     int udp_socket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);

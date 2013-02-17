@@ -24,6 +24,11 @@
  */
 #define LLMNR_PORT 5355
 
+typedef struct llmnr_responder *llmnr_responder_t;
+
+int llmnr_responder_create(llmnr_responder_t *responder);
+int llmnr_responder_delete(llmnr_responder_t responder);
+
 int llmnr_new_udp_socket(void);
 
 #endif	/* XLLMNRD_H */

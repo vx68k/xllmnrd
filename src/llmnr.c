@@ -19,11 +19,14 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
+#define _GNU_SOURCE 1
 
 #include "llmnr.h"
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -62,6 +65,48 @@ int llmnr_responder_delete(llmnr_responder_t responder) {
     
     errno = EINVAL;
     return -1;
+}
+
+int llmnr_responder_run(llmnr_responder_t responder) {
+    for (;;) {
+        struct sockaddr_in6 from;
+        char packet[512];
+        char control[512];
+        struct iovec iov[1] = {
+            {
+                .iov_base = packet,
+                .iov_len = sizeof packet,
+            },
+        };
+        struct msghdr msg = {
+            .msg_name = &from,
+            .msg_namelen = sizeof from,
+            .msg_iov = iov,
+            .msg_iovlen = 1,
+            .msg_control = control,
+            .msg_controllen = sizeof control,
+        };
+        if (recvmsg(responder->udp_socket, &msg, 0) >= 0) {
+            struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+            while (cmsg) {
+                if (cmsg->cmsg_level == IPPROTO_IPV6 &&
+                    cmsg->cmsg_type == IPV6_PKTINFO &&
+                    cmsg->cmsg_len >= CMSG_LEN(sizeof(struct in6_pktinfo)))
+                {
+                    struct in6_pktinfo *ipi6 = 
+                        (struct in6_pktinfo*)CMSG_DATA(cmsg);
+                    char buf[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, &ipi6->ipi6_addr, buf,
+                         INET6_ADDRSTRLEN);
+                    syslog(LOG_DEBUG, "Received packet to %s", buf);
+                }
+
+                cmsg = CMSG_NXTHDR(&msg, cmsg);
+            }
+        }
+    }
+    
+    return 0;
 }
 
 int llmnr_open_udp_socket(void) {

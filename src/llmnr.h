@@ -29,6 +29,8 @@ typedef struct llmnr_responder *llmnr_responder_t;
 int llmnr_responder_create(llmnr_responder_t *responder);
 int llmnr_responder_delete(llmnr_responder_t responder);
 
+int llmnr_responder_run(llmnr_responder_t responder);
+
 int llmnr_open_udp_socket(void);
 
 #endif	/* XLLMNRD_H */

@@ -19,10 +19,12 @@
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
+#define _GNU_SOURCE 1
 
 #include "llmnr.h"
 #include <syslog.h>
 #include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -36,11 +38,12 @@ int main(int argc, char **argv) {
     struct options options = {
         .foreground = true,
     };
+
+    openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
     
     if (llmnr_responder_create(&responder) < 0) {
-        syslog(LOG_DAEMON | LOG_CRIT,
-                "Could not create a responder object with error: %m");
-        syslog(LOG_DAEMON | LOG_INFO, "Exiting");
+        syslog(LOG_ERR, "Could not create a responder object: %m");
+        syslog(LOG_INFO, "Exiting");
         exit(EXIT_FAILURE);
     }
 

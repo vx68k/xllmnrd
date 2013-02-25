@@ -1,0 +1,125 @@
+2013-02-25  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Added a call to openlog.
+	[8a5809c966d8] [tip]
+
+	* src/main.c:
+	Changed to use the new responder type. Removed unnecessary includes.
+	[6f7d2ed1e0bb]
+
+2013-02-21  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr.c, src/llmnr.h:
+	Added a new function.
+	[6a4f660348b9]
+
+	* configure.ac:
+	Added checks for configure.
+	[920a0e8aef5f]
+
+2013-02-18  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr.c:
+	Used a C99 designated initializer for in6addr_llmnr.
+	[301501d66594]
+
+	* README:
+	Created a README file.
+	[fdc3b8c26e7e]
+
+2013-02-17  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr.c, src/llmnr.h, src/main.c:
+	Renamed llmnr_new_udp_socket.
+	[52fa3e5f24e6]
+
+	* src/llmnr.c, src/llmnr.h:
+	Added functions for responder objects.
+	[b747d11789e8]
+
+	* .hgignore:
+	Added stamp-h1 to .hgignore.
+	[ab1e7ff9c0a2]
+
+2013-02-14  Kaz Sasa  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added AC_PROG_CC_STDC.
+	[93b74b649dcf]
+
+2013-02-13  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Changed to use syslog to report errors.
+	[286394c534f5]
+
+	* src/llmnr.c, src/main.c:
+	Added #include "config.h".
+	[d135ca24adcd]
+
+	* src/main.c:
+	Switched to foreground execution.
+	[76f9aed30d21]
+
+	* src/llmnr.c:
+	Added a missing #include.
+	[837966d7a370]
+
+	* src/llmnr.c:
+	Added a pair of braces to ip6addr_llmnr to suppress warnings.
+	[a6ff4f8c8bfb]
+
+	* src/main.c:
+	Added a return statement to the main function.
+	[3f67b10e9667]
+
+2013-02-08  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Added the new file to Makefile.am.
+	[56cd4e039b9b]
+
+	* src/llmnr.c, src/main.c:
+	Created a new file and moved llmnr_new_udp_socket. Also removed the
+	use of the SO_REUSEADDR option.
+	[1e6729888f7c]
+
+2013-02-07  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr.h, src/main.c:
+	Added copyright notices.
+	[a539f2991143]
+
+	* COPYING:
+	Added the GNU GPL text.
+	[7c968df7f8bd]
+
+2013-02-04  Kaz Sasa  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added a configure.ac.
+	[97501f767473]
+
+	* Makefile.am, src/Makefile.am:
+	Added Makefile.am's.
+	[2b2efbedb7d3]
+
+	* src/llmnr.h, src/main.c:
+	Added a new header.
+	[35396fd728c6]
+
+	* src/main.c:
+	Cleaned the program structure.
+	[d13a2fc276ca]
+
+2013-01-29  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Added a source file.
+	[e280d8bd295e]
+
+	* .hgignore:
+	Added .hgignore.
+	[fca01d2bf68c]
+

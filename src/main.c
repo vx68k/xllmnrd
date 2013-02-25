@@ -21,58 +21,33 @@
 #endif
 
 #include "llmnr.h"
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
-
-static void run_service(void);
 
 struct options {
     bool foreground;
 };
 
+static llmnr_responder_t responder;
+
 int main(int argc, char **argv) {
     struct options options = {
         .foreground = true,
     };
-
-    if (options.foreground || daemon(false, false) == 0) {
-        run_service();
-    }
     
-    return 0;
-}
-
-void run_service(void) {
-    int so = llmnr_open_udp_socket();
-    if (so < 0) {
-        syslog(LOG_DAEMON | LOG_ERR, "Error: %m");
+    if (llmnr_responder_create(&responder) < 0) {
+        syslog(LOG_DAEMON | LOG_CRIT,
+                "Could not create a responder object with error: %m");
         syslog(LOG_DAEMON | LOG_INFO, "Exiting");
         exit(EXIT_FAILURE);
     }
 
-    for (;;) {
-        struct sockaddr_in6 from = {};
-        char packet[512];
-        char control[1024];
-        struct iovec iov[1] = {
-            {
-                .iov_base = packet,
-                .iov_len = 512,
-            },
-        };
-        struct msghdr msg = {
-            .msg_name = &from,
-            .msg_namelen = sizeof from,
-            .msg_iov = iov,
-            .msg_iovlen = 1,
-            .msg_control = control,
-            .msg_controllen = 1024,
-        };
-        recvmsg(so, &msg, 0);
-    }   
+    if (options.foreground || daemon(false, false) == 0) {
+        llmnr_responder_run(responder);
+    }
+
+    llmnr_responder_delete(responder);    
+    return 0;
 }

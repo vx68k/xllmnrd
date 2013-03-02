@@ -25,6 +25,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -38,6 +39,8 @@ static const struct in6_addr in6addr_llmnr = {
 struct llmnr_responder {
     int udp_socket;
 };
+
+static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo **);
 
 int llmnr_responder_create(llmnr_responder_t *responder) {
     struct llmnr_responder *obj =
@@ -70,8 +73,8 @@ int llmnr_responder_delete(llmnr_responder_t responder) {
 int llmnr_responder_run(llmnr_responder_t responder) {
     for (;;) {
         struct sockaddr_in6 from;
-        char packet[512];
-        char control[512];
+        unsigned char packet[1500];
+        unsigned char control[128];
         struct iovec iov[1] = {
             {
                 .iov_base = packet,
@@ -87,25 +90,33 @@ int llmnr_responder_run(llmnr_responder_t responder) {
             .msg_controllen = sizeof control,
         };
         if (recvmsg(responder->udp_socket, &msg, 0) >= 0) {
-            struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
-            while (cmsg) {
-                if (cmsg->cmsg_level == IPPROTO_IPV6 &&
-                    cmsg->cmsg_type == IPV6_PKTINFO &&
-                    cmsg->cmsg_len >= CMSG_LEN(sizeof(struct in6_pktinfo)))
-                {
-                    struct in6_pktinfo *ipi6 = 
-                        (struct in6_pktinfo*)CMSG_DATA(cmsg);
-                    char buf[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &ipi6->ipi6_addr, buf,
-                         INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "Received packet to %s", buf);
-                }
-
-                cmsg = CMSG_NXTHDR(&msg, cmsg);
+            struct in6_pktinfo *ipi6 = 0;
+            llmnr_decode_cmsg(&msg, &ipi6);
+            if (ipi6) {
+                char addrbuf[INET6_ADDRSTRLEN];
+                char ifnamebuf[IF_NAMESIZE];
+                syslog(LOG_DEBUG, "Received packet to %s on %s",
+                        inet_ntop(AF_INET6, &ipi6->ipi6_addr, addrbuf,
+                        INET6_ADDRSTRLEN),
+                        if_indextoname(ipi6->ipi6_ifindex, ifnamebuf));
             }
         }
     }
     
+    return 0;
+}
+
+int llmnr_decode_cmsg(struct msghdr *msg, struct in6_pktinfo **ipi6) {
+    for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg;
+            cmsg = CMSG_NXTHDR(msg, cmsg)) {
+        if (cmsg->cmsg_level == IPPROTO_IPV6) {
+            if (cmsg->cmsg_type == IPV6_PKTINFO &&
+                    cmsg->cmsg_len >= CMSG_LEN(sizeof **ipi6)) {
+                *ipi6 = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -125,7 +136,7 @@ int llmnr_open_udp_socket(void) {
             int recvpktinfo = 1;
             if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                     &ipv6mr, sizeof ipv6mr) == 0 &&
-                setsockopt(udp_socket, IPPROTO_IPV6, IPV6_RECVPKTINFO,
+                    setsockopt(udp_socket, IPPROTO_IPV6, IPV6_RECVPKTINFO,
                     &recvpktinfo, sizeof recvpktinfo) == 0) {
 
                 int unicast_hops = 1;

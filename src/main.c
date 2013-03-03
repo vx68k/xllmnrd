@@ -1,5 +1,5 @@
 /*
- * Experimental responder of the LLMNR protocol
+ * Experimental LLMNR responder daemon
  * Copyright (C) 2013  Kaz Sasa
  *
  * This program is free software: you can redistribute it and/or modify

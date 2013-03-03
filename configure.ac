@@ -14,9 +14,14 @@ AC_PROG_CC_STDC
 
 # Checks for header files.
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([stdint.h syslog.h sys/socket.h netinet/in.h arpa/inet.h])
+AC_CHECK_HEADERS([limits.h syslog.h sys/socket.h netinet/in.h arpa/inet.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
+AC_C_INLINE
+AC_C_RESTRICT
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC

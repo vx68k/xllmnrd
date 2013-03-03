@@ -4,4 +4,4 @@ bin_PROGRAMS = xllmnrd
 
 xllmnrd_SOURCES = main.c llmnr.c
 
-noinst_HEADERS = llmnr.h
+noinst_HEADERS = llmnr.h llmnr_header.h

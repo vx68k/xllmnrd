@@ -23,14 +23,17 @@
 
 #include "llmnr.h"
 
+#include "llmnr_header.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <inttypes.h>
 
 static const struct in6_addr in6addr_llmnr = {
     .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
@@ -40,7 +43,8 @@ struct llmnr_responder {
     int udp_socket;
 };
 
-static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo **);
+static int llmnr_decode_cmsg(struct msghdr *restrict,
+        struct in6_pktinfo *restrict);
 
 int llmnr_responder_create(llmnr_responder_t *responder) {
     struct llmnr_responder *obj =
@@ -72,7 +76,7 @@ int llmnr_responder_delete(llmnr_responder_t responder) {
 
 int llmnr_responder_run(llmnr_responder_t responder) {
     for (;;) {
-        struct sockaddr_in6 from;
+        struct sockaddr_in6 name;
         unsigned char packet[1500];
         unsigned char control[128];
         struct iovec iov[1] = {
@@ -82,23 +86,48 @@ int llmnr_responder_run(llmnr_responder_t responder) {
             },
         };
         struct msghdr msg = {
-            .msg_name = &from,
-            .msg_namelen = sizeof from,
+            .msg_name = &name,
+            .msg_namelen = sizeof name,
             .msg_iov = iov,
             .msg_iovlen = 1,
             .msg_control = control,
             .msg_controllen = sizeof control,
         };
-        if (recvmsg(responder->udp_socket, &msg, 0) >= 0) {
-            struct in6_pktinfo *ipi6 = 0;
-            llmnr_decode_cmsg(&msg, &ipi6);
-            if (ipi6) {
-                char addrbuf[INET6_ADDRSTRLEN];
-                char ifnamebuf[IF_NAMESIZE];
-                syslog(LOG_DEBUG, "Received packet to %s on %s",
-                        inet_ntop(AF_INET6, &ipi6->ipi6_addr, addrbuf,
-                        INET6_ADDRSTRLEN),
-                        if_indextoname(ipi6->ipi6_ifindex, ifnamebuf));
+        ssize_t recv_size = recvmsg(responder->udp_socket, &msg, 0);
+        if (recv_size >= 0) {
+            struct in6_pktinfo pktinfo = {
+                .ipi6_addr = IN6ADDR_ANY_INIT,
+                .ipi6_ifindex = 0,
+            };
+            if (llmnr_decode_cmsg(&msg, &pktinfo) >= 0 &&
+                    pktinfo.ipi6_ifindex != 0 &&
+                    IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
+                char ifname[IF_NAMESIZE];
+                if_indextoname(pktinfo.ipi6_ifindex, ifname);
+                syslog(LOG_DEBUG, "Received packet on %s", ifname);
+
+                struct llmnr_header *header =
+                        (struct llmnr_header *)packet;
+                if (recv_size >= sizeof *header &&
+                        llmnr_header_is_valid_query(header)) {
+                    /* TODO: Handle query.  */  
+                } else {
+                    char addrstr[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, &name.sin6_addr, addrstr,
+                            INET6_ADDRSTRLEN);
+                    syslog(LOG_INFO,
+                            "Invalid packet from %s%%%" PRIu32
+                            " (discarded)",
+                            addrstr, name.sin6_scope_id);
+                }
+            } else {
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &name.sin6_addr, addrstr,
+                        INET6_ADDRSTRLEN);
+                syslog(LOG_INFO,
+                        "Non-multicast packet from %s%%%" PRIu32
+                        " (discarded)",
+                        addrstr, name.sin6_scope_id);
             }
         }
     }
@@ -106,13 +135,14 @@ int llmnr_responder_run(llmnr_responder_t responder) {
     return 0;
 }
 
-int llmnr_decode_cmsg(struct msghdr *msg, struct in6_pktinfo **ipi6) {
+int llmnr_decode_cmsg(struct msghdr *restrict msg,
+        struct in6_pktinfo *restrict pktinfo) {
     for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg;
             cmsg = CMSG_NXTHDR(msg, cmsg)) {
         if (cmsg->cmsg_level == IPPROTO_IPV6) {
             if (cmsg->cmsg_type == IPV6_PKTINFO &&
-                    cmsg->cmsg_len >= CMSG_LEN(sizeof **ipi6)) {
-                *ipi6 = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+                    cmsg->cmsg_len >= CMSG_LEN(sizeof *pktinfo)) {
+                memcpy(pktinfo, CMSG_DATA(cmsg), sizeof *pktinfo);
             }
         }
     }

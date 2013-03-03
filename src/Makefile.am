@@ -1,6 +1,6 @@
 ## Process this file with automake to produce a Makefile.in.
 
-bin_PROGRAMS = xllmnrd
+sbin_PROGRAMS = xllmnrd
 
 xllmnrd_SOURCES = main.c llmnr.c
 

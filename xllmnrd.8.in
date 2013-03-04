@@ -1,0 +1,22 @@
+.\" @configure_input@
+.TH XLLMNRD 8 2013-03-03 "@PACKAGE_STRING@"
+.SH NAME
+xllmnrd - experimental LLMNR responder
+.SH SYNOPSIS
+.B xllmnrd
+.RB [ -f ]
+.RB [ --foreground ]
+.br
+.B xllmnrd --help
+.br
+.B xllmnrd --version
+.SH DESCRIPTION
+.B xllmnrd
+responds to Link-Local Multicast Name Resolution (LLMNR) queries for the host.
+.SH BUGS
+.B xllmnrd
+does not implement all the requirements specified in RFC 4795 yet.
+.SH "SEE ALSO"
+.BR hostname (1),
+.BR named (8),
+RFC 4795

@@ -108,7 +108,7 @@ int llmnr_responder_run(llmnr_responder_t responder) {
 
                 struct llmnr_header *header =
                         (struct llmnr_header *)packet;
-                if (recv_size >= sizeof *header &&
+                if ((size_t)recv_size >= sizeof *header &&
                         llmnr_header_is_valid_query(header)) {
                     /* TODO: Handle query.  */  
                 } else {

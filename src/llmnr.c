@@ -43,8 +43,9 @@ struct llmnr_responder {
     int udp_socket;
 };
 
-static int llmnr_decode_cmsg(struct msghdr *restrict,
-        struct in6_pktinfo *restrict);
+static ssize_t llmnr_receive_udp6(int, void *, size_t,
+        struct sockaddr_in6 *, struct in6_pktinfo *);
+static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
 int llmnr_responder_create(llmnr_responder_t *responder) {
     struct llmnr_responder *obj =
@@ -57,7 +58,7 @@ int llmnr_responder_create(llmnr_responder_t *responder) {
             *responder = obj;
             return 0;
         }
-        
+
         free(obj);
     }
     return -1;
@@ -69,70 +70,80 @@ int llmnr_responder_delete(llmnr_responder_t responder) {
         free(responder);
         return 0;
     }
-    
+
     errno = EINVAL;
     return -1;
 }
 
 int llmnr_responder_run(llmnr_responder_t responder) {
     for (;;) {
-        struct sockaddr_in6 name;
-        unsigned char packet[1500];
-        unsigned char control[128];
-        struct iovec iov[1] = {
-            {
-                .iov_base = packet,
-                .iov_len = sizeof packet,
-            },
-        };
-        struct msghdr msg = {
-            .msg_name = &name,
-            .msg_namelen = sizeof name,
-            .msg_iov = iov,
-            .msg_iovlen = 1,
-            .msg_control = control,
-            .msg_controllen = sizeof control,
-        };
-        ssize_t recv_size = recvmsg(responder->udp_socket, &msg, 0);
+        unsigned char packetbuf[1500];
+        struct sockaddr_in6 sender;
+        struct in6_pktinfo pktinfo;
+        ssize_t recv_size = llmnr_receive_udp6(responder->udp_socket,
+                packetbuf, sizeof packetbuf, &sender, &pktinfo);
         if (recv_size >= 0) {
-            struct in6_pktinfo pktinfo = {
-                .ipi6_addr = IN6ADDR_ANY_INIT,
-                .ipi6_ifindex = 0,
-            };
-            if (llmnr_decode_cmsg(&msg, &pktinfo) >= 0 &&
-                    pktinfo.ipi6_ifindex != 0 &&
-                    IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
-                char ifname[IF_NAMESIZE];
-                if_indextoname(pktinfo.ipi6_ifindex, ifname);
-                syslog(LOG_DEBUG, "Received packet on %s", ifname);
-
+            if (IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
                 struct llmnr_header *header =
-                        (struct llmnr_header *)packet;
+                        (struct llmnr_header *)packetbuf;
                 if ((size_t)recv_size >= sizeof *header &&
                         llmnr_header_is_valid_query(header)) {
-                    /* TODO: Handle query.  */  
+                    char ifname[IF_NAMESIZE];
+                    if_indextoname(pktinfo.ipi6_ifindex, ifname);
+                    syslog(LOG_DEBUG, "Received query on %s", ifname);
+
+                    /* TODO: Handle the query.  */
                 } else {
                     char addrstr[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &name.sin6_addr, addrstr,
+                    inet_ntop(AF_INET6, &sender.sin6_addr, addrstr,
                             INET6_ADDRSTRLEN);
                     syslog(LOG_INFO,
                             "Invalid packet from %s%%%" PRIu32
                             " (discarded)",
-                            addrstr, name.sin6_scope_id);
+                            addrstr, sender.sin6_scope_id);
                 }
             } else {
                 char addrstr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &name.sin6_addr, addrstr,
+                inet_ntop(AF_INET6, &sender.sin6_addr, addrstr,
                         INET6_ADDRSTRLEN);
                 syslog(LOG_INFO,
                         "Non-multicast packet from %s%%%" PRIu32
                         " (discarded)",
-                        addrstr, name.sin6_scope_id);
+                        addrstr, sender.sin6_scope_id);
             }
         }
     }
-    
+
     return 0;
+}
+
+int llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
+        struct sockaddr_in6 *restrict sender,
+        struct in6_pktinfo *restrict pktinfo) {
+    struct iovec iov[1] = {
+        {
+            .iov_base = buf,
+            .iov_len = bufsize,
+        },
+    };
+    unsigned char cmsgbuf[128];
+    struct msghdr msg = {
+        .msg_name = sender,
+        .msg_namelen = sizeof *sender,
+        .msg_iov = iov,
+        .msg_iovlen = 1,
+        .msg_control = cmsgbuf,
+        .msg_controllen = sizeof cmsgbuf,
+    };
+    ssize_t recv_size = recvmsg(sock, &msg, 0);
+    if (recv_size > 0) {
+        if (msg.msg_namelen != sizeof *sender ||
+                llmnr_decode_cmsg(&msg, pktinfo) < 0) {
+            errno = ENOMSG;
+            return -1;
+        }
+    }
+    return recv_size;
 }
 
 int llmnr_decode_cmsg(struct msghdr *restrict msg,

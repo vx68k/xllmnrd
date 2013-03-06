@@ -39,48 +39,38 @@ static const struct in6_addr in6addr_llmnr = {
     .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
 };
 
-struct llmnr_responder {
-    int udp_socket;
-};
+static int responder_udp_socket = -1;
 
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
-int llmnr_responder_create(llmnr_responder_t *responder) {
-    struct llmnr_responder *obj =
-        malloc(sizeof(struct llmnr_responder));
-    if (obj) {
-        *obj = (struct llmnr_responder) {
-            .udp_socket = llmnr_open_udp_socket(),
-        };
-        if (obj->udp_socket >= 0) {
-            *responder = obj;
-            return 0;
-        }
-
-        free(obj);
+int llmnr_responder_initialize(void) {
+    if (responder_udp_socket >= 0) {
+        errno = EPERM;
+        return -1;
     }
-    return -1;
-}
 
-int llmnr_responder_delete(llmnr_responder_t responder) {
-    if (responder) {
-        close(responder->udp_socket);
-        free(responder);
+    responder_udp_socket = llmnr_open_udp_socket();
+    if (responder_udp_socket >= 0) {
         return 0;
     }
-
-    errno = EINVAL;
     return -1;
 }
 
-int llmnr_responder_run(llmnr_responder_t responder) {
+void llmnr_responder_finalize(void) {
+    if (responder_udp_socket >= 0) {
+        close(responder_udp_socket);
+        responder_udp_socket = -1;
+    }
+}
+
+int llmnr_responder_run(void) {
     for (;;) {
         unsigned char packetbuf[1500];
         struct sockaddr_in6 sender;
         struct in6_pktinfo pktinfo;
-        ssize_t recv_size = llmnr_receive_udp6(responder->udp_socket,
+        ssize_t recv_size = llmnr_receive_udp6(responder_udp_socket,
                 packetbuf, sizeof packetbuf, &sender, &pktinfo);
         if (recv_size >= 0) {
             if (IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {

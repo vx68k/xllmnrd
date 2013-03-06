@@ -35,8 +35,6 @@ struct program_options {
     bool foreground;
 };
 
-static llmnr_responder_t responder;
-
 static int parse_options(int, char *[*], struct program_options *);
 
 int main(int argc, char *argv[static argc + 1]) {
@@ -46,17 +44,16 @@ int main(int argc, char *argv[static argc + 1]) {
     if (parse_options(argc, argv, &options) >= 0) {
         openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
 
-        if (llmnr_responder_create(&responder) < 0) {
+        if (llmnr_responder_initialize() < 0) {
             syslog(LOG_ERR, "Could not create a responder object: %m");
             syslog(LOG_INFO, "Exiting");
             exit(EXIT_FAILURE);
         }
+        atexit(llmnr_responder_finalize);
 
         if (options.foreground || daemon(false, false) == 0) {
-            llmnr_responder_run(responder);
+            llmnr_responder_run();
         }
-
-        llmnr_responder_delete(responder);
     }
 
     return 0;

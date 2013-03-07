@@ -2,6 +2,6 @@
 
 sbin_PROGRAMS = xllmnrd
 
-xllmnrd_SOURCES = main.c llmnr.c
+xllmnrd_SOURCES = main.c llmnr.c ifaddr.c
 
-noinst_HEADERS = llmnr.h llmnr_header.h
+noinst_HEADERS = llmnr.h llmnr_header.h ifaddr.h

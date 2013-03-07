@@ -45,6 +45,23 @@ static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
+/*
+ * Logs a discarded packet with the sender address.
+ */
+static inline void log_discarded(const char *restrict message,
+        const struct sockaddr_in6 *restrict sender) {
+    if (sender && sender->sin6_family == AF_INET6) {
+        char addrstr[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &sender->sin6_addr, addrstr,
+                INET6_ADDRSTRLEN);
+        syslog(LOG_INFO,
+                "%s from %s%%%" PRIu32 " (discarded)", message, addrstr,
+                sender->sin6_scope_id);
+    } else {
+        syslog(LOG_INFO, "%s (discarded)", message);
+    }
+}
+
 int llmnr_responder_initialize(void) {
     if (responder_udp_socket >= 0) {
         errno = EPERM;
@@ -84,22 +101,10 @@ int llmnr_responder_run(void) {
 
                     /* TODO: Handle the query.  */
                 } else {
-                    char addrstr[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &sender.sin6_addr, addrstr,
-                            INET6_ADDRSTRLEN);
-                    syslog(LOG_INFO,
-                            "Invalid packet from %s%%%" PRIu32
-                            " (discarded)",
-                            addrstr, sender.sin6_scope_id);
+                    log_discarded("Invalid packet", &sender);
                 }
             } else {
-                char addrstr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &sender.sin6_addr, addrstr,
-                        INET6_ADDRSTRLEN);
-                syslog(LOG_INFO,
-                        "Non-multicast packet from %s%%%" PRIu32
-                        " (discarded)",
-                        addrstr, sender.sin6_scope_id);
+                log_discarded("Non-multicast packet", &sender);
             }
         }
     }

@@ -1,6 +1,7 @@
 This directory contains the source code for an experimental Link-Local
-Multicast Name Resolution (LLMNR) responder implementation for GNU/Linux
-operating systems.
+Multicast Name Resolution (LLMNR) responder for GNU/Linux operating
+systems.  It is intended to be used on a small/home network to improve
+interoperability between GNU/Linux and Microsoft Windows.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License.

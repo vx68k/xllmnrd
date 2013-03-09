@@ -39,6 +39,4 @@ void llmnr_responder_finalize(void);
  */
 int llmnr_responder_run(void);
 
-int llmnr_open_udp_socket(void);
-
 #endif

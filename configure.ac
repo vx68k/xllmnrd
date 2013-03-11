@@ -25,7 +25,7 @@ AC_TYPE_UINT16_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([socket])
+AC_CHECK_FUNCS([atexit socket])
 
 AC_CONFIG_FILES([Makefile src/Makefile xllmnrd.8])
 AC_OUTPUT

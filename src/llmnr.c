@@ -153,7 +153,7 @@ int llmnr_open_udp_socket(void) {
     return -1;
 }
 
-int llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
+ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
         struct sockaddr_in6 *restrict sender,
         struct in6_pktinfo *restrict pktinfo) {
     struct iovec iov[1] = {

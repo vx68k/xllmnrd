@@ -1,8 +1,144 @@
+2013-03-11  Kaz Sasa  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added a check for atexit().
+	[5796ea9357f6] [tip]
+
+	* src/ifaddr.c:
+	Recommits ifaddr.c with the new EOL conversion.
+	[2262b4eb8ecd]
+
+	* .hgeol:
+	Created the .hgeol file for edit on Windows.
+	[dc21195b9e0f]
+
+2013-03-09  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Merged another head.
+	[7fa5d2d8a0fa]
+
+	* src/llmnr.c, src/llmnr.h:
+	Modified llmnr_open_udp_socket().
+	[4bbbc4cd9cb0]
+
+	* INSTALL:
+	Added an INSTALL file.
+	[e4627bac8c5e]
+
+2013-03-08  Kaz Sasa  <kazssym@vx68k.org>
+
+	* README:
+	Modified the README content.
+	[9e30d3091167]
+
+2013-03-07  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Added ifaddr.c and ifaddr.h to the Makefile (see issue #1).
+	[0ed68db0f628]
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Created new files (see issue #1).
+	[a2a304421b83]
+
+	* src/llmnr.c:
+	Added new inline function log_discarded.
+	[85edd224a73e]
+
+2013-03-06  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Modified the main function aligned to the responder changes.
+	[8c850188d45a]
+
+	* src/llmnr.c, src/llmnr.h:
+	Removed the responder type.
+	[3e70d2bb6031]
+
+	* src/llmnr.c:
+	Added a function to receive a UDPv6 packet.
+	[e67f1354fc15]
+
+2013-03-05  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Modified declarations of pointer parameters.
+	[6871874ed880]
+
+	* src/llmnr.c:
+	Fixed a comparison between signed and unsigned values.
+	[12bf12c66104]
+
+2013-03-04  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Makefile.am:
+	Added the new manual page to the Makefile.
+	[9d54c538afa9]
+
+	* configure.ac:
+	Added the new manual page to the configure output files (fixes issue
+	#3).
+	[f829eca18066]
+
+	* xllmnrd.8.in:
+	Created a manual page (see issue #3).
+	[835dd50d2b7c]
+
+2013-03-03  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Makefile.am:
+	Added the dist-hook target.
+	[8730f7b6975c]
+
+	* configure.ac:
+	Added the URL for the package home page.
+	[ac736ebe23da]
+
+	* configure.ac:
+	Updated configure checks.
+	[897611f74ba2]
+
+	* src/main.c:
+	Implemented command line options (fixes issue #5).
+	[79791519508a]
+
+	* src/main.c:
+	Modified comments.
+	[73a2aaf5ba28]
+
+	* src/Makefile.am:
+	Changed to sbin_PROGRAMS.
+	[2e3a4a79c09a]
+
+	* src/Makefile.am:
+	Added llmnr_header.h to noinst_HEADERS.
+	[46d0e3101e4b]
+
+	* src/llmnr.c:
+	Added code to check received packets.
+	[f60f6cb9252e]
+
+2013-03-02  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr_header.h:
+	Added a header structure for LLMNR packets.
+	[a374b64ab95d]
+
+	* src/llmnr.c:
+	Added new function llmnr_decode_cmsg.
+	[aea51bcd70b3]
+
+2013-02-26  Kaz Sasa  <kazssym@vx68k.org>
+
+	* ChangeLog:
+	Added ChangeLog.
+	[d8de056d93dd]
+
 2013-02-25  Kaz Sasa  <kazssym@vx68k.org>
 
 	* src/main.c:
 	Added a call to openlog.
-	[8a5809c966d8] [tip]
+	[8a5809c966d8]
 
 	* src/main.c:
 	Changed to use the new responder type. Removed unnecessary includes.

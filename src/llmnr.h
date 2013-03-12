@@ -39,4 +39,10 @@ void llmnr_responder_finalize(void);
  */
 int llmnr_responder_run(void);
 
+/*
+ * Requests the termination of the responder loop.
+ * This function is atomic regarding signals.
+ */
+extern void llmnr_responder_terminate(void);
+
 #endif

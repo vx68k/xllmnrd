@@ -30,10 +30,12 @@
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 static const struct in6_addr in6addr_llmnr = {
     .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
@@ -45,6 +47,8 @@ static int llmnr_open_udp_socket(void);
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
+
+static volatile sig_atomic_t responder_terminated;
 
 /*
  * Logs a discarded packet with the sender address.
@@ -84,7 +88,7 @@ void llmnr_responder_finalize(void) {
 }
 
 int llmnr_responder_run(void) {
-    for (;;) {
+    while (!responder_terminated) {
         unsigned char packetbuf[1500];
         struct sockaddr_in6 sender;
         struct in6_pktinfo pktinfo;
@@ -109,8 +113,13 @@ int llmnr_responder_run(void) {
             }
         }
     }
+    responder_terminated = false;
 
     return 0;
+}
+
+void llmnr_responder_terminate(void) {
+    responder_terminated = true;
 }
 
 int llmnr_open_udp_socket(void) {

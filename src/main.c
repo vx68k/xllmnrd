@@ -37,7 +37,7 @@ struct program_options {
 
 static int parse_options(int, char *[*], struct program_options *);
 
-int main(int argc, char *argv[static argc + 1]) {
+int main(int argc, char *argv[argc + 1]) {
     struct program_options options = {
         .foreground = false,
     };
@@ -59,7 +59,7 @@ int main(int argc, char *argv[static argc + 1]) {
     return 0;
 }
 
-int parse_options(int argc, char *argv[static argc + 1],
+int parse_options(int argc, char *argv[argc + 1],
         struct program_options *restrict options) {
     enum opt {
         OPT_VERSION = UCHAR_MAX + 1,

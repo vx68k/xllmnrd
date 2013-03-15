@@ -53,21 +53,20 @@ int main(int argc, char *argv[argc + 1]) {
             syslog(LOG_INFO, "Exiting");
             exit(EXIT_FAILURE);
         }
-        atexit(llmnr_responder_finalize);
 
         if (options.foreground || daemon(false, false) == 0) {
             struct sigaction terminate_action = {
                 .sa_handler = handle_signal_to_terminate,
             };
             sigaddset(&terminate_action.sa_mask, SIGINT);
-            sigaddset(&terminate_action.sa_mask, SIGQUIT);
             sigaddset(&terminate_action.sa_mask, SIGTERM);
             sigaction(SIGINT, &terminate_action, 0);
-            sigaction(SIGQUIT, &terminate_action, 0);
             sigaction(SIGTERM, &terminate_action, 0);
 
             llmnr_responder_run();
         }
+
+        llmnr_responder_finalize();
     }
 
     if (caught_signal != 0) {

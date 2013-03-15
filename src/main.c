@@ -67,14 +67,14 @@ int main(int argc, char *argv[argc + 1]) {
         }
 
         llmnr_responder_finalize();
-    }
 
-    if (caught_signal != 0) {
-        const struct sigaction default_action = {
-            .sa_handler = SIG_DFL,
-        };
-        sigaction(caught_signal, &default_action, 0);
-        raise(caught_signal);
+        if (caught_signal != 0) {
+            const struct sigaction default_action = {
+                .sa_handler = SIG_DFL,
+            };
+            sigaction(caught_signal, &default_action, 0);
+            raise(caught_signal);
+        }
     }
     return 0;
 }

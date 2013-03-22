@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
@@ -36,6 +37,9 @@ struct program_options {
 };
 
 static int parse_options(int, char *[*], struct program_options *);
+static void handle_signal_to_terminate(int __sig);
+
+static volatile sig_atomic_t caught_signal;
 
 int main(int argc, char *argv[argc + 1]) {
     struct program_options options = {
@@ -49,13 +53,29 @@ int main(int argc, char *argv[argc + 1]) {
             syslog(LOG_INFO, "Exiting");
             exit(EXIT_FAILURE);
         }
-        atexit(llmnr_responder_finalize);
 
         if (options.foreground || daemon(false, false) == 0) {
+            struct sigaction terminate_action = {
+                .sa_handler = handle_signal_to_terminate,
+            };
+            sigaddset(&terminate_action.sa_mask, SIGINT);
+            sigaddset(&terminate_action.sa_mask, SIGTERM);
+            sigaction(SIGINT, &terminate_action, 0);
+            sigaction(SIGTERM, &terminate_action, 0);
+
             llmnr_responder_run();
         }
-    }
 
+        llmnr_responder_finalize();
+
+        if (caught_signal != 0) {
+            const struct sigaction default_action = {
+                .sa_handler = SIG_DFL,
+            };
+            sigaction(caught_signal, &default_action, 0);
+            raise(caught_signal);
+        }
+    }
     return 0;
 }
 
@@ -102,4 +122,11 @@ int parse_options(int argc, char *argv[argc + 1],
         return -1;
     }
     return 0;
+}
+
+void handle_signal_to_terminate(int sig) {
+    if (caught_signal == 0) {
+        caught_signal = sig;
+        llmnr_responder_terminate();
+    }
 }

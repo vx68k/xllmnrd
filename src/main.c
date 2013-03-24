@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
@@ -36,6 +37,25 @@ struct program_options {
 };
 
 static int parse_options(int, char *[*], struct program_options *);
+static void handle_signal_to_terminate(int __sig);
+
+static volatile sig_atomic_t caught_signal;
+
+/*
+ * Sets the handler for a signal and makes a log entry if it failed.
+ */
+static inline int set_signal_handler(int sig, void (*handler)(int __sig),
+        sigset_t mask) {
+    const struct sigaction action = {
+        .sa_handler = handler,
+        .sa_mask = mask,
+    };
+    int ret = sigaction(sig, &action, 0);
+    if (ret != 0) {
+        syslog(LOG_ERR, "Failed to set handler for %s", strsignal(sig));
+    }
+    return ret;
+}
 
 int main(int argc, char *argv[argc + 1]) {
     struct program_options options = {
@@ -49,13 +69,31 @@ int main(int argc, char *argv[argc + 1]) {
             syslog(LOG_INFO, "Exiting");
             exit(EXIT_FAILURE);
         }
-        atexit(llmnr_responder_finalize);
 
         if (options.foreground || daemon(false, false) == 0) {
+            sigset_t mask;
+            sigemptyset(&mask);
+            sigaddset(&mask, SIGINT);
+            sigaddset(&mask, SIGTERM);
+
+            set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
+            set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
+
             llmnr_responder_run();
         }
-    }
 
+        llmnr_responder_finalize();
+
+        if (caught_signal != 0) {
+            // Resets the handler to default and reraise the same signal.
+            const struct sigaction default_action = {
+                .sa_handler = SIG_DFL,
+            };
+            if (sigaction(caught_signal, &default_action, 0) == 0) {
+                raise(caught_signal);
+            }
+        }
+    }
     return 0;
 }
 
@@ -102,4 +140,15 @@ int parse_options(int argc, char *argv[argc + 1],
         return -1;
     }
     return 0;
+}
+
+/*
+ * Handles a signal by terminating the process.
+ */
+void handle_signal_to_terminate(int sig) {
+    if (caught_signal == 0) {
+        caught_signal = sig;
+
+        llmnr_responder_terminate();
+    }
 }

@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <limits.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -42,6 +43,7 @@ static const struct in6_addr in6addr_llmnr = {
     .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
 };
 
+static unsigned int initialize_count;
 static int responder_udp_socket = -1;
 
 static int llmnr_open_udp_socket(void);
@@ -69,23 +71,31 @@ static inline void log_discarded(const char *restrict message,
 }
 
 int llmnr_responder_initialize(void) {
-    if (responder_udp_socket >= 0) {
-        errno = EPERM;
-        return -1;
-    }
+    if (initialize_count == 0) {
+        int udp = llmnr_open_udp_socket();
+        if (udp >= 0) {
+            responder_udp_socket = udp;
 
-    int udp = llmnr_open_udp_socket();
-    if (udp >= 0) {
-        responder_udp_socket = udp;
-        return 0;
+            initialize_count += 1;
+            return initialize_count;
+        }
+    } else {
+        if (initialize_count >= INT_MAX) {
+            abort();
+        }
+        initialize_count += 1;
+        return initialize_count;
     }
     return -1;
 }
 
 void llmnr_responder_finalize(void) {
-    if (responder_udp_socket >= 0) {
-        close(responder_udp_socket);
-        responder_udp_socket = -1;
+    if (initialize_count != 0) {
+        initialize_count -= 1;
+        if (initialize_count == 0) {
+            close(responder_udp_socket);
+            responder_udp_socket = -1;
+        }
     }
 }
 

@@ -76,18 +76,14 @@ int llmnr_responder_initialize(void) {
 
     int udp = llmnr_open_udp_socket();
     if (udp >= 0) {
-        if (ifaddr_initialize() == 0) {
-            responder_udp_socket = udp;
-            return 0;
-        }
-        close(udp);
+        responder_udp_socket = udp;
+        return 0;
     }
     return -1;
 }
 
 void llmnr_responder_finalize(void) {
     if (responder_udp_socket >= 0) {
-        ifaddr_finalize();
         close(responder_udp_socket);
         responder_udp_socket = -1;
     }

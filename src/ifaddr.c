@@ -27,33 +27,48 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 static int ifaddr_open_rtnetlink(void);
 
+/**
+ * Keeps how many times this module has been initialized recursively.
+ * The value SHALL be incremented up to INT_MAX by each call to
+ * ifaddr_initialize() and decremented by each call to ifaddr_finalize().
+ */
+static unsigned int initialize_count;
+
 static int rtnetlink_fd = -1;
 
-static inline int ifaddr_is_initialized(void) {
-    return rtnetlink_fd >= 0;
+/**
+ * Returns non-zero if this module has been initialized.
+ */
+static inline int ifaddr_initialized(void) {
+    return initialize_count > 0;
 }
 
 int ifaddr_initialize(void) {
-    if (ifaddr_is_initialized()) {
-        errno = EBUSY;
-        return -1;
-    }
-
-    int fd = ifaddr_open_rtnetlink();
-    if (fd >= 0) {
-        rtnetlink_fd = fd;
-        return 0;
+    if (!ifaddr_initialized()) {
+        int fd = ifaddr_open_rtnetlink();
+        if (fd >= 0) {
+            rtnetlink_fd = fd;
+            return initialize_count++;
+        }
+    } else {
+        if (initialize_count < INT_MAX) {
+            return initialize_count++;
+        }
+        errno = EOVERFLOW;
     }
     return -1;
 }
 
 void ifaddr_finalize(void) {
-    if (ifaddr_is_initialized()) {
-        close(rtnetlink_fd);
-        rtnetlink_fd = -1;
+    if (ifaddr_initialized()) {
+        if (--initialize_count == 0) {
+            close(rtnetlink_fd);
+            rtnetlink_fd = -1;
+        }
     }
 }
 

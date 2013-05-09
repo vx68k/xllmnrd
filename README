@@ -1,10 +1,15 @@
-This directory contains the source code for an experimental Link-Local
-Multicast Name Resolution (LLMNR) responder for GNU/Linux operating
-systems.  It is intended to be used on a small/home network to improve
-interoperability between GNU/Linux and Microsoft Windows.
+This directory contains the source code for an experimental LLMNR responder for
+GNU/Linux operating systems.  It is intended to be used on a small/home network
+to improve interoperability between GNU/Linux and Microsoft Windows.
 
-This program is free software: you can redistribute it and/or modify it
-under the terms of the GNU General Public License.
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License.  You should have got a copy of it
+in the COPYING file.
+
+For generic installation instructions, see the INSTALL file.  If you have got a
+copy of this program from our repository, you must generate a configure script
+and Makefile templates with GNU autoconf and GNU automake once before you begin
+installation.
 
 See our wiki at <https://bitbucket.org/kazssym/xllmnrd/wiki> for more
 information.

@@ -95,6 +95,9 @@ int main(int argc, char *argv[argc + 1]) {
 
         if (caught_signal != 0) {
             // Resets the handler to default and reraise the same signal.
+
+            ifaddr_finalize(); // The exit functions will not be called.
+
             const struct sigaction default_action = {
                 .sa_handler = SIG_DFL,
             };

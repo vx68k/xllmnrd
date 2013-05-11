@@ -1,15 +1,17 @@
-This directory contains the source code for an experimental LLMNR responder for
-GNU/Linux operating systems.  It is intended to be used on a small/home network
-to improve interoperability between GNU/Linux and Microsoft Windows.
+This directory contains the source code for an experimental IPv6 LLMNR
+responder for GNU/Linux operating systems.  It makes it possible for Microsoft
+Windows clients to get the IPv6 addresses of local GNU/Linux servers without
+any DNS configuration.  It is intended to be used on an unmanaged small/home
+network to improve interoperability between GNU/Linux and Microsoft Windows.
 
 This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License.  You should have got a copy of it
-in the COPYING file.
+the terms of the GNU General Public License.  You should have received a copy
+of it in the COPYING file.
 
-For generic installation instructions, see the INSTALL file.  If you have got a
-copy of this program from our repository, you must generate a configure script
-and Makefile templates with GNU autoconf and GNU automake once before you begin
+For generic installation instructions, see the INSTALL file.  If you have got
+a copy of this package from our repository, you must generate a configure
+script and Makefile templates with GNU autoconf and GNU automake once before
 installation.
 
-See our wiki at <https://bitbucket.org/kazssym/xllmnrd/wiki> for more
+See our wiki <https://bitbucket.org/kazssym/xllmnrd/wiki> for more
 information.

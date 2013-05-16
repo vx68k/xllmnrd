@@ -1,4 +1,6 @@
 syntax: glob
+xllmnrd
+xllmnrd.8
 
 *.o
 *.lo

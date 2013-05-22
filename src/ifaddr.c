@@ -24,8 +24,12 @@
 #include "ifaddr.h"
 
 #include <linux/rtnetlink.h>
+#include <pthread.h>
 #include <sys/socket.h>
+#include <syslog.h>
 #include <unistd.h>
+#include <signal.h>
+#include <string.h>
 #include <errno.h>
 #include <limits.h>
 
@@ -40,6 +44,13 @@ static unsigned int initialize_count;
 
 static int rtnetlink_fd = -1;
 
+static volatile sig_atomic_t terminated;
+
+/**
+ * Identifier for the worker thread.
+ */
+static pthread_t worker_thread;
+
 /**
  * Returns non-zero if this module has been initialized.
  */
@@ -47,12 +58,23 @@ static inline int ifaddr_initialized(void) {
     return initialize_count > 0;
 }
 
+static int ifaddr_start_worker(void);
+static void *ifaddr_run(void *__data);
+
 int ifaddr_initialize(void) {
     if (!ifaddr_initialized()) {
         int fd = ifaddr_open_rtnetlink();
         if (fd >= 0) {
             rtnetlink_fd = fd;
-            return initialize_count++;
+
+            int err = ifaddr_start_worker();
+            if (err == 0) {
+                return initialize_count++;
+            }
+
+            close(rtnetlink_fd);
+            rtnetlink_fd = -1;
+            errno = err;
         }
     } else {
         if (initialize_count < INT_MAX) {
@@ -70,6 +92,53 @@ void ifaddr_finalize(void) {
             rtnetlink_fd = -1;
         }
     }
+}
+
+/**
+ * Starts the worker thread.
+ * @return 0 on success, non-zero error number on failure
+ */
+int ifaddr_start_worker(void) {
+    // The worker thread should not catch signals except SIGUSR2.
+    sigset_t set, oset;
+    sigfillset(&set);
+    sigdelset(&set, SIGUSR2);
+
+    int err = pthread_sigmask(SIG_SETMASK, &set, &oset);
+    if (err == 0) {
+        err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
+        // Restore the signal mask before proceeding.
+        // Errors are not significant here.
+        pthread_sigmask(SIG_SETMASK, &oset, 0);
+    }
+    return err;
+}
+
+
+/**
+ * Runs the worker in a loop.
+ * @param data
+ * @return the value of data
+ */
+void *ifaddr_run(void *data) {
+    if (ifaddr_initialized()) {
+        terminated = 0;
+        while (!terminated) {
+            unsigned char buf[128];
+            ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
+            struct nlmsghdr *nlmsg = (void *)buf;
+            if (recv_size >= 0 && (size_t)recv_size >= sizeof *nlmsg) {
+                if (nlmsg->nlmsg_type == NLMSG_ERROR) {
+                    struct nlmsgerr *err = NLMSG_DATA(nlmsg);
+                    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
+                        syslog(LOG_ERR, "Got rtnetlink error: %s",
+                                strerror(-(err->error)));
+                    }
+                }
+            }
+        }
+    }
+    return data;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {

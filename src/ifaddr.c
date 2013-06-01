@@ -31,7 +31,9 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <stdbool.h>
 
 static int ifaddr_open_rtnetlink(void);
 
@@ -61,6 +63,13 @@ static inline int ifaddr_initialized(void) {
 static int ifaddr_start_worker(void);
 static void *ifaddr_run(void *__data);
 
+/**
+ * Decodes netlink messages.
+ * @param __nlmsg pointer to the first netlink message
+ * @param __size total size of the netlink messages
+ */
+static void ifaddr_decode_nlmsg(struct nlmsghdr *__nlmsg, size_t __size);
+
 int ifaddr_initialize(void) {
     if (!ifaddr_initialized()) {
         int fd = ifaddr_open_rtnetlink();
@@ -69,7 +78,13 @@ int ifaddr_initialize(void) {
 
             int err = ifaddr_start_worker();
             if (err == 0) {
-                return initialize_count++;
+                // Must be initialized for ifaddr_refresh() to work.
+                ++initialize_count;
+                err = ifaddr_refresh();
+                if (err == 0) {
+                    return initialize_count;
+                }
+                --initialize_count;
             }
 
             close(rtnetlink_fd);
@@ -114,7 +129,6 @@ int ifaddr_start_worker(void) {
     return err;
 }
 
-
 /**
  * Runs the worker in a loop.
  * @param data
@@ -127,18 +141,80 @@ void *ifaddr_run(void *data) {
             unsigned char buf[128];
             ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
             struct nlmsghdr *nlmsg = (void *)buf;
-            if (recv_size >= 0 && (size_t)recv_size >= sizeof *nlmsg) {
-                if (nlmsg->nlmsg_type == NLMSG_ERROR) {
-                    struct nlmsgerr *err = NLMSG_DATA(nlmsg);
-                    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
-                        syslog(LOG_ERR, "Got rtnetlink error: %s",
-                                strerror(-(err->error)));
-                    }
-                }
+            if (recv_size >= 0) {
+                ifaddr_decode_nlmsg(nlmsg, recv_size);
+            } else if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                        strerror(errno));
             }
         }
     }
     return data;
+}
+
+void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
+    while (nlmsg && size >= sizeof *nlmsg && size >= nlmsg->nlmsg_len) {
+        // Check if it is not a multiple message.
+        bool done = (nlmsg->nlmsg_flags & NLM_F_MULTI) == 0;
+
+        switch (nlmsg->nlmsg_type) {
+        case NLMSG_NOOP:
+            syslog(LOG_INFO, "Got NLMSG_NOOP");
+            break;
+        case NLMSG_ERROR:
+        {
+            struct nlmsgerr *err = NLMSG_DATA(nlmsg);
+            if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
+                syslog(LOG_ERR, "Got rtnetlink error: %s",
+                        strerror(-(err->error)));
+            }
+            break;
+        }
+        case NLMSG_DONE:
+            done = true;
+            break;
+        case RTM_NEWADDR:
+            syslog(LOG_DEBUG, "Got RTM_NEWADDR");
+            break;
+        case RTM_DELADDR:
+            syslog(LOG_DEBUG, "Got RTM_DELADDR");
+            break;
+        default:
+            syslog(LOG_INFO, "Unknown netlink message type: %" PRIu16,
+                    nlmsg->nlmsg_type);
+            break;
+        }
+
+        if (done) {
+            nlmsg = 0;
+        } else {
+            nlmsg = NLMSG_NEXT(nlmsg, size);
+        }
+    }
+}
+
+int ifaddr_refresh(void) {
+    if (ifaddr_initialized()) {
+        unsigned char buf[128];
+        struct nlmsghdr *nlmsg = (void*)buf;
+        struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
+        *nlmsg = (struct nlmsghdr) {
+            .nlmsg_len = NLMSG_LENGTH(sizeof *ifa),
+            .nlmsg_type = RTM_GETADDR,
+            .nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT,
+        };
+        *ifa = (struct ifaddrmsg) {
+            .ifa_family = AF_INET6,
+        };
+        if (send(rtnetlink_fd, buf, nlmsg->nlmsg_len, 0) >= 0) {
+            // TODO: Should wait.
+            return 0;
+        }
+    } else {
+        // TODO: Choose a better error number.
+        errno = EBADF;
+    }
+    return -1;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {

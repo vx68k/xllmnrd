@@ -25,6 +25,12 @@ extern int ifaddr_initialize(void);
 
 extern void ifaddr_finalize(void);
 
+/**
+ * Refreshes the interface address table.
+ * @return 0 on success, -1 on failure
+ */
+extern int ifaddr_refresh(void);
+
 extern int ifaddr_lookup(unsigned int __ifindex, struct in6_addr *__addr);
 
 #endif

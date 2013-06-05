@@ -82,7 +82,7 @@ int ifaddr_initialize(void) {
                 ++initialize_count;
                 err = ifaddr_refresh();
                 if (err == 0) {
-                    return initialize_count;
+                    return 0;
                 }
                 --initialize_count;
             }

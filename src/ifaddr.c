@@ -53,6 +53,21 @@ static volatile sig_atomic_t terminated;
 static pthread_t worker_thread;
 
 /**
+ * Mutex for refresh_not_in_progress.
+ */
+static pthread_mutex_t refresh_mutex;
+
+/**
+ * Condition variable for refresh_not_in_progress.
+ */
+static pthread_cond_t refresh_cond;
+
+/**
+ * Indicates if a refresh operation is not in progress.
+ */
+static volatile bool refresh_not_in_progress;
+
+/**
  * Returns non-zero if this module has been initialized.
  */
 static inline int ifaddr_initialized(void) {
@@ -77,13 +92,25 @@ int ifaddr_initialize(void) {
 
             int err = ifaddr_start_worker();
             if (err == 0) {
-                // Must be initialized for ifaddr_refresh() to work.
-                ++initialize_count;
-                err = ifaddr_refresh();
+                err = pthread_mutex_init(&refresh_mutex, 0);
                 if (err == 0) {
-                    return 0;
+                    err = pthread_cond_init(&refresh_cond, 0);
+                    if (err == 0) {
+                        refresh_not_in_progress = true;
+                        
+                        // Must be initialized for ifaddr_refresh() to work.
+                        ++initialize_count;
+                        err = ifaddr_refresh();
+                        if (err == 0) {
+                            return 0;
+                        }
+                        --initialize_count;
+                    }
+                    // Errors are not significant here.
+                    pthread_cond_destroy(&refresh_cond);
                 }
-                --initialize_count;
+                // Errors are not significant here.
+                pthread_mutex_destroy(&refresh_mutex);
             }
 
             close(rtnetlink_fd);
@@ -102,6 +129,9 @@ int ifaddr_initialize(void) {
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
         if (--initialize_count == 0) {
+            pthread_cond_destroy(&refresh_cond);
+            pthread_mutex_destroy(&refresh_mutex);
+
             close(rtnetlink_fd);
             rtnetlink_fd = -1;
         }
@@ -170,6 +200,11 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             break;
         }
         case NLMSG_DONE:
+            pthread_mutex_lock(&refresh_mutex);
+            refresh_not_in_progress = true;
+            pthread_cond_broadcast(&refresh_cond);
+            pthread_mutex_unlock(&refresh_mutex);
+
             done = true;
             break;
         case RTM_NEWADDR:
@@ -193,7 +228,10 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
 }
 
 int ifaddr_refresh(void) {
+    int result = -1;
     if (ifaddr_initialized()) {
+        pthread_mutex_lock(&refresh_mutex);
+
         unsigned char buf[128];
         struct nlmsghdr *nlmsg = (void*)buf;
         struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
@@ -205,15 +243,22 @@ int ifaddr_refresh(void) {
         *ifa = (struct ifaddrmsg) {
             .ifa_family = AF_INET6,
         };
-        if (send(rtnetlink_fd, buf, nlmsg->nlmsg_len, 0) >= 0) {
-            // TODO: Should wait.
-            return 0;
+        if (!refresh_not_in_progress ||
+                send(rtnetlink_fd, buf, nlmsg->nlmsg_len, 0) >= 0) {
+            refresh_not_in_progress = false;
+            do {
+                pthread_cond_wait(&refresh_cond, &refresh_mutex);
+            } while (!refresh_not_in_progress);
+            
+            result = 0;
         }
+
+        pthread_mutex_unlock(&refresh_mutex);
     } else {
         // TODO: Choose a better error number.
         errno = EBADF;
     }
-    return -1;
+    return result;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {

@@ -31,7 +31,6 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
 
@@ -180,8 +179,8 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             syslog(LOG_DEBUG, "Got RTM_DELADDR");
             break;
         default:
-            syslog(LOG_INFO, "Unknown netlink message type: %" PRIu16,
-                    nlmsg->nlmsg_type);
+            syslog(LOG_INFO, "Unknown netlink message type: %u",
+                    (unsigned int)nlmsg->nlmsg_type);
             break;
         }
 

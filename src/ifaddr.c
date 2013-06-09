@@ -97,7 +97,7 @@ int ifaddr_initialize(void) {
                     err = pthread_cond_init(&refresh_cond, 0);
                     if (err == 0) {
                         refresh_not_in_progress = true;
-                        
+
                         // Must be initialized for ifaddr_refresh() to work.
                         ++initialize_count;
                         err = ifaddr_refresh();
@@ -169,7 +169,7 @@ void *ifaddr_run(void *data) {
         while (!terminated) {
             unsigned char buf[128];
             ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
-            struct nlmsghdr *nlmsg = (void *)buf;
+            struct nlmsghdr *nlmsg = (void *) buf;
             if (recv_size >= 0) {
                 ifaddr_decode_nlmsg(nlmsg, recv_size);
             } else if (errno != EINTR) {
@@ -215,7 +215,7 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             break;
         default:
             syslog(LOG_INFO, "Unknown netlink message type: %u",
-                    (unsigned int)nlmsg->nlmsg_type);
+                    (unsigned int) nlmsg->nlmsg_type);
             break;
         }
 
@@ -233,7 +233,7 @@ int ifaddr_refresh(void) {
         pthread_mutex_lock(&refresh_mutex);
 
         unsigned char buf[128];
-        struct nlmsghdr *nlmsg = (void*)buf;
+        struct nlmsghdr *nlmsg = (void*) buf;
         struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
         *nlmsg = (struct nlmsghdr) {
             .nlmsg_len = NLMSG_LENGTH(sizeof *ifa),
@@ -249,7 +249,7 @@ int ifaddr_refresh(void) {
             do {
                 pthread_cond_wait(&refresh_cond, &refresh_mutex);
             } while (!refresh_not_in_progress);
-            
+
             result = 0;
         }
 
@@ -275,7 +275,7 @@ int ifaddr_open_rtnetlink(void) {
             .nl_family = AF_NETLINK,
             .nl_groups = RTMGRP_IPV6_IFADDR,
         };
-        if (bind(fd, (const void*)&addr, sizeof addr) == 0) {
+        if (bind(fd, (const void *) &addr, sizeof addr) == 0) {
             return fd;
         }
 

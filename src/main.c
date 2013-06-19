@@ -22,14 +22,16 @@
 #define _GNU_SOURCE 1
 
 #include "llmnr.h"
+#include "ifaddr.h"
 #include <getopt.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 
 struct program_options {
@@ -64,6 +66,13 @@ int main(int argc, char *argv[argc + 1]) {
     if (parse_options(argc, argv, &options) >= 0) {
         openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
 
+        if (ifaddr_initialize() < 0) {
+            syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
+                    strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        atexit(&ifaddr_finalize);
+
         if (llmnr_responder_initialize() < 0) {
             syslog(LOG_ERR, "Could not create a responder object: %m");
             syslog(LOG_INFO, "Exiting");
@@ -86,6 +95,9 @@ int main(int argc, char *argv[argc + 1]) {
 
         if (caught_signal != 0) {
             // Resets the handler to default and reraise the same signal.
+
+            ifaddr_finalize(); // The exit functions will not be called.
+
             const struct sigaction default_action = {
                 .sa_handler = SIG_DFL,
             };

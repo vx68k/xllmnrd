@@ -23,6 +23,7 @@
 
 #include "llmnr.h"
 
+#include "ifaddr.h"
 #include "llmnr_header.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -73,8 +74,9 @@ int llmnr_responder_initialize(void) {
         return -1;
     }
 
-    responder_udp_socket = llmnr_open_udp_socket();
-    if (responder_udp_socket >= 0) {
+    int udp = llmnr_open_udp_socket();
+    if (udp >= 0) {
+        responder_udp_socket = udp;
         return 0;
     }
     return -1;
@@ -97,8 +99,8 @@ int llmnr_responder_run(void) {
         if (recv_size >= 0) {
             if (IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
                 struct llmnr_header *header =
-                        (struct llmnr_header *)packetbuf;
-                if ((size_t)recv_size >= sizeof *header &&
+                        (struct llmnr_header *) packetbuf;
+                if ((size_t) recv_size >= sizeof *header &&
                         llmnr_header_is_valid_query(header)) {
                     char ifname[IF_NAMESIZE];
                     if_indextoname(pktinfo.ipi6_ifindex, ifname);
@@ -150,7 +152,7 @@ int llmnr_open_udp_socket(void) {
                 .sin6_port = htons(LLMNR_PORT),
                 .sin6_addr = in6addr_any,
             };
-            if (bind(udp_socket, (const void*)&addr, sizeof addr) == 0) {
+            if (bind(udp_socket, (const void *) &addr, sizeof addr) == 0) {
                 return udp_socket;
             }
         }

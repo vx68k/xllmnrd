@@ -15,7 +15,8 @@ AC_SEARCH_LIBS([pthread_create], [pthread])
 
 # Checks for header files.
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([limits.h syslog.h sys/socket.h netinet/in.h arpa/inet.h])
+AC_CHECK_HEADERS([arpa/inet.h limits.h linux/rtnetlink.h netinet/in.h \
+net/if.h syslog.h sys/socket.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
@@ -26,7 +27,7 @@ AC_TYPE_UINT16_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([atexit socket])
+AC_CHECK_FUNCS([atexit socket strerror])
 
 AC_CONFIG_FILES([Makefile src/Makefile xllmnrd.8])
 AC_OUTPUT

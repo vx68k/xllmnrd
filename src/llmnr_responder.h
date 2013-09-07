@@ -1,5 +1,5 @@
 /*
- * Declarations for the LLMNR protocol
+ * <llmnr_responder.h> - LLMNR responder (interface)
  * Copyright (C) 2013  Kaz Sasa
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LLMNR_H
-#define	LLMNR_H 1
+#ifndef LLMNR_RESPONDER_H
+#define	LLMNR_RESPONDER_H 1
 
 /*
  * Port number.

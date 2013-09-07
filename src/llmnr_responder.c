@@ -21,7 +21,7 @@
 #endif
 #define _GNU_SOURCE 1
 
-#include "llmnr.h"
+#include "llmnr_responder.h"
 
 #include "ifaddr.h"
 #include "llmnr_header.h"

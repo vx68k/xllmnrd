@@ -37,6 +37,10 @@
 #include <limits.h>
 #include <stdbool.h>
 
+#ifndef EX_USAGE
+#define EX_USAGE 64
+#endif
+
 struct program_options {
     bool foreground;
 };
@@ -141,7 +145,7 @@ int parse_options(int argc, char *argv[argc + 1],
             version = true;
             break;
         case '?':
-            return -1;
+            exit(EX_USAGE);
         }
     } while (opt >= 0);
 

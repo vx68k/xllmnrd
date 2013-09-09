@@ -23,6 +23,9 @@
 
 #include "llmnr_responder.h"
 #include "ifaddr.h"
+#if HAVE_SYSEXITS_H
+#include <sysexits.h>
+#endif
 #include <getopt.h>
 #include <syslog.h>
 #include <unistd.h>

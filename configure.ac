@@ -16,7 +16,7 @@ AC_SEARCH_LIBS([pthread_create], [pthread])
 # Checks for header files.
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h limits.h linux/rtnetlink.h netinet/in.h \
-net/if.h syslog.h sys/socket.h])
+net/if.h sysexits.h syslog.h sys/socket.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE

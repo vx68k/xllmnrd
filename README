@@ -3,15 +3,13 @@ responder for GNU/Linux operating systems.  It makes it possible for Microsoft
 Windows clients to get the IPv6 addresses of local GNU/Linux servers without
 any DNS configuration.  It is intended to be used on an unmanaged small/home
 network to improve interoperability between GNU/Linux and Microsoft Windows.
+For more information, visit <https://bitbucket.org/kazssym/xllmnrd/wiki>.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License.  You should have received a copy
-of it in the COPYING file.
+of it in the 'COPYING' file.
 
-For generic installation instructions, see the INSTALL file.  If you have got
-a copy of this package from our repository, you must generate a configure
-script and Makefile templates with GNU autoconf and GNU automake once before
-installation.
-
-See our wiki <https://bitbucket.org/kazssym/xllmnrd/wiki> for more
-information.
+For generic installation instructions, see the 'INSTALL' file.  If you have
+got a copy of this program from our repository, you must first generate a
+configure script and Makefile templates before your installation.  Just type
+'autoreconf --install' and see if it can generate them successfully.

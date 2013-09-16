@@ -4,7 +4,7 @@ AC_INIT([xllmnrd], [1.0x],,, [https://bitbucket.org/kazssym/xllmnrd])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([1.11 no-define])
+AM_INIT_AUTOMAKE([no-define])
 
 # Checks for programs.
 AC_PROG_CC

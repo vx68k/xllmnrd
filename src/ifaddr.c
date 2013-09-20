@@ -164,18 +164,16 @@ int ifaddr_start_worker(void) {
  * @return the value of data
  */
 void *ifaddr_run(void *data) {
-    if (ifaddr_initialized()) {
-        terminated = 0;
-        while (!terminated) {
-            unsigned char buf[128];
-            ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
-            struct nlmsghdr *nlmsg = (void *) buf;
-            if (recv_size >= 0) {
-                ifaddr_decode_nlmsg(nlmsg, recv_size);
-            } else if (errno != EINTR) {
-                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
-                        strerror(errno));
-            }
+    terminated = 0;
+    while (!terminated) {
+        unsigned char buf[128];
+        ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
+        struct nlmsghdr *nlmsg = (void *) buf;
+        if (recv_size >= 0) {
+            ifaddr_decode_nlmsg(nlmsg, recv_size);
+        } else if (errno != EINTR) {
+            syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                    strerror(errno));
         }
     }
     return data;

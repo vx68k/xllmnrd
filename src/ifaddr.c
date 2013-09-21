@@ -35,7 +35,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-static int ifaddr_open_rtnetlink(void);
+static int open_rtnetlink(void);
 
 /**
  * Keeps how many times this module has been initialized recursively.
@@ -87,7 +87,7 @@ static void ifaddr_decode_nlmsg(struct nlmsghdr *__nlmsg, size_t __size);
 
 int ifaddr_initialize(void) {
     if (!ifaddr_initialized()) {
-        int fd = ifaddr_open_rtnetlink();
+        int fd = open_rtnetlink();
         if (fd >= 0) {
             rtnetlink_fd = fd;
 
@@ -268,7 +268,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
 /*
  * Opens a socket for RTNETLINK.
  */
-int ifaddr_open_rtnetlink(void) {
+int open_rtnetlink(void) {
     int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (fd >= 0) {
         const struct sockaddr_nl addr = {

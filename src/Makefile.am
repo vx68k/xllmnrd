@@ -1,7 +1,17 @@
 ## Process this file with automake to produce a Makefile.in.
 
 sbin_PROGRAMS = xllmnrd
+man_MANS = xllmnrd.8
 
 xllmnrd_SOURCES = main.c llmnr_responder.c ifaddr.c
 
 noinst_HEADERS = llmnr_responder.h llmnr_header.h ifaddr.h
+EXTRADISTS = xllmnrd.8.in
+
+xllmnrd.8: xllmnrd.8.in
+	@rm -f $@-t $@
+	sed -e 's,[@]PACKAGE_NAME[@],$(PACKAGE_NAME),g' \
+	  -e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g' \
+	  -e 's,[@]PACKAGE_STRING[@],$(PACKAGE_STRING),g' \
+	  < $(srcdir)/xllmnrd.8.in > $@-t
+	mv $@-t $@

@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <assert.h>
 
 static int ifaddr_open_rtnetlink(void);
 
@@ -164,6 +165,7 @@ int ifaddr_start_worker(void) {
  * @return the value of data
  */
 void *ifaddr_run(void *data) {
+    assert(ifaddr_initialized());
     terminated = 0;
     while (!terminated) {
         unsigned char buf[128];

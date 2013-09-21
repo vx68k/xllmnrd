@@ -8,7 +8,7 @@ xllmnrd_SOURCES = main.c llmnr_responder.c ifaddr.c
 noinst_HEADERS = llmnr_responder.h llmnr_header.h ifaddr.h
 EXTRADISTS = xllmnrd.8.in
 
-xllmnrd.8: xllmnrd.8.in
+xllmnrd.8: xllmnrd.8.in Makefile
 	@rm -f $@-t $@
 	sed -e 's,[@]PACKAGE_NAME[@],$(PACKAGE_NAME),g' \
 	  -e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g' \

@@ -8,6 +8,8 @@ xllmnrd_SOURCES = main.c llmnr_responder.c ifaddr.c
 noinst_HEADERS = llmnr_responder.h llmnr_header.h ifaddr.h
 EXTRA_DIST = xllmnrd.8.in
 
+CLEANFILES = xllmnrd.8
+
 xllmnrd.8: xllmnrd.8.in Makefile
 	@rm -f $@-t $@
 	sed -e 's,[@]PACKAGE_NAME[@],$(PACKAGE_NAME),g' \

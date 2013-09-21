@@ -1,4 +1,11 @@
-.\" @configure_input@
+.\" Manual page for xllmnrd
+.\" Copyright (C) 2013  Kaz Nishimura
+.\"
+.\" Copying and distribution of this file, with or without modification, are
+.\" permitted in any medium without royalty provided the copyright notice and
+.\" this notice are preserved.  This file is offered as-is, without any
+.\" warranty.
+.
 .TH XLLMNRD 8 2013-03-03 "@PACKAGE_STRING@"
 .SH NAME
 xllmnrd \- experimental LLMNR responder

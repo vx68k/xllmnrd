@@ -29,5 +29,5 @@ AC_TYPE_UINT16_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([atexit socket strerror])
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
 AC_OUTPUT

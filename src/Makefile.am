@@ -6,7 +6,7 @@ man_MANS = xllmnrd.8
 xllmnrd_SOURCES = main.c llmnr_responder.c ifaddr.c
 
 noinst_HEADERS = llmnr_responder.h llmnr_header.h ifaddr.h
-EXTRADISTS = xllmnrd.8.in
+EXTRA_DIST = xllmnrd.8.in
 
 xllmnrd.8: xllmnrd.8.in Makefile
 	@rm -f $@-t $@

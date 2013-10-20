@@ -16,7 +16,7 @@ all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE)
 
 $(builddir)/Makefile: configure
-	test -d $(builddir)
+	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); cd $(builddir) && $$srcdir/configure
 
 configure: stamp-ac

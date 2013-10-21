@@ -19,9 +19,8 @@ $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); cd $(builddir) && $$srcdir/configure
 
-configure: stamp-ac
-
-stamp-ac: configure.ac
+configure: stamp-configure
+stamp-configure: configure.ac
 	@rm -f $@
 	$(AUTORECONF) --install
 	touch $@

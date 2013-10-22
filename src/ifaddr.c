@@ -24,8 +24,9 @@
 #include "ifaddr.h"
 
 #include <linux/rtnetlink.h>
-#include <pthread.h>
+#include <arpa/inet.h> /* inet_ntop */
 #include <sys/socket.h>
+#include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
@@ -168,11 +169,15 @@ void *ifaddr_run(void *data) {
     assert(ifaddr_initialized());
     terminated = 0;
     while (!terminated) {
-        unsigned char buf[128];
-        ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
+        // Gets the required buffer size.
+        ssize_t recv_size = recv(rtnetlink_fd, 0, 0, MSG_PEEK | MSG_TRUNC);
+
+        unsigned char buf[recv_size];
+        ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
+
         struct nlmsghdr *nlmsg = (void *) buf;
-        if (recv_size >= 0) {
-            ifaddr_decode_nlmsg(nlmsg, recv_size);
+        if (recv_len >= 0) {
+            ifaddr_decode_nlmsg(nlmsg, recv_len);
         } else if (errno != EINTR) {
             syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
                     strerror(errno));
@@ -181,10 +186,9 @@ void *ifaddr_run(void *data) {
     return data;
 }
 
-void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
-    while (nlmsg && size >= sizeof *nlmsg && size >= nlmsg->nlmsg_len) {
-        // Check if it is not a multiple message.
-        bool done = (nlmsg->nlmsg_flags & NLM_F_MULTI) == 0;
+void ifaddr_decode_nlmsg(struct nlmsghdr *nlmsg, size_t len) {
+    while (NLMSG_OK(nlmsg, len)) {
+        bool done = false;
 
         switch (nlmsg->nlmsg_type) {
         case NLMSG_NOOP:
@@ -204,11 +208,28 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             refresh_not_in_progress = true;
             pthread_cond_broadcast(&refresh_cond);
             pthread_mutex_unlock(&refresh_mutex);
-
             done = true;
             break;
         case RTM_NEWADDR:
-            syslog(LOG_DEBUG, "Got RTM_NEWADDR");
+            if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (struct ifaddrmsg))) {
+                struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
+                struct rtattr *rta = (struct rtattr *) ((char *) ifa
+                        + NLMSG_ALIGN(sizeof (struct ifaddrmsg)));
+                size_t rta_len = nlmsg->nlmsg_len
+                        - NLMSG_SPACE(sizeof (struct ifaddrmsg));
+                syslog(LOG_DEBUG, "Got RTM_NEWADDR for interface %u",
+                        (unsigned int) ifa->ifa_index);
+                while (RTA_OK(rta, rta_len)) {
+                    if (rta->rta_type == IFA_ADDRESS) {
+                        struct in6_addr *addr = RTA_DATA(rta);
+
+                        char addrstr[INET6_ADDRSTRLEN];
+                        inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
+                        syslog(LOG_DEBUG, "Address: %s", addrstr);
+                    }
+                    rta = RTA_NEXT(rta, rta_len);
+                }
+            }
             break;
         case RTM_DELADDR:
             syslog(LOG_DEBUG, "Got RTM_DELADDR");
@@ -219,11 +240,11 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             break;
         }
 
-        if (done) {
-            nlmsg = 0;
-        } else {
-            nlmsg = NLMSG_NEXT(nlmsg, size);
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
+            // There is no more messages.
+            break;
         }
+        nlmsg = NLMSG_NEXT(nlmsg, len);
     }
 }
 

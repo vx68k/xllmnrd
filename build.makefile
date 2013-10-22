@@ -15,6 +15,8 @@ CC = gcc -std=gnu99
 
 CFLAGS = -g -O2 -Wall -Wextra
 
+export CC
+
 all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) check
 	cd $(builddir) && $(MAKE) distcheck
@@ -22,7 +24,7 @@ all: $(builddir)/Makefile
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
-	cd $(builddir) && CFLAGS='$(CFLAGS)' CC='$(CC)' $$srcdir/configure
+	cd $(builddir) && CFLAGS='$(CFLAGS)' $$srcdir/configure
 
 configure: stamp-configure
 stamp-configure: configure.ac

@@ -241,7 +241,7 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *nlmsg, size_t len) {
         }
 
         if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
-            // There is no more messages.
+            // There are no more messages.
             break;
         }
         nlmsg = NLMSG_NEXT(nlmsg, len);

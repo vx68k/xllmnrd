@@ -12,16 +12,18 @@ builddir = build
 
 AUTORECONF = autoreconf
 
+CFLAGS = -g -O2 -Wall -Wextra
+
 all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE)
 
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)
-	srcdir=$$(pwd); cd $(builddir) && $$srcdir/configure
+	srcdir=$$(pwd); \
+	cd $(builddir) && CFLAGS='$(CFLAGS)' $$srcdir/configure
 
-configure: stamp-ac
-
-stamp-ac: configure.ac
+configure: stamp-configure
+stamp-configure: configure.ac
 	@rm -f $@
 	$(AUTORECONF) --install
 	touch $@

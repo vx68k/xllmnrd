@@ -15,7 +15,8 @@ AUTORECONF = autoreconf
 CFLAGS = -g -O2 -Wall -Wextra
 
 all: $(builddir)/Makefile
-	cd $(builddir) && $(MAKE)
+	cd $(builddir) && $(MAKE) check
+	cd $(builddir) && $(MAKE) distcheck
 
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)

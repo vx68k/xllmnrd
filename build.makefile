@@ -11,16 +11,20 @@
 builddir = build
 
 AUTORECONF = autoreconf
+CC = gcc -std=gnu99
 
 CFLAGS = -g -O2 -Wall -Wextra
 
+export CC
+
 all: $(builddir)/Makefile
-	cd $(builddir) && $(MAKE)
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
+	cd $(builddir) && $(MAKE) distcheck
 
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
-	cd $(builddir) && CFLAGS='$(CFLAGS)' $$srcdir/configure
+	cd $(builddir) && $$srcdir/configure
 
 configure: stamp-configure
 stamp-configure: configure.ac

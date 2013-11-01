@@ -86,6 +86,13 @@ static void *ifaddr_run(void *__data);
  */
 static void ifaddr_decode_nlmsg(struct nlmsghdr *__nlmsg, size_t __size);
 
+/**
+ * Handles a rtnetlink message of type 'struct ifaddrmsg'.
+ * @param __nlmsg pointer to the netlink message
+ */
+static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
+
+
 int ifaddr_initialize(void) {
     if (!ifaddr_initialized()) {
         int fd = open_rtnetlink();
@@ -211,28 +218,12 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *nlmsg, size_t len) {
             done = true;
             break;
         case RTM_NEWADDR:
-            if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (struct ifaddrmsg))) {
-                struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
-                struct rtattr *rta = (struct rtattr *) ((char *) ifa
-                        + NLMSG_ALIGN(sizeof (struct ifaddrmsg)));
-                size_t rta_len = nlmsg->nlmsg_len
-                        - NLMSG_SPACE(sizeof (struct ifaddrmsg));
-                syslog(LOG_DEBUG, "Got RTM_NEWADDR for interface %u",
-                        (unsigned int) ifa->ifa_index);
-                while (RTA_OK(rta, rta_len)) {
-                    if (rta->rta_type == IFA_ADDRESS) {
-                        struct in6_addr *addr = RTA_DATA(rta);
-
-                        char addrstr[INET6_ADDRSTRLEN];
-                        inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
-                        syslog(LOG_DEBUG, "Address: %s", addrstr);
-                    }
-                    rta = RTA_NEXT(rta, rta_len);
-                }
-            }
+            syslog(LOG_DEBUG, "Got RTM_NEWADDR");
+            ifaddr_handle_ifaddrmsg(nlmsg);
             break;
         case RTM_DELADDR:
             syslog(LOG_DEBUG, "Got RTM_DELADDR");
+            ifaddr_handle_ifaddrmsg(nlmsg);
             break;
         default:
             syslog(LOG_INFO, "Unknown netlink message type: %u",
@@ -245,6 +236,29 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *nlmsg, size_t len) {
             break;
         }
         nlmsg = NLMSG_NEXT(nlmsg, len);
+    }
+}
+
+void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
+    struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
+    // We use 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must
+    // be aligned.
+    if (nlmsg->nlmsg_len >= NLMSG_SPACE(sizeof *ifa)) {
+        struct rtattr *rta = (struct rtattr *)
+                ((char *) nlmsg + NLMSG_SPACE(sizeof *ifa));
+        size_t rta_len = nlmsg->nlmsg_len - NLMSG_SPACE(sizeof *ifa);
+        syslog(LOG_DEBUG, "  Interface %u",
+                (unsigned int) ifa->ifa_index);
+        while (RTA_OK(rta, rta_len)) {
+            if (rta->rta_type == IFA_ADDRESS) {
+                struct in6_addr *addr = RTA_DATA(rta);
+
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "  Address %s", addrstr);
+            }
+            rta = RTA_NEXT(rta, rta_len);
+        }
     }
 }
 

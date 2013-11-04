@@ -12,10 +12,11 @@ builddir = build
 
 AUTORECONF = autoreconf
 CC = gcc -std=gnu99
+CXX = g++ -std=gnu++11
 
 CFLAGS = -g -O2 -Wall -Wextra
 
-export CC
+export CC CXX
 
 all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check

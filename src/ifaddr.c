@@ -44,6 +44,12 @@ static int open_rtnetlink(void);
 static bool initialized;
 
 /**
+ * Signal number that will be used to interrupt the worker thread.
+ * If this value is zero, no signal will be used.
+ */
+static int interrupt_signo;
+
+/**
  * File descriptor for the rtnetlink socket.
  */
 static int rtnetlink_fd;
@@ -94,12 +100,13 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
 
-int ifaddr_initialize(void) {
+int ifaddr_initialize(int signo) {
     if (ifaddr_initialized()) {
         errno = EBUSY;
         return -1;
     }
     initialized = true;
+    interrupt_signo = signo;
 
     int fd = open_rtnetlink();
     if (fd >= 0) {
@@ -136,11 +143,15 @@ void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
         initialized = false;
 
+        terminated = true;
+        if (interrupt_signo != 0) {
+            pthread_kill(worker_thread, interrupt_signo);
+        }
+        pthread_join(worker_thread, NULL);
+
         pthread_cond_destroy(&refresh_cond);
         pthread_mutex_destroy(&refresh_mutex);
-
         close(rtnetlink_fd);
-        rtnetlink_fd = -1;
     }
 }
 
@@ -174,17 +185,27 @@ void *ifaddr_run(void *data) {
     terminated = 0;
     while (!terminated) {
         // Gets the required buffer size.
-        ssize_t recv_size = recv(rtnetlink_fd, 0, 0, MSG_PEEK | MSG_TRUNC);
-
-        unsigned char buf[recv_size];
-        ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
-
-        struct nlmsghdr *nlmsg = (void *) buf;
-        if (recv_len >= 0) {
-            ifaddr_decode_nlmsg(nlmsg, recv_len);
-        } else if (errno != EINTR) {
-            syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
-                    strerror(errno));
+        ssize_t recv_size = recv(rtnetlink_fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
+        if (recv_size < 0) {
+            if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                        strerror(errno));
+                return data;
+            }
+        } else {
+            unsigned char buf[recv_size];
+            ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
+            if (recv_len < 0) {
+                if (errno != EINTR) {
+                    syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                            strerror(errno));
+                    return data;
+                }
+            } else {
+                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+                assert(recv_len == recv_size);
+                ifaddr_decode_nlmsg(nlmsg, recv_len);
+            }
         }
     }
     return data;

@@ -27,7 +27,9 @@ extern "C" {
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
+#include <csignal>
 
+using namespace std;
 using CppUnit::TestFixture;
 
 class IfaddrTest : public TestFixture {
@@ -38,10 +40,17 @@ class IfaddrTest : public TestFixture {
 
 public:
     virtual void setUp() override {
+        struct sigaction sa = {};
+        sa.sa_handler = &handle_signal;
+        sigaction(SIGUSR2, &sa, NULL);
     }
 
     virtual void tearDown() override {
         ifaddr_finalize();
+
+        struct sigaction sa = {};
+        sa.sa_handler = SIG_DFL;
+        sigaction(SIGUSR2, &sa, NULL);
     }
 
     void testUninitialized() {
@@ -49,9 +58,13 @@ public:
     }
 
     void testNormal() {
-        CPPUNIT_ASSERT(ifaddr_initialize() >= 0);
+        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) >= 0);
         CPPUNIT_ASSERT(ifaddr_refresh() >= 0);
         ifaddr_finalize();
+    }
+
+protected:
+    static void handle_signal(int sig) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTest);

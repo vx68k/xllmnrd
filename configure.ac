@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([no-define])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC_STDC
+AC_PROG_CXX
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread])
@@ -29,5 +30,6 @@ AC_TYPE_UINT16_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([atexit socket strerror])
 
+AM_PATH_CPPUNIT([1.12.1])
 AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
 AC_OUTPUT

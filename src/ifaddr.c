@@ -24,8 +24,9 @@
 #include "ifaddr.h"
 
 #include <linux/rtnetlink.h>
-#include <pthread.h>
+#include <arpa/inet.h> /* inet_ntop */
 #include <sys/socket.h>
+#include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
@@ -38,13 +39,20 @@
 static int open_rtnetlink(void);
 
 /**
- * Keeps how many times this module has been initialized recursively.
- * The value SHALL be incremented up to INT_MAX by each call to
- * ifaddr_initialize() and decremented by each call to ifaddr_finalize().
+ * True if this module has been initialized.
  */
-static unsigned int initialize_count;
+static bool initialized;
 
-static int rtnetlink_fd = -1;
+/**
+ * Signal number that will be used to interrupt the worker thread.
+ * If this value is zero, no signal will be used.
+ */
+static int interrupt_signo;
+
+/**
+ * File descriptor for the rtnetlink socket.
+ */
+static int rtnetlink_fd;
 
 static volatile sig_atomic_t terminated;
 
@@ -72,7 +80,7 @@ static volatile bool refresh_not_in_progress;
  * Returns non-zero if this module has been initialized.
  */
 static inline int ifaddr_initialized(void) {
-    return initialize_count > 0;
+    return initialized;
 }
 
 static int ifaddr_start_worker(void);
@@ -83,59 +91,67 @@ static void *ifaddr_run(void *__data);
  * @param __nlmsg pointer to the first netlink message
  * @param __size total size of the netlink messages
  */
-static void ifaddr_decode_nlmsg(struct nlmsghdr *__nlmsg, size_t __size);
+static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
 
-int ifaddr_initialize(void) {
-    if (!ifaddr_initialized()) {
-        int fd = open_rtnetlink();
-        if (fd >= 0) {
-            rtnetlink_fd = fd;
+/**
+ * Handles a rtnetlink message of type 'struct ifaddrmsg'.
+ * @param __nlmsg pointer to the netlink message
+ */
+static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
-            int err = ifaddr_start_worker();
+
+int ifaddr_initialize(int signo) {
+    if (ifaddr_initialized()) {
+        errno = EBUSY;
+        return -1;
+    }
+    initialized = true;
+    interrupt_signo = signo;
+
+    int fd = open_rtnetlink();
+    if (fd >= 0) {
+        rtnetlink_fd = fd;
+
+        int err = ifaddr_start_worker();
+        if (err == 0) {
+            err = pthread_mutex_init(&refresh_mutex, 0);
             if (err == 0) {
-                err = pthread_mutex_init(&refresh_mutex, 0);
+                err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    err = pthread_cond_init(&refresh_cond, 0);
-                    if (err == 0) {
-                        refresh_not_in_progress = true;
+                    refresh_not_in_progress = true;
 
-                        // Must be initialized for ifaddr_refresh() to work.
-                        ++initialize_count;
-                        err = ifaddr_refresh();
-                        if (err == 0) {
-                            return 0;
-                        }
-                        --initialize_count;
+                    err = ifaddr_refresh();
+                    if (err == 0) {
+                        return 0;
                     }
-                    // Errors are not significant here.
-                    pthread_cond_destroy(&refresh_cond);
                 }
                 // Errors are not significant here.
-                pthread_mutex_destroy(&refresh_mutex);
+                pthread_cond_destroy(&refresh_cond);
             }
+            // Errors are not significant here.
+            pthread_mutex_destroy(&refresh_mutex);
+        }
 
-            close(rtnetlink_fd);
-            rtnetlink_fd = -1;
-            errno = err;
-        }
-    } else {
-        if (initialize_count < INT_MAX) {
-            return initialize_count++;
-        }
-        errno = EOVERFLOW;
+        close(rtnetlink_fd);
+        errno = err;
     }
+    initialized = false;
     return -1;
 }
 
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
-        if (--initialize_count == 0) {
-            pthread_cond_destroy(&refresh_cond);
-            pthread_mutex_destroy(&refresh_mutex);
+        initialized = false;
 
-            close(rtnetlink_fd);
-            rtnetlink_fd = -1;
+        terminated = true;
+        if (interrupt_signo != 0) {
+            pthread_kill(worker_thread, interrupt_signo);
         }
+        pthread_join(worker_thread, NULL);
+
+        pthread_cond_destroy(&refresh_cond);
+        pthread_mutex_destroy(&refresh_mutex);
+        close(rtnetlink_fd);
     }
 }
 
@@ -168,23 +184,36 @@ void *ifaddr_run(void *data) {
     assert(ifaddr_initialized());
     terminated = 0;
     while (!terminated) {
-        unsigned char buf[128];
-        ssize_t recv_size = recv(rtnetlink_fd, buf, sizeof buf, 0);
-        struct nlmsghdr *nlmsg = (void *) buf;
-        if (recv_size >= 0) {
-            ifaddr_decode_nlmsg(nlmsg, recv_size);
-        } else if (errno != EINTR) {
-            syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
-                    strerror(errno));
+        // Gets the required buffer size.
+        ssize_t recv_size = recv(rtnetlink_fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
+        if (recv_size < 0) {
+            if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                        strerror(errno));
+                return data;
+            }
+        } else {
+            unsigned char buf[recv_size];
+            ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
+            if (recv_len < 0) {
+                if (errno != EINTR) {
+                    syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                            strerror(errno));
+                    return data;
+                }
+            } else {
+                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+                assert(recv_len == recv_size);
+                ifaddr_decode_nlmsg(nlmsg, recv_len);
+            }
         }
     }
     return data;
 }
 
-void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
-    while (nlmsg && size >= sizeof *nlmsg && size >= nlmsg->nlmsg_len) {
-        // Check if it is not a multiple message.
-        bool done = (nlmsg->nlmsg_flags & NLM_F_MULTI) == 0;
+void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
+    while (NLMSG_OK(nlmsg, len)) {
+        bool done = false;
 
         switch (nlmsg->nlmsg_type) {
         case NLMSG_NOOP:
@@ -204,14 +233,15 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             refresh_not_in_progress = true;
             pthread_cond_broadcast(&refresh_cond);
             pthread_mutex_unlock(&refresh_mutex);
-
             done = true;
             break;
         case RTM_NEWADDR:
             syslog(LOG_DEBUG, "Got RTM_NEWADDR");
+            ifaddr_handle_ifaddrmsg(nlmsg);
             break;
         case RTM_DELADDR:
             syslog(LOG_DEBUG, "Got RTM_DELADDR");
+            ifaddr_handle_ifaddrmsg(nlmsg);
             break;
         default:
             syslog(LOG_INFO, "Unknown netlink message type: %u",
@@ -219,10 +249,33 @@ void ifaddr_decode_nlmsg(struct nlmsghdr *restrict nlmsg, size_t size) {
             break;
         }
 
-        if (done) {
-            nlmsg = 0;
-        } else {
-            nlmsg = NLMSG_NEXT(nlmsg, size);
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
+            // There are no more messages.
+            break;
+        }
+        nlmsg = NLMSG_NEXT(nlmsg, len);
+    }
+}
+
+void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
+    struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
+    // We use 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must
+    // be aligned.
+    if (nlmsg->nlmsg_len >= NLMSG_SPACE(sizeof *ifa)) {
+        struct rtattr *rta = (struct rtattr *)
+                ((char *) nlmsg + NLMSG_SPACE(sizeof *ifa));
+        size_t rta_len = nlmsg->nlmsg_len - NLMSG_SPACE(sizeof *ifa);
+        syslog(LOG_DEBUG, "  Interface %u",
+                (unsigned int) ifa->ifa_index);
+        while (RTA_OK(rta, rta_len)) {
+            if (rta->rta_type == IFA_ADDRESS) {
+                struct in6_addr *addr = RTA_DATA(rta);
+
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "  Address %s", addrstr);
+            }
+            rta = RTA_NEXT(rta, rta_len);
         }
     }
 }

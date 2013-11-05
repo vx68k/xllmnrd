@@ -21,7 +21,13 @@
 
 #include <netinet/in.h>
 
-extern int ifaddr_initialize(void);
+/**
+ * Initializes this module.
+ * @param __signo Signal number that will be used to interrupt the worker
+ * thread; if its value is 0, no signal will be used.
+ * @return 0 on success, -1 on failure.
+ */
+extern int ifaddr_initialize(int __signo);
 
 extern void ifaddr_finalize(void);
 

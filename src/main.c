@@ -73,7 +73,7 @@ int main(int argc, char *argv[argc + 1]) {
     if (parse_options(argc, argv, &options) >= 0) {
         openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
 
-        if (ifaddr_initialize() < 0) {
+        if (ifaddr_initialize(0) < 0) {
             syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
                     strerror(errno));
             exit(EXIT_FAILURE);

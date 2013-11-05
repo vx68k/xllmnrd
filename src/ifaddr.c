@@ -17,13 +17,15 @@
  */
 
 #if HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 #define _GNU_SOURCE 1
 
 #include "ifaddr.h"
 
+#if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
+#endif
 #include <arpa/inet.h> /* inet_ntop */
 #include <sys/socket.h>
 #include <pthread.h>

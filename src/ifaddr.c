@@ -39,13 +39,14 @@
 static int open_rtnetlink(void);
 
 /**
- * Keeps how many times this module has been initialized recursively.
- * The value SHALL be incremented up to INT_MAX by each call to
- * ifaddr_initialize() and decremented by each call to ifaddr_finalize().
+ * True if this module has been initialized.
  */
-static unsigned int initialize_count;
+static bool initialized;
 
-static int rtnetlink_fd = -1;
+/**
+ * File descriptor for the rtnetlink socket.
+ */
+static int rtnetlink_fd;
 
 static volatile sig_atomic_t terminated;
 
@@ -73,7 +74,7 @@ static volatile bool refresh_not_in_progress;
  * Returns non-zero if this module has been initialized.
  */
 static inline int ifaddr_initialized(void) {
-    return initialize_count > 0;
+    return initialized;
 }
 
 static int ifaddr_start_worker(void);
@@ -94,56 +95,52 @@ static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
 
 int ifaddr_initialize(void) {
-    if (!ifaddr_initialized()) {
-        int fd = open_rtnetlink();
-        if (fd >= 0) {
-            rtnetlink_fd = fd;
+    if (ifaddr_initialized()) {
+        errno = EBUSY;
+        return -1;
+    }
+    initialized = true;
 
-            int err = ifaddr_start_worker();
+    int fd = open_rtnetlink();
+    if (fd >= 0) {
+        rtnetlink_fd = fd;
+
+        int err = ifaddr_start_worker();
+        if (err == 0) {
+            err = pthread_mutex_init(&refresh_mutex, 0);
             if (err == 0) {
-                err = pthread_mutex_init(&refresh_mutex, 0);
+                err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    err = pthread_cond_init(&refresh_cond, 0);
-                    if (err == 0) {
-                        refresh_not_in_progress = true;
+                    refresh_not_in_progress = true;
 
-                        // Must be initialized for ifaddr_refresh() to work.
-                        ++initialize_count;
-                        err = ifaddr_refresh();
-                        if (err == 0) {
-                            return 0;
-                        }
-                        --initialize_count;
+                    err = ifaddr_refresh();
+                    if (err == 0) {
+                        return 0;
                     }
-                    // Errors are not significant here.
-                    pthread_cond_destroy(&refresh_cond);
                 }
                 // Errors are not significant here.
-                pthread_mutex_destroy(&refresh_mutex);
+                pthread_cond_destroy(&refresh_cond);
             }
+            // Errors are not significant here.
+            pthread_mutex_destroy(&refresh_mutex);
+        }
 
-            close(rtnetlink_fd);
-            rtnetlink_fd = -1;
-            errno = err;
-        }
-    } else {
-        if (initialize_count < INT_MAX) {
-            return initialize_count++;
-        }
-        errno = EOVERFLOW;
+        close(rtnetlink_fd);
+        errno = err;
     }
+    initialized = false;
     return -1;
 }
 
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
-        if (--initialize_count == 0) {
-            pthread_cond_destroy(&refresh_cond);
-            pthread_mutex_destroy(&refresh_mutex);
+        initialized = false;
 
-            close(rtnetlink_fd);
-            rtnetlink_fd = -1;
-        }
+        pthread_cond_destroy(&refresh_cond);
+        pthread_mutex_destroy(&refresh_mutex);
+
+        close(rtnetlink_fd);
+        rtnetlink_fd = -1;
     }
 }
 

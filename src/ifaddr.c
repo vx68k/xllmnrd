@@ -32,7 +32,6 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <assert.h>
 

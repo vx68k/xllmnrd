@@ -85,7 +85,7 @@ static void *ifaddr_run(void *__data);
  * @param __nlmsg pointer to the first netlink message
  * @param __size total size of the netlink messages
  */
-static void ifaddr_decode_nlmsg(struct nlmsghdr *__nlmsg, size_t __size);
+static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
 
 /**
  * Handles a rtnetlink message of type 'struct ifaddrmsg'.
@@ -190,7 +190,7 @@ void *ifaddr_run(void *data) {
     return data;
 }
 
-void ifaddr_decode_nlmsg(struct nlmsghdr *nlmsg, size_t len) {
+void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
     while (NLMSG_OK(nlmsg, len)) {
         bool done = false;
 

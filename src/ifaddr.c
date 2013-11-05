@@ -35,7 +35,26 @@
 #include <stdbool.h>
 #include <assert.h>
 
-static int open_rtnetlink(void);
+/**
+ * Opens a RTNETLINK socket and binds to necessary groups.
+ */
+static inline int open_rtnetlink(void) {
+    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (fd >= 0) {
+        const struct sockaddr_nl addr = {
+            .nl_family = AF_NETLINK,
+            .nl_groups = RTMGRP_IPV6_IFADDR,
+        };
+        if (bind(fd, (const void *) &addr, sizeof addr) == 0) {
+            return fd;
+        }
+
+        int saved_errno = errno;
+        close(fd);
+        errno = saved_errno;
+    }
+    return -1;
+}
 
 /**
  * True if this module has been initialized.
@@ -314,26 +333,5 @@ int ifaddr_refresh(void) {
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
-    return -1;
-}
-
-/*
- * Opens a socket for RTNETLINK.
- */
-int open_rtnetlink(void) {
-    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    if (fd >= 0) {
-        const struct sockaddr_nl addr = {
-            .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV6_IFADDR,
-        };
-        if (bind(fd, (const void *) &addr, sizeof addr) == 0) {
-            return fd;
-        }
-
-        int saved_errno = errno;
-        close(fd);
-        errno = saved_errno;
-    }
     return -1;
 }

@@ -1,8 +1,398 @@
+2013-11-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
+	Added code to make the worker thread terminated properly to fix
+	issue #12.
+	[5a9dce72160c] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Added a const qualifier to the first argument of
+	'ifaddr_decode_nlmsg'.
+	[78687b032cb3] <feature/ifaddr>
+
+	* test/Makefile.am, test/testifaddr.cpp:
+	Added a test fixture for ifaddr (see issue #11).
+	[0596fce2c828] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Changed ifaddr back to single-initialization.
+	[9c21afe7386a] <feature/ifaddr>
+
+2013-11-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/testmain.cpp:
+	Removed extra blank lines.
+	[603ba2e04280]
+
+2013-11-04  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* build.makefile:
+	Added the CXX definition for the test driver.
+	[849b2bc82ea4]
+
+2013-11-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/Makefile.am, test/testmain.cpp:
+	Added a unit test driver.
+	[feb10d25656b] <feature/unittest>
+
+2013-10-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added configure checks for CppUnit.
+	[6306a401bb56] <feature/unittest>
+
+2013-11-01  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Moved the ifaddrmsg handling code into new function
+	ifaddr_handle_ifadddrmsg().
+	[0218e801bfd7] <feature/ifaddr>
+
+2013-10-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* build.makefile:
+	Changed to pass CFLAGS to make check only.
+	[b2a4d468f342]
+
+	* build.makefile:
+	Changed to pass CC as an environment variable.
+	[37d0620bee36]
+
+	* build.makefile:
+	Set CC explicitly.
+	[db7b24508292]
+
+	* configure.ac:
+	Changed the URL.
+	[836674ab33c2]
+
+	* build.makefile:
+	Changed the default rule.
+	[b7c7c3435f88]
+
+	* src/ifaddr.c:
+	Modified comment text.
+	[1f9e70a6d20d] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Added RTM_NEWADDR handling.
+	[11a86b102ac5] <feature/ifaddr>
+
+2013-10-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* build.makefile:
+	Set custom CFLAGS.
+	[804fb6398201]
+
+	* build.makefile:
+	Renamed the stamp file.
+	[92e2de2414aa]
+
+2013-10-20  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* build.makefile:
+	Added a missing mkdir command in build.makefile.
+	[ada64e04dbe7]
+
+	* build.makefile:
+	Added build.makefile for maintenance jobs.
+	[1c276db4d324]
+
+2013-10-13  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Makefile.am:
+	Removed an argument from the rm command.
+	[a731be9ec832]
+
+	* Makefile.am:
+	Modified the dist-hook target.
+	[c2868457d063]
+
+2013-09-25  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* README:
+	Added a heading line in README.
+	[660d852355c6]
+
+2013-09-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/Makefile.am:
+	Added test/Makefile.am to fix issue #10.
+	[b4c5f8eeb984]
+
+	* Makefile.am, configure.ac:
+	Added the test subdirectory.
+	[418dcccc094e]
+
+2013-09-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Added xllmnrd.8 to CLEANFILES.
+	[5e48155ce2d1]
+
+	* src/Makefile.am:
+	Fixed a macro name.
+	[b5307acf32f2]
+
+	* src/Makefile.am:
+	Added dependency so that the target will be rebuilt when Makefile
+	changes.
+	[0d29b27fc0e2]
+
+2013-09-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Added a manual page target into src/Makefile.am.
+	[3bf50c9fa119]
+
+	* src/xllmnrd.8.in, xllmnrd.8.in:
+	Moved the manual page template into src and added license comments.
+	[e1c1ec5e680a]
+
+	* Makefile.am, configure.ac:
+	Removed the manual page from AC_CONFIG_FILES.
+	[e6f2233f65b3]
+
+2013-09-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Renamed ifaddr_open_rtnetlink() to open_rtnetlink().
+	[dbce808cf893]
+
+	* src/ifaddr.c:
+	Added an assertion in ifaddr_run().
+	[965fb869a61b]
+
+2013-09-20  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Removed an initialization check in ifaddr_run().
+	[8f28777d4eb1]
+
+2013-09-16  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Removed Automake version dependency from configure.ac.
+	[701f8123a55e]
+
+	* README:
+	Modified the content of the 'README' file.
+	[ab6e71f8eca7]
+
+2013-09-10  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* AUTHORS, src/ifaddr.c, src/ifaddr.h, src/llmnr_header.h,
+	src/llmnr_responder.c, src/llmnr_responder.h, src/main.c:
+	Updated the author name.
+	[b1f98fc1a701]
+
+2013-09-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Used EX_USAGE for command errors.
+	[87d21b3ac02f]
+
+	* src/main.c:
+	Added a conditional include for <sysexits.h>.
+	[f80ea1a6d119]
+
+	* configure.ac:
+	Added a configure test for <sysexits.h>.
+	[f697fb76a119]
+
+2013-09-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/Makefile.am, src/llmnr.h, src/llmnr_responder.c,
+	src/llmnr_responder.h, src/main.c:
+	Renamed llmnr.h to llmnr_responder.h to close issue #9.
+	[8dad9c2136ab]
+
+2013-07-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Updated the HEADERS and FUNCS lists.
+	[2191f6bc54da]
+
+2013-06-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/llmnr_responder.c:
+	Changed the code spacing slightly.
+	[2559d5cc17e3] <ifaddr>
+
+2013-06-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added a wait for refresh completion.
+	[384319ad8b28] <ifaddr>
+
+	* src/ifaddr.c:
+	Removed the use of PRIu16.
+	[0fb85cb114ca] <ifaddr>
+
+	* src/ifaddr.c:
+	Fixed the return value of ifaddr_initialize.
+	[8d0d1aa850c5] <ifaddr>
+
+2013-06-01  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Added new function ifaddr_refresh(). Modified the netlink message
+	decoder in ifaddr_run().
+	[de92542d5010] <ifaddr>
+
+2013-05-22  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added a worker thread in ifaddr.
+	[58e03751c113] <ifaddr>
+
+2013-05-19  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h, src/llmnr.h, src/llmnr_header.h,
+	src/llmnr_responder.c, src/main.c:
+	Modified file header comments.
+	[0d186b25d157]
+
+2013-05-18  Kaz Sasa  <kazssym@vx68k.org>
+
+	* xllmnrd.8.in:
+	Added a missing backslash in the NAME section.
+	[11ea089f23f2]
+
+2013-05-16  Kaz Sasa  <kazssym@vx68k.org>
+
+	* .hgignore:
+	Added final output files to .hgignore
+	[5f0dc3bf173d]
+
+2013-05-11  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Added a call to ifaddr_finalize() before clean termination by
+	signals.
+	[c07a6952d68a] <ifaddr>
+
+	* README:
+	Modified the README text.
+	[e6bfd30a9e51]
+
+2013-05-08  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Changed the ifaddr initialization to be recursive.
+	[5fcea9e3ab8b] <ifaddr>
+
+2013-05-03  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr_responder.c:
+	Backed out changeset: cd3934141824
+	[6f93f3d6dc3b] <ifaddr>
+
+	* src/llmnr_responder.c:
+	Changed the initialization of ifaddr to be recursive.
+	[cd3934141824] <ifaddr>
+
+	* src/llmnr_responder.c, src/main.c:
+	Moved the initialization of ifaddr to the main unit.
+	[483bc64ee6ca] <ifaddr>
+
+2013-04-04  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Makefile.am:
+	Added a hook to sign the SHA1SUM file for distribution.
+	[f1c430f86cdf]
+
+2013-03-23  Kaz Sasa  <kazssym@vx68k.org>
+
+	* README:
+	Modified the README file.
+	[3c036899e5cd]
+
+	* src/main.c:
+	Modified the signal handling code to fix issue #4.
+	[e704a599f93c] <unfinished>
+
+	* configure.ac:
+	Added options to AM_INIT_AUTOMAKE.
+	[2b7d8caf44ca]
+
+	* Makefile.am:
+	Removed the definition of AUTOMAKE_OPTIONS.
+	[4f05d867c972]
+
+	* NEWS:
+	Created a NEWS file.
+	[560487c6d569]
+
+2013-03-10  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr_responder.c:
+	Added initialization/finalization for the ifaddr unit.
+	[208f26b6668a] <unfinished>
+
+2013-03-22  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added code for the ifaddr unit (see issue #1).
+	[587ad14b27cb] <unfinished>
+
+2013-03-14  Kaz Sasa  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added a check for a POSIX thread library.
+	[18eb684398ad]
+
+2013-03-15  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Moved signal cleanup code (see issue #4).
+	[2a0d03d6b019]
+
+	* src/main.c:
+	Removed the SIGQUIT handler (see issue #4). Changed to call
+	llmnr_responder_finalize() explicitly.
+	[b4233b4db491]
+
+2013-03-14  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Added signal handlers (see issue #4).
+	[66ffb06641b7]
+
+2013-03-13  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/Makefile.am, src/llmnr.c, src/llmnr_responder.c:
+	Renamed llmnr.c to llmnr_responder.c.
+	[39d0108cbfd0]
+
+	* AUTHORS:
+	Created the AUTHORS file.
+	[470eb2449bc0]
+
+2013-03-12  Kaz Sasa  <kazssym@vx68k.org>
+
+	* src/llmnr.c, src/llmnr.h:
+	Added code to terminate the responder loop.
+	[ad791a9b9157]
+
+	* src/main.c:
+	Removed static keywords from array parameters.
+	[ef739d0b39fd]
+
+	* src/llmnr.c:
+	Corrected the return type of llmnr_receive_udp6().
+	[fa35dccfe2e7]
+
+	* ChangeLog:
+	Updated the ChangeLog file.
+	[689741415173]
+
 2013-03-11  Kaz Sasa  <kazssym@vx68k.org>
 
 	* configure.ac:
 	Added a check for atexit().
-	[5796ea9357f6] [tip]
+	[5796ea9357f6]
 
 	* src/ifaddr.c:
 	Recommits ifaddr.c with the new EOL conversion.
@@ -13,9 +403,6 @@
 	[dc21195b9e0f]
 
 2013-03-09  Kaz Sasa  <kazssym@vx68k.org>
-
-	* Merged another head.
-	[7fa5d2d8a0fa]
 
 	* src/llmnr.c, src/llmnr.h:
 	Modified llmnr_open_udp_socket().

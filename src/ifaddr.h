@@ -23,13 +23,22 @@
 
 /**
  * Initializes this module.
- * @param __signo Signal number that will be used to interrupt the worker
+ * @param __signo signal number that will be used to interrupt the worker
  * thread; if its value is 0, no signal will be used.
- * @return 0 on success, -1 on failure.
+ * @return 0 on success, or non-zero error number on failure.
  */
 extern int ifaddr_initialize(int __signo);
 
 extern void ifaddr_finalize(void);
+
+/**
+ * Starts the internal worker thread.
+ * This function will be called implicitly if any other function that requires
+ * the worker thread is called.
+ * This function will do nothing and return 0 if already started.
+ * @return 0 on success, or non-zero error number on failure.
+ */
+extern int ifaddr_start(void);
 
 /**
  * Refreshes the interface address table.

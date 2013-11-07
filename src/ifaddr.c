@@ -75,11 +75,6 @@ static int rtnetlink_fd;
 static volatile sig_atomic_t terminated;
 
 /**
- * Identifier for the worker thread.
- */
-static pthread_t worker_thread;
-
-/**
  * Mutex for refresh_not_in_progress.
  */
 static pthread_mutex_t refresh_mutex;
@@ -95,13 +90,42 @@ static pthread_cond_t refresh_cond;
 static volatile bool refresh_not_in_progress;
 
 /**
+ * True if the worker thread is started.
+ */
+static bool started;
+
+/**
+ * Identifier for the worker thread.
+ */
+static pthread_t worker_thread;
+
+/**
  * Returns non-zero if this module has been initialized.
  */
 static inline int ifaddr_initialized(void) {
     return initialized;
 }
 
-static int ifaddr_start_worker(void);
+/**
+ * Returns true if the worker thread is started.
+ * The return value is valid only if this module is initialized.
+ * @return non-zero if the worker thread is started, or zero if not.
+ */
+static inline int ifaddr_started(void) {
+    return started;
+}
+
+/**
+ * Ensures the worker thread is started.
+ * @return 0 on success, or non-zero error number on failure.
+ */
+static inline int ifaddr_ensure_started(void) {
+    if (!ifaddr_started()) {
+        return ifaddr_start();
+    }
+    return 0;
+}
+
 static void *ifaddr_run(void *__data);
 
 /**
@@ -120,52 +144,45 @@ static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
 int ifaddr_initialize(int signo) {
     if (ifaddr_initialized()) {
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
-    initialized = true;
     interrupt_signo = signo;
 
     int fd = open_rtnetlink();
+    int err = errno;
     if (fd >= 0) {
         rtnetlink_fd = fd;
 
-        int err = ifaddr_start_worker();
+        err = pthread_mutex_init(&refresh_mutex, 0);
         if (err == 0) {
-            err = pthread_mutex_init(&refresh_mutex, 0);
+            err = pthread_cond_init(&refresh_cond, 0);
             if (err == 0) {
-                err = pthread_cond_init(&refresh_cond, 0);
-                if (err == 0) {
-                    refresh_not_in_progress = true;
+                refresh_not_in_progress = true;
+                started = false;
 
-                    err = ifaddr_refresh();
-                    if (err == 0) {
-                        return 0;
-                    }
-                }
-                // Errors are not significant here.
-                pthread_cond_destroy(&refresh_cond);
+                initialized = true;
+                return 0;
             }
-            // Errors are not significant here.
-            pthread_mutex_destroy(&refresh_mutex);
+            pthread_cond_destroy(&refresh_cond); // Any error is ignored.
         }
+        pthread_mutex_destroy(&refresh_mutex); // Any error is ignored.
 
         close(rtnetlink_fd);
-        errno = err;
     }
-    initialized = false;
-    return -1;
+    return err;
 }
 
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
         initialized = false;
 
-        terminated = true;
-        if (interrupt_signo != 0) {
-            pthread_kill(worker_thread, interrupt_signo);
+        if (ifaddr_started()) {
+            terminated = true;
+            if (interrupt_signo != 0) {
+                pthread_kill(worker_thread, interrupt_signo);
+            }
+            pthread_join(worker_thread, NULL);
         }
-        pthread_join(worker_thread, NULL);
 
         pthread_cond_destroy(&refresh_cond);
         pthread_mutex_destroy(&refresh_mutex);
@@ -173,22 +190,30 @@ void ifaddr_finalize(void) {
     }
 }
 
-/**
- * Starts the worker thread.
- * @return 0 on success, non-zero error number on failure
- */
-int ifaddr_start_worker(void) {
-    // The worker thread should not catch signals except SIGUSR2.
-    sigset_t set, oset;
-    sigfillset(&set);
-    sigdelset(&set, SIGUSR2);
+int ifaddr_start(void) {
+    if (!ifaddr_initialized()) {
+        return ESRCH;
+    }
 
-    int err = pthread_sigmask(SIG_SETMASK, &set, &oset);
-    if (err == 0) {
-        err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
-        // Restore the signal mask before proceeding.
-        // Errors are not significant here.
-        pthread_sigmask(SIG_SETMASK, &oset, 0);
+    int err = 0;
+    if (!ifaddr_started()) {
+        sigset_t set, oset;
+        sigfillset(&set);
+        if (interrupt_signo != 0) {
+            sigdelset(&set, interrupt_signo);
+        }
+
+        err = pthread_sigmask(SIG_SETMASK, &set, &oset);
+        if (err == 0) {
+            err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
+            // Restores the signal mask before proceeding.
+            pthread_sigmask(SIG_SETMASK, &oset, 0); // Any error is ignored.
+
+            if (err == 0) {
+                started = true;
+                return 0;
+            }
+        }
     }
     return err;
 }
@@ -301,6 +326,12 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
 int ifaddr_refresh(void) {
     int result = -1;
     if (ifaddr_initialized()) {
+        int err = ifaddr_ensure_started();
+        if (err != 0) {
+            errno = err;
+            return -1;
+        }
+
         pthread_mutex_lock(&refresh_mutex);
 
         unsigned char buf[128];

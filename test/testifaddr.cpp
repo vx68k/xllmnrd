@@ -54,11 +54,14 @@ public:
     }
 
     void testUninitialized() {
+        CPPUNIT_ASSERT(ifaddr_start() != 0);
         CPPUNIT_ASSERT(ifaddr_refresh() < 0);
     }
 
     void testNormal() {
-        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) >= 0);
+        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) == 0);
+        CPPUNIT_ASSERT(ifaddr_start() == 0);
+        CPPUNIT_ASSERT(ifaddr_start() == 0); // Multiple calls are OK.
         CPPUNIT_ASSERT(ifaddr_refresh() >= 0);
         ifaddr_finalize();
     }

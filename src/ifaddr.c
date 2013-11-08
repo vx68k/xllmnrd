@@ -131,6 +131,40 @@ static inline int ifaddr_started(void) {
     return started;
 }
 
+/**
+ * Waits for the running refresh operation to complete.
+ */
+static inline void ifaddr_wait_for_refresh_completion(void) {
+    assert(ifaddr_initialized());
+    assert(ifaddr_started());
+
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock 'refresh_mutex'");
+
+    while (!refresh_not_in_progress) {
+        abort_if_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
+                "ifaddr: Could not wait for 'refresh_cond'");
+    }
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock 'refresh_mutex'");
+}
+
+static inline void ifaddr_complete_refresh(void) {
+    assert(ifaddr_initialized());
+    assert(ifaddr_started());
+
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock 'refresh_mutex'");
+
+    refresh_not_in_progress = true;
+    abort_if_error(pthread_cond_broadcast(&refresh_cond),
+            "ifaddr: Could not broadcast 'refresh_cond'");
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock 'refresh_mutex'");
+}
+
 static void *ifaddr_run(void *__data);
 
 /**
@@ -230,7 +264,6 @@ int ifaddr_start(void) {
  * @return the value of data
  */
 void *ifaddr_run(void *data) {
-    assert(ifaddr_initialized());
     while (!terminated) {
         // Gets the required buffer size.
         ssize_t recv_size = recv(rtnetlink_fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
@@ -277,10 +310,7 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
             break;
         }
         case NLMSG_DONE:
-            pthread_mutex_lock(&refresh_mutex);
-            refresh_not_in_progress = true;
-            pthread_cond_broadcast(&refresh_cond);
-            pthread_mutex_unlock(&refresh_mutex);
+            ifaddr_complete_refresh();
             done = true;
             break;
         case RTM_NEWADDR:
@@ -334,7 +364,7 @@ int ifaddr_refresh(void) {
     }
 
     abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock a mutex");
+            "ifaddr: Could not lock 'refresh_mutex'");
 
     int err = 0;
     if (refresh_not_in_progress) {
@@ -361,17 +391,23 @@ int ifaddr_refresh(void) {
 
     if (err == 0) {
         refresh_not_in_progress = false;
-        do {
-            pthread_cond_wait(&refresh_cond, &refresh_mutex);
-        } while (!refresh_not_in_progress);
     }
 
     abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock a mutex");
+            "ifaddr: Could not unlock 'refresh_mutex'");
 
     return err;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
+    if (!ifaddr_initialized()) {
+        return ESRCH;
+    }
+
+    if (!ifaddr_started()) {
+        ifaddr_start();
+    }
+    ifaddr_wait_for_refresh_completion();
+
     return -1;
 }

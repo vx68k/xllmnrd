@@ -200,6 +200,8 @@ int ifaddr_start(void) {
 
     int err = 0;
     if (!ifaddr_started()) {
+        terminated = false;
+
         sigset_t set, oset;
         sigfillset(&set);
         if (interrupt_signo != 0) {
@@ -229,7 +231,6 @@ int ifaddr_start(void) {
  */
 void *ifaddr_run(void *data) {
     assert(ifaddr_initialized());
-    terminated = 0;
     while (!terminated) {
         // Gets the required buffer size.
         ssize_t recv_size = recv(rtnetlink_fd, NULL, 0, MSG_PEEK | MSG_TRUNC);

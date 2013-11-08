@@ -181,11 +181,11 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
 
-int ifaddr_initialize(int signo) {
+int ifaddr_initialize(int sig) {
     if (ifaddr_initialized()) {
         return EBUSY;
     }
-    interrupt_signo = signo;
+    interrupt_signo = sig;
 
     int fd = open_rtnetlink();
     int err = errno;

@@ -23,11 +23,11 @@
 
 /**
  * Initializes this module.
- * @param __signo signal number that will be used to interrupt the worker
+ * @param __sig signal number that will be used to interrupt the worker
  * thread; if its value is 0, no signal will be used.
  * @return 0 on success, or non-zero error number on failure.
  */
-extern int ifaddr_initialize(int __signo);
+extern int ifaddr_initialize(int __sig);
 
 extern void ifaddr_finalize(void);
 

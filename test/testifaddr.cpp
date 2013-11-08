@@ -27,6 +27,7 @@ extern "C" {
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
+#include <netinet/in.h>
 #include <csignal>
 
 using namespace std;
@@ -54,12 +55,19 @@ public:
     }
 
     void testUninitialized() {
-        CPPUNIT_ASSERT(ifaddr_refresh() < 0);
+        CPPUNIT_ASSERT(ifaddr_start() != 0);
+        CPPUNIT_ASSERT(ifaddr_refresh() != 0);
     }
 
     void testNormal() {
-        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) >= 0);
-        CPPUNIT_ASSERT(ifaddr_refresh() >= 0);
+        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) == 0);
+        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) != 0);
+        CPPUNIT_ASSERT(ifaddr_start() == 0);
+        CPPUNIT_ASSERT(ifaddr_start() == 0); // Multiple calls are OK.
+        CPPUNIT_ASSERT(ifaddr_refresh() == 0);
+        
+        struct in6_addr address;
+        ifaddr_lookup(0, &address);
         ifaddr_finalize();
     }
 

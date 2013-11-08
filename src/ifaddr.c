@@ -33,12 +33,43 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <stdlib.h> /* abort */
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <assert.h>
 
-static int open_rtnetlink(void);
+/**
+ * Terminates the program abnormally if a error is detected.
+ * @param e value to be checked for an error.
+ * @param message error message.
+ */
+static inline void abort_if_error(int e, const char *restrict message) {
+    if (e != 0) {
+        syslog(LOG_CRIT, "%s: %s", message, strerror(e));
+        abort();
+    }
+}
+
+/**
+ * Opens a RTNETLINK socket and binds to necessary groups.
+ */
+static inline int open_rtnetlink(int *restrict fd_out) {
+    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int err = errno;
+    if (fd >= 0) {
+        struct sockaddr_nl addr = {
+            .nl_family = AF_NETLINK,
+            .nl_groups = RTMGRP_IPV6_IFADDR,
+        };
+        if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
+            *fd_out = fd;
+            return 0;
+        }
+        err = errno;
+        close(fd);
+    }
+    return err;
+}
 
 /**
  * True if this module has been initialized.
@@ -59,11 +90,6 @@ static int rtnetlink_fd;
 static volatile sig_atomic_t terminated;
 
 /**
- * Identifier for the worker thread.
- */
-static pthread_t worker_thread;
-
-/**
  * Mutex for refresh_not_in_progress.
  */
 static pthread_mutex_t refresh_mutex;
@@ -74,9 +100,20 @@ static pthread_mutex_t refresh_mutex;
 static pthread_cond_t refresh_cond;
 
 /**
- * Indicates if a refresh operation is not in progress.
+ * True if a refresh operation is not in progress.
+ * This flag is volatile as it is used from multiple threads.
  */
 static volatile bool refresh_not_in_progress;
+
+/**
+ * True if the worker thread is started.
+ */
+static bool started;
+
+/**
+ * Identifier for the worker thread.
+ */
+static pthread_t worker_thread;
 
 /**
  * Returns non-zero if this module has been initialized.
@@ -85,7 +122,49 @@ static inline int ifaddr_initialized(void) {
     return initialized;
 }
 
-static int ifaddr_start_worker(void);
+/**
+ * Returns true if the worker thread is started.
+ * The return value is valid only if this module is initialized.
+ * @return non-zero if the worker thread is started, or zero if not.
+ */
+static inline int ifaddr_started(void) {
+    return started;
+}
+
+/**
+ * Waits for the running refresh operation to complete.
+ */
+static inline void ifaddr_wait_for_refresh_completion(void) {
+    assert(ifaddr_initialized());
+    assert(ifaddr_started());
+
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock 'refresh_mutex'");
+
+    while (!refresh_not_in_progress) {
+        abort_if_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
+                "ifaddr: Could not wait for 'refresh_cond'");
+    }
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock 'refresh_mutex'");
+}
+
+static inline void ifaddr_complete_refresh(void) {
+    assert(ifaddr_initialized());
+    assert(ifaddr_started());
+
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock 'refresh_mutex'");
+
+    refresh_not_in_progress = true;
+    abort_if_error(pthread_cond_broadcast(&refresh_cond),
+            "ifaddr: Could not broadcast 'refresh_cond'");
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock 'refresh_mutex'");
+}
+
 static void *ifaddr_run(void *__data);
 
 /**
@@ -102,54 +181,42 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
 
 
-int ifaddr_initialize(int signo) {
+int ifaddr_initialize(int sig) {
     if (ifaddr_initialized()) {
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
-    initialized = true;
-    interrupt_signo = signo;
+    interrupt_signo = sig;
 
-    int fd = open_rtnetlink();
-    if (fd >= 0) {
-        rtnetlink_fd = fd;
-
-        int err = ifaddr_start_worker();
+    int err = open_rtnetlink(&rtnetlink_fd);
+    if (err == 0) {
+        err = pthread_mutex_init(&refresh_mutex, 0);
         if (err == 0) {
-            err = pthread_mutex_init(&refresh_mutex, 0);
+            err = pthread_cond_init(&refresh_cond, 0);
             if (err == 0) {
-                err = pthread_cond_init(&refresh_cond, 0);
-                if (err == 0) {
-                    refresh_not_in_progress = true;
-
-                    err = ifaddr_refresh();
-                    if (err == 0) {
-                        return 0;
-                    }
-                }
-                // Errors are not significant here.
-                pthread_cond_destroy(&refresh_cond);
+                started = false;
+                initialized = true;
+                return 0;
             }
-            // Errors are not significant here.
-            pthread_mutex_destroy(&refresh_mutex);
+            pthread_cond_destroy(&refresh_cond); // Any error is ignored.
         }
+        pthread_mutex_destroy(&refresh_mutex); // Any error is ignored.
 
         close(rtnetlink_fd);
-        errno = err;
     }
-    initialized = false;
-    return -1;
+    return err;
 }
 
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
         initialized = false;
 
-        terminated = true;
-        if (interrupt_signo != 0) {
-            pthread_kill(worker_thread, interrupt_signo);
+        if (ifaddr_started()) {
+            terminated = true;
+            if (interrupt_signo != 0) {
+                pthread_kill(worker_thread, interrupt_signo);
+            }
+            pthread_join(worker_thread, NULL);
         }
-        pthread_join(worker_thread, NULL);
 
         pthread_cond_destroy(&refresh_cond);
         pthread_mutex_destroy(&refresh_mutex);
@@ -157,22 +224,33 @@ void ifaddr_finalize(void) {
     }
 }
 
-/**
- * Starts the worker thread.
- * @return 0 on success, non-zero error number on failure
- */
-int ifaddr_start_worker(void) {
-    // The worker thread should not catch signals except SIGUSR2.
-    sigset_t set, oset;
-    sigfillset(&set);
-    sigdelset(&set, SIGUSR2);
+int ifaddr_start(void) {
+    if (!ifaddr_initialized()) {
+        return ESRCH;
+    }
 
-    int err = pthread_sigmask(SIG_SETMASK, &set, &oset);
-    if (err == 0) {
-        err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
-        // Restore the signal mask before proceeding.
-        // Errors are not significant here.
-        pthread_sigmask(SIG_SETMASK, &oset, 0);
+    int err = 0;
+    if (!ifaddr_started()) {
+        terminated = false;
+
+        sigset_t set, oset;
+        sigfillset(&set);
+        if (interrupt_signo != 0) {
+            sigdelset(&set, interrupt_signo);
+        }
+
+        err = pthread_sigmask(SIG_SETMASK, &set, &oset);
+        if (err == 0) {
+            err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
+            // Restores the signal mask before proceeding.
+            pthread_sigmask(SIG_SETMASK, &oset, 0); // Any error is ignored.
+
+            if (err == 0) {
+                refresh_not_in_progress = true;
+                started = true;
+                return ifaddr_refresh();
+            }
+        }
     }
     return err;
 }
@@ -183,8 +261,6 @@ int ifaddr_start_worker(void) {
  * @return the value of data
  */
 void *ifaddr_run(void *data) {
-    assert(ifaddr_initialized());
-    terminated = 0;
     while (!terminated) {
         // Gets the required buffer size.
         ssize_t recv_size = recv(rtnetlink_fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
@@ -231,10 +307,7 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
             break;
         }
         case NLMSG_DONE:
-            pthread_mutex_lock(&refresh_mutex);
-            refresh_not_in_progress = true;
-            pthread_cond_broadcast(&refresh_cond);
-            pthread_mutex_unlock(&refresh_mutex);
+            ifaddr_complete_refresh();
             done = true;
             break;
         case RTM_NEWADDR:
@@ -283,13 +356,18 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
 }
 
 int ifaddr_refresh(void) {
-    int result = -1;
-    if (ifaddr_initialized()) {
-        pthread_mutex_lock(&refresh_mutex);
+    if (!ifaddr_initialized() || !ifaddr_started()) {
+        return ESRCH;
+    }
 
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock 'refresh_mutex'");
+
+    int err = 0;
+    if (refresh_not_in_progress) {
         unsigned char buf[128];
-        struct nlmsghdr *nlmsg = (void*) buf;
-        struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
+        struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
         *nlmsg = (struct nlmsghdr) {
             .nlmsg_len = NLMSG_LENGTH(sizeof *ifa),
             .nlmsg_type = RTM_GETADDR,
@@ -298,45 +376,35 @@ int ifaddr_refresh(void) {
         *ifa = (struct ifaddrmsg) {
             .ifa_family = AF_INET6,
         };
-        if (!refresh_not_in_progress ||
-                send(rtnetlink_fd, buf, nlmsg->nlmsg_len, 0) >= 0) {
-            refresh_not_in_progress = false;
-            do {
-                pthread_cond_wait(&refresh_cond, &refresh_mutex);
-            } while (!refresh_not_in_progress);
 
-            result = 0;
+        ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);
+        if (send_len < 0) {
+            err = errno;
+        } else if ((size_t) send_len != nlmsg->nlmsg_len) {
+            syslog(LOG_CRIT, "ifaddr: Truncated request");
+            abort();
         }
-
-        pthread_mutex_unlock(&refresh_mutex);
-    } else {
-        // TODO: Choose a better error number.
-        errno = EBADF;
     }
-    return result;
+
+    if (err == 0) {
+        refresh_not_in_progress = false;
+    }
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock 'refresh_mutex'");
+
+    return err;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
-    return -1;
-}
-
-/*
- * Opens a socket for RTNETLINK.
- */
-int open_rtnetlink(void) {
-    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    if (fd >= 0) {
-        const struct sockaddr_nl addr = {
-            .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV6_IFADDR,
-        };
-        if (bind(fd, (const void *) &addr, sizeof addr) == 0) {
-            return fd;
-        }
-
-        int saved_errno = errno;
-        close(fd);
-        errno = saved_errno;
+    if (!ifaddr_initialized()) {
+        return ESRCH;
     }
+
+    if (!ifaddr_started()) {
+        ifaddr_start();
+    }
+    ifaddr_wait_for_refresh_completion();
+
     return -1;
 }

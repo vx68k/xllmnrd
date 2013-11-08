@@ -73,9 +73,10 @@ int main(int argc, char *argv[argc + 1]) {
     if (parse_options(argc, argv, &options) >= 0) {
         openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
 
-        if (ifaddr_initialize(0) < 0) {
+        int err = ifaddr_initialize(SIGUSR2);
+        if (err != 0) {
             syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
-                    strerror(errno));
+                    strerror(err));
             exit(EXIT_FAILURE);
         }
         atexit(&ifaddr_finalize);
@@ -95,6 +96,7 @@ int main(int argc, char *argv[argc + 1]) {
             set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
             set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
 
+            ifaddr_start();
             llmnr_responder_run();
         }
 

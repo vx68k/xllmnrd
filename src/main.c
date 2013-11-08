@@ -96,7 +96,7 @@ int main(int argc, char *argv[argc + 1]) {
             set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
             set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
 
-            ifaddr_refresh();
+            ifaddr_start();
             llmnr_responder_run();
         }
 

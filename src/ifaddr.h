@@ -33,16 +33,14 @@ extern void ifaddr_finalize(void);
 
 /**
  * Starts the internal worker thread.
- * This function will be called implicitly if any other function that requires
- * the worker thread is called.
  * This function will do nothing and return 0 if already started.
  * @return 0 on success, or non-zero error number on failure.
  */
 extern int ifaddr_start(void);
 
 /**
- * Refreshes the interface address table.
- * @return 0 on success, -1 on failure
+ * Refreshes the interface table.
+ * @return 0 on success, or non-zero error number on failure
  */
 extern int ifaddr_refresh(void);
 

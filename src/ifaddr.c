@@ -31,9 +31,22 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <stdlib.h> /* abort */
 #include <errno.h>
 #include <stdbool.h>
 #include <assert.h>
+
+/**
+ * Terminates the program abnormally if a error is detected.
+ * @param e value to be checked for an error.
+ * @param message error message.
+ */
+static inline void abort_if_error(int e, const char *message) {
+    if (e != 0) {
+        syslog(LOG_CRIT, "%s: %s", message, strerror(e));
+        abort();
+    }
+}
 
 /**
  * Opens a RTNETLINK socket and binds to necessary groups.
@@ -85,7 +98,8 @@ static pthread_mutex_t refresh_mutex;
 static pthread_cond_t refresh_cond;
 
 /**
- * Indicates if a refresh operation is not in progress.
+ * True if a refresh operation is not in progress.
+ * This flag is volatile as it is used from multiple threads.
  */
 static volatile bool refresh_not_in_progress;
 
@@ -113,17 +127,6 @@ static inline int ifaddr_initialized(void) {
  */
 static inline int ifaddr_started(void) {
     return started;
-}
-
-/**
- * Ensures the worker thread is started.
- * @return 0 on success, or non-zero error number on failure.
- */
-static inline int ifaddr_ensure_started(void) {
-    if (!ifaddr_started()) {
-        return ifaddr_start();
-    }
-    return 0;
 }
 
 static void *ifaddr_run(void *__data);
@@ -157,9 +160,7 @@ int ifaddr_initialize(int signo) {
         if (err == 0) {
             err = pthread_cond_init(&refresh_cond, 0);
             if (err == 0) {
-                refresh_not_in_progress = true;
                 started = false;
-
                 initialized = true;
                 return 0;
             }
@@ -210,8 +211,9 @@ int ifaddr_start(void) {
             pthread_sigmask(SIG_SETMASK, &oset, 0); // Any error is ignored.
 
             if (err == 0) {
+                refresh_not_in_progress = true;
                 started = true;
-                return 0;
+                return ifaddr_refresh();
             }
         }
     }
@@ -324,19 +326,18 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
 }
 
 int ifaddr_refresh(void) {
-    int result = -1;
-    if (ifaddr_initialized()) {
-        int err = ifaddr_ensure_started();
-        if (err != 0) {
-            errno = err;
-            return -1;
-        }
+    if (!ifaddr_initialized() || !ifaddr_started()) {
+        return ESRCH;
+    }
 
-        pthread_mutex_lock(&refresh_mutex);
+    abort_if_error(pthread_mutex_lock(&refresh_mutex),
+            "ifaddr: Could not lock a mutex");
 
+    int err = 0;
+    if (refresh_not_in_progress) {
         unsigned char buf[128];
-        struct nlmsghdr *nlmsg = (void*) buf;
-        struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
+        struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
         *nlmsg = (struct nlmsghdr) {
             .nlmsg_len = NLMSG_LENGTH(sizeof *ifa),
             .nlmsg_type = RTM_GETADDR,
@@ -345,22 +346,27 @@ int ifaddr_refresh(void) {
         *ifa = (struct ifaddrmsg) {
             .ifa_family = AF_INET6,
         };
-        if (!refresh_not_in_progress ||
-                send(rtnetlink_fd, buf, nlmsg->nlmsg_len, 0) >= 0) {
-            refresh_not_in_progress = false;
-            do {
-                pthread_cond_wait(&refresh_cond, &refresh_mutex);
-            } while (!refresh_not_in_progress);
 
-            result = 0;
+        ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);
+        if (send_len < 0) {
+            err = errno;
+        } else if ((size_t) send_len != nlmsg->nlmsg_len) {
+            syslog(LOG_CRIT, "ifaddr: Truncated request");
+            abort();
         }
-
-        pthread_mutex_unlock(&refresh_mutex);
-    } else {
-        // TODO: Choose a better error number.
-        errno = EBADF;
     }
-    return result;
+
+    if (err == 0) {
+        refresh_not_in_progress = false;
+        do {
+            pthread_cond_wait(&refresh_cond, &refresh_mutex);
+        } while (!refresh_not_in_progress);
+    }
+
+    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
+            "ifaddr: Could not unlock a mutex");
+
+    return err;
 }
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {

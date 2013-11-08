@@ -53,22 +53,22 @@ static inline void abort_if_error(int e, const char *message) {
 /**
  * Opens a RTNETLINK socket and binds to necessary groups.
  */
-static inline int open_rtnetlink(void) {
+static inline int open_rtnetlink(int *restrict fd_out) {
     int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int err = errno;
     if (fd >= 0) {
-        const struct sockaddr_nl addr = {
+        struct sockaddr_nl addr = {
             .nl_family = AF_NETLINK,
             .nl_groups = RTMGRP_IPV6_IFADDR,
         };
-        if (bind(fd, (const void *) &addr, sizeof addr) == 0) {
-            return fd;
+        if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
+            *fd_out = fd;
+            return 0;
         }
-
-        int saved_errno = errno;
+        err = errno;
         close(fd);
-        errno = saved_errno;
     }
-    return -1;
+    return err;
 }
 
 /**
@@ -187,11 +187,8 @@ int ifaddr_initialize(int sig) {
     }
     interrupt_signo = sig;
 
-    int fd = open_rtnetlink();
-    int err = errno;
-    if (fd >= 0) {
-        rtnetlink_fd = fd;
-
+    int err = open_rtnetlink(&rtnetlink_fd);
+    if (err == 0) {
         err = pthread_mutex_init(&refresh_mutex, 0);
         if (err == 0) {
             err = pthread_cond_init(&refresh_cond, 0);

@@ -4,9 +4,18 @@ AUTOMAKE_OPTIONS = parallel-tests
 AM_CPPFLAGS = -I$(top_builddir)/src -I$(top_srcdir)/src
 AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
-check_PROGRAMS = unittest
+check_PROGRAMS = runtest
+check_DATA = unit.test
+CLEANFILES = unit.test
 
-TESTS = unittest
+TESTS = unit.test
+MOSTLYCLEANFILES = $(TEST_LOGS:.log=.xml)
 
-unittest_LDADD = $(LDADD) $(CPPUNIT_LIBS)
-unittest_SOURCES = testmain.cpp testifaddr.cpp $(top_srcdir)/src/ifaddr.c
+TEST_LOG_COMPILER = ./runtest
+AM_TEST_LOG_FLAGS = -x $(@:.log=.xml)
+
+runtest_LDADD = $(LDADD) $(CPPUNIT_LIBS)
+runtest_SOURCES = testmain.cpp testifaddr.cpp $(top_srcdir)/src/ifaddr.c
+
+unit.test:
+	touch $@

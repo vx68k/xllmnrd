@@ -22,17 +22,21 @@
 #define _GNU_SOURCE 1
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/XmlOutputter.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include <iostream>
 #include <cstdlib>
 
 using namespace std;
 using CppUnit::TextUi::TestRunner;
+using CppUnit::XmlOutputter;
 using CppUnit::TestFactoryRegistry;
 
 int main(int argc, char *argv[]) {
     TestRunner runner;
     runner.addTest(TestFactoryRegistry::getRegistry().makeTest());
 
+    runner.setOutputter(new XmlOutputter(&runner.result(), clog, "UTF-8"));
     if (!runner.run()) {
         return EXIT_FAILURE;
     }

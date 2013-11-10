@@ -22,16 +22,48 @@
 #define _GNU_SOURCE 1
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/XmlOutputter.h>
 #include <cppunit/ui/text/TestRunner.h>
+#if HAVE_SYSEXITS_H
+#include <sysexits.h>
+#endif
+#include <unistd.h>
+#include <iostream>
+#include <cstring>
 #include <cstdlib>
+
+#ifndef EX_USAGE
+#define EX_USAGE 64
+#endif
 
 using namespace std;
 using CppUnit::TextUi::TestRunner;
+using CppUnit::XmlOutputter;
 using CppUnit::TestFactoryRegistry;
 
+static const char *xml_output_name;
+
 int main(int argc, char *argv[]) {
+    int opt;
+    do {
+        opt = getopt(argc, argv, "x:");
+        switch (opt) {
+        case 'x':
+            xml_output_name = optarg;
+            break;
+        case '?':
+            exit(EX_USAGE);
+        }
+    } while (opt >= 0);
+
     TestRunner runner;
     runner.addTest(TestFactoryRegistry::getRegistry().makeTest());
+
+    ofstream out;
+    if (xml_output_name) {
+        out.open(xml_output_name);
+        runner.setOutputter(new XmlOutputter(&runner.result(), out, "UTF-8"));
+    }
 
     if (!runner.run()) {
         return EXIT_FAILURE;

@@ -37,6 +37,7 @@ class IfaddrTest : public TestFixture {
     CPPUNIT_TEST_SUITE(IfaddrTest);
     CPPUNIT_TEST(testUninitialized);
     CPPUNIT_TEST(testNormal);
+    CPPUNIT_TEST(testRefresh);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -56,7 +57,6 @@ public:
 
     void testUninitialized() {
         CPPUNIT_ASSERT(ifaddr_start() != 0);
-        CPPUNIT_ASSERT(ifaddr_refresh() != 0);
     }
 
     void testNormal() {
@@ -64,11 +64,26 @@ public:
         CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) != 0);
         CPPUNIT_ASSERT(ifaddr_start() == 0);
         CPPUNIT_ASSERT(ifaddr_start() == 0); // Multiple calls are OK.
-        CPPUNIT_ASSERT(ifaddr_refresh() == 0);
         
         struct in6_addr address;
         ifaddr_lookup(0, &address);
         ifaddr_finalize();
+    }
+
+    void testRefresh() {
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This must fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
+        ifaddr_initialize(SIGUSR2);
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This still must fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
+        ifaddr_start();
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
+        ifaddr_finalize();
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This also must fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
     }
 
 protected:

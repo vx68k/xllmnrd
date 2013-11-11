@@ -21,10 +21,16 @@ build-aux/
 m4/
 autom4te.cache/
 
-# Common binary directories
-.libs/
+syntax: regexp
 
-# Backup files
-*~
-*.~*
-*.orig
+# Libtool binary files
+\.libs/
+
+# NetBeans IDE files (not for commits)
+^nbproject/
+
+# Backup and garbage files
+~$
+\.~[^/]*$
+\.orig$
+\.rej$

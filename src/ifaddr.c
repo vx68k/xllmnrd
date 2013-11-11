@@ -176,13 +176,13 @@ static inline void ifaddr_remove_interface(unsigned int ifindex,
             iftable[i] = iftable[i + 1];
             ++i;
         }
-    }
 
-    char ifname[IF_NAMESIZE];
-    char str[INET6_ADDRSTRLEN];
-    if_indextoname(ifindex, ifname);
-    inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
-    syslog(LOG_INFO, "ifaddr: Removed interface %s = %s", ifname, str);
+        char ifname[IF_NAMESIZE];
+        char str[INET6_ADDRSTRLEN];
+        if_indextoname(ifindex, ifname);
+        inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
+        syslog(LOG_INFO, "ifaddr: Removed interface %s = %s", ifname, str);
+    }
 }
 
 /**

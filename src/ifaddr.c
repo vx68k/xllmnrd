@@ -498,7 +498,7 @@ int ifaddr_refresh(void) {
     return err;
 }
 
-int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
+int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
     if (!ifaddr_initialized()) {
         return ESRCH;
     }
@@ -508,5 +508,22 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *addr) {
     }
     ifaddr_wait_for_refresh_completion();
 
-    return -1;
+    abort_if_error(pthread_mutex_lock(&iftable_mutex),
+            "ifaddr: Could not lock 'ifable_mutex'");
+
+    unsigned int i = 0;
+    while (i != iftable_size && iftable[i].ifindex != ifindex) {
+        ++i;
+    }
+
+    int err = EINVAL;
+    if (i != iftable_size) {
+        *addr_out = iftable[i].addr;
+        err = 0;
+    }
+
+    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
+            "ifaddr: Could not unlock 'ifable_mutex'");
+
+    return err;
 }

@@ -118,8 +118,6 @@ static inline int open_udp6(in_port_t port, int *fd_out) {
     return err;
 }
 
-static int responder_udp_socket = -1;
-
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
@@ -144,6 +142,25 @@ static inline void log_discarded(const char *restrict message,
 }
 
 /**
+ * True if this module is initialized.
+ */
+static bool initialized;
+
+/**
+ * File descriptor of the IPv6 UDP socket.
+ * This value is valid only if this module is initialized.
+ */
+static int udp6_socket;
+
+/**
+ * Returns true if this module is initialized.
+ * @return true if initialized, or false.
+ */
+static inline int llmnr_responder_initialized(void) {
+    return initialized;
+}
+
+/**
  * Handles a LLMNR query.
  * @param __ifindex interface index.
  * @param __header pointer to the LLMNR packet header.
@@ -154,23 +171,31 @@ static int llmnr_responder_handle_query(unsigned int __ifindex,
         const struct llmnr_header *__header,
         const struct sockaddr_in6 *__sender);
 
-int llmnr_responder_initialize(void) {
-    if (responder_udp_socket >= 0) {
-        errno = EPERM;
-        return -1;
+int llmnr_responder_initialize(in_port_t port) {
+    if (llmnr_responder_initialized()) {
+        return EBUSY;
     }
 
-    int err = open_udp6(htons(LLMNR_PORT), &responder_udp_socket);
+    // If the specified port number is 0, we use the default port number.
+    if (port == htons(0)) {
+        port = htons(LLMNR_PORT);
+    }
+
+    int err = open_udp6(port, &udp6_socket);
     if (err == 0) {
+        // TODO: Make the socket join the LLMNR multicast group for each
+        // interface.
+        initialized = true;
         return 0;
     }
-    return -1;
+    return err;
 }
 
 void llmnr_responder_finalize(void) {
-    if (responder_udp_socket >= 0) {
-        close(responder_udp_socket);
-        responder_udp_socket = -1;
+    if (llmnr_responder_initialized()) {
+        initialized = false;
+
+        close(udp6_socket);
     }
 }
 
@@ -181,7 +206,7 @@ int llmnr_responder_run(void) {
         struct in6_pktinfo pi = {
             .ipi6_addr = IN6ADDR_ANY_INIT,
         };
-        ssize_t recv_len = llmnr_receive_udp6(responder_udp_socket,
+        ssize_t recv_len = llmnr_receive_udp6(udp6_socket,
                 data, sizeof data, &sender, &pi);
         if (recv_len >= 0) {
             // The destination MUST be the LLMNR multicast address.

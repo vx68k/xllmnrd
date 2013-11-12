@@ -50,7 +50,7 @@ struct llmnr_header {
 static inline int llmnr_query_is_valid(
         const struct llmnr_header *restrict header) {
     // The following bits must be zero in any query.
-    const uint16_t mask = htons(LLMNR_HEADER_QR | LLMNR_HEADER_OPCODE);
+    const uint_fast16_t mask = htons(LLMNR_HEADER_QR | LLMNR_HEADER_OPCODE);
     if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
             header->ancount == htons(0) && header->nscount == htons(0)) {
         return 1;

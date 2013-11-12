@@ -46,9 +46,80 @@
 
 static const struct in6_addr in6addr_llmnr = IN6ADDR_LLMNR_INIT;
 
+/**
+ * Sets socket options for an IPv6 UDP responder socket.
+ * @param fd file descriptor of a socket.
+ * @return 0 on success, or non-zero error number.
+ */
+static inline int set_options_udp6(int fd) {
+    // We are not interested in IPv4 packets.
+    static const int v6only = true;
+    // We want the interface index for each received datagram.
+    static const int rcvpktinfo = true;
+    // The unicast hop limit SHOULD be 1.
+    static const int unicast_hops = 1;
+
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only,
+            sizeof (int)) != 0) {
+        return errno;
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &rcvpktinfo,
+            sizeof (int)) != 0) {
+        return errno;
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &unicast_hops,
+            sizeof (int)) != 0) {
+        syslog(LOG_WARNING,
+                "Could not set IPV6_UNICAST_HOPS to %d: %s",
+                unicast_hops, strerror(errno));
+    }
+
+    // TODO: Joining must be done later for each interface.
+    const struct ipv6_mreq mr = {
+        .ipv6mr_multiaddr = in6addr_llmnr,
+        .ipv6mr_interface = 0,
+    };
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr,
+            sizeof (struct ipv6_mreq)) < 0) {
+        return errno;
+    }
+
+    return 0;
+}
+
+/**
+ * Opens an IPv6 UDP responder socket.
+ * @param port port number in the network byte order.
+ * @param fd_out [out] pointer to a file descriptor.
+ * @return 0 on success, or non-zero error number.
+ */
+static inline int open_udp6(in_port_t port, int *fd_out) {
+    int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    int err = errno;
+    if (fd >= 0) {
+        err = set_options_udp6(fd);
+        if (err == 0) {
+            const struct sockaddr_in6 addr = {
+                .sin6_family = AF_INET6,
+                .sin6_port = port,
+                .sin6_flowinfo = 0,
+                .sin6_addr = in6addr_any,
+                .sin6_scope_id = 0,
+            };
+            if (bind(fd, (const struct sockaddr *) &addr,
+                    sizeof (struct sockaddr_in6)) == 0) {
+                *fd_out = fd;
+                return 0;
+            }
+            err = errno;
+        }
+        close(fd);
+    }
+    return err;
+}
+
 static int responder_udp_socket = -1;
 
-static int llmnr_open_udp_socket(void);
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
@@ -78,9 +149,8 @@ int llmnr_responder_initialize(void) {
         return -1;
     }
 
-    int udp = llmnr_open_udp_socket();
-    if (udp >= 0) {
-        responder_udp_socket = udp;
+    int err = open_udp6(htons(LLMNR_PORT), &responder_udp_socket);
+    if (err == 0) {
         return 0;
     }
     return -1;
@@ -126,46 +196,6 @@ int llmnr_responder_run(void) {
 
 void llmnr_responder_terminate(void) {
     responder_terminated = true;
-}
-
-int llmnr_open_udp_socket(void) {
-    int udp_socket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-    if (udp_socket >= 0) {
-        const struct ipv6_mreq mreq = {
-            .ipv6mr_multiaddr = in6addr_llmnr,
-        };
-        const int v6only = 1;
-        const int recvpktinfo = 1;
-        if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-                &mreq, sizeof mreq) == 0 &&
-                setsockopt(udp_socket, IPPROTO_IPV6, IPV6_V6ONLY,
-                &v6only, sizeof v6only) == 0 &&
-                setsockopt(udp_socket, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-                &recvpktinfo, sizeof recvpktinfo) == 0) {
-            const int unicast_hops = 1;
-            if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-                    &unicast_hops, sizeof unicast_hops) != 0) {
-                // Not fatal.
-                syslog(LOG_WARNING,
-                        "setsockopt IPV6_UNICAST_HOPS=%d failed: %m",
-                        unicast_hops);
-            }
-
-            const struct sockaddr_in6 addr = {
-                .sin6_family = AF_INET6,
-                .sin6_port = htons(LLMNR_PORT),
-                .sin6_addr = in6addr_any,
-            };
-            if (bind(udp_socket, (const void *) &addr, sizeof addr) == 0) {
-                return udp_socket;
-            }
-        }
-
-        int saved_errno = errno;
-        close(udp_socket);
-        errno = saved_errno;
-    }
-    return -1;
 }
 
 ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,

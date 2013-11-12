@@ -38,9 +38,13 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-static const struct in6_addr in6addr_llmnr = {
-    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
-};
+#ifndef IN6ADDR_LLMNR_INIT
+#define IN6ADDR_LLMNR_INIT { \
+    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3} \
+}
+#endif
+
+static const struct in6_addr in6addr_llmnr = IN6ADDR_LLMNR_INIT;
 
 static int responder_udp_socket = -1;
 

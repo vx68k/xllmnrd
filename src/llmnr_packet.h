@@ -1,5 +1,5 @@
 /*
- * Declarations for the LLMNR protocol
+ * LLMNR packet manipulation
  * Copyright (C) 2013  Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LLMNR_HEADER_H
-#define LLMNR_HEADER_H 1
+#ifndef LLMNR_PACKET_H
+#define LLMNR_PACKET_H 1
 
 #include <arpa/inet.h>
 #include <stdint.h>
@@ -42,15 +42,17 @@ struct llmnr_header {
     uint16_t arcount;
 };
 
-static inline int llmnr_header_is_valid_query(
-        const struct llmnr_header *header) {
-    /* These bits must be zero for queries.  */
+/**
+ * Returns true if a header is valid as a query.
+ * @param header pointer to a LLMNR header.
+ * @return true if the query is valid, or false.
+ */
+static inline int llmnr_query_is_valid(
+        const struct llmnr_header *restrict header) {
+    // The following bits must be zero in any query.
     const uint16_t mask = htons(LLMNR_HEADER_QR | LLMNR_HEADER_OPCODE);
-    if (header &&
-            (header->flags & mask) == htons(0) &&
-            header->qdcount == htons(1) &&
-            header->ancount == htons(0) &&
-            header->nscount == htons(0)) {
+    if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
+            header->ancount == htons(0) && header->nscount == htons(0)) {
         return 1;
     }
     return 0;

@@ -24,7 +24,7 @@
 #include "llmnr_responder.h"
 
 #include "ifaddr.h"
-#include "llmnr_header.h"
+#include "llmnr_packet.h"
 #include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
 #include <net/if.h> /* if_indextoname */
@@ -214,7 +214,7 @@ int llmnr_responder_run(void) {
                     (size_t) recv_len >= sizeof (struct llmnr_header)) {
                 const struct llmnr_header *header =
                         (const struct llmnr_header *) data;
-                if (llmnr_header_is_valid_query(header)) {
+                if (llmnr_query_is_valid(header)) {
                     llmnr_responder_handle_query(pi.ipi6_ifindex, header,
                             &sender);
                 } else {

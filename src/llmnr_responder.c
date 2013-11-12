@@ -55,7 +55,7 @@ static inline int set_options_udp6(int fd) {
     // We are not interested in IPv4 packets.
     static const int v6only = true;
     // We want the interface index for each received datagram.
-    static const int rcvpktinfo = true;
+    static const int recvpktinfo = true;
     // The unicast hop limit SHOULD be 1.
     static const int unicast_hops = 1;
 
@@ -63,7 +63,7 @@ static inline int set_options_udp6(int fd) {
             sizeof (int)) != 0) {
         return errno;
     }
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &rcvpktinfo,
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &recvpktinfo,
             sizeof (int)) != 0) {
         return errno;
     }

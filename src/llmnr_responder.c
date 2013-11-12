@@ -25,9 +25,9 @@
 
 #include "ifaddr.h"
 #include "llmnr_header.h"
-#include <arpa/inet.h>
+#include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
-#include <net/if.h>
+#include <net/if.h> /* if_indextoname */
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -143,6 +143,17 @@ static inline void log_discarded(const char *restrict message,
     }
 }
 
+/**
+ * Handles a LLMNR query.
+ * @param __ifindex interface index.
+ * @param __header pointer to the LLMNR packet header.
+ * @param __sender socket address of the sender.
+ * @return 0 on success, or non-zero error number on failure.
+ */
+static int llmnr_responder_handle_query(unsigned int __ifindex,
+        const struct llmnr_header *__header,
+        const struct sockaddr_in6 *__sender);
+
 int llmnr_responder_initialize(void) {
     if (responder_udp_socket >= 0) {
         errno = EPERM;
@@ -165,22 +176,22 @@ void llmnr_responder_finalize(void) {
 
 int llmnr_responder_run(void) {
     while (!responder_terminated) {
-        unsigned char packetbuf[1500];
+        unsigned char data[1500];
         struct sockaddr_in6 sender;
-        struct in6_pktinfo pktinfo;
-        ssize_t recv_size = llmnr_receive_udp6(responder_udp_socket,
-                packetbuf, sizeof packetbuf, &sender, &pktinfo);
-        if (recv_size >= 0) {
-            if (IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
-                struct llmnr_header *header =
-                        (struct llmnr_header *) packetbuf;
-                if ((size_t) recv_size >= sizeof *header &&
-                        llmnr_header_is_valid_query(header)) {
-                    char ifname[IF_NAMESIZE];
-                    if_indextoname(pktinfo.ipi6_ifindex, ifname);
-                    syslog(LOG_DEBUG, "Received query on %s", ifname);
-
-                    /* TODO: Handle the query.  */
+        struct in6_pktinfo pi = {
+            .ipi6_addr = IN6ADDR_ANY_INIT,
+        };
+        ssize_t recv_len = llmnr_receive_udp6(responder_udp_socket,
+                data, sizeof data, &sender, &pi);
+        if (recv_len >= 0) {
+            // The destination MUST be the LLMNR multicast address.
+            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_llmnr) &&
+                    (size_t) recv_len >= sizeof (struct llmnr_header)) {
+                const struct llmnr_header *header =
+                        (const struct llmnr_header *) data;
+                if (llmnr_header_is_valid_query(header)) {
+                    llmnr_responder_handle_query(pi.ipi6_ifindex, header,
+                            &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
                 }
@@ -237,6 +248,26 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
                 memcpy(pktinfo, CMSG_DATA(cmsg), sizeof *pktinfo);
             }
         }
+    }
+
+    return 0;
+}
+
+int llmnr_responder_handle_query(unsigned int ifindex,
+        const struct llmnr_header *restrict header,
+        const struct sockaddr_in6 *restrict sender) {
+    char ifname[IF_NAMESIZE];
+    if_indextoname(ifindex, ifname);
+    syslog(LOG_DEBUG, "Received valid query on %s", ifname);
+
+    struct in6_addr addr;
+    int err = ifaddr_lookup(ifindex, &addr);
+    if (err == 0) {
+        char str[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &addr, str, INET6_ADDRSTRLEN);
+        syslog(LOG_DEBUG, "  Local address is %s", str);
+
+        /* TODO: Handle the query.  */
     }
 
     return 0;

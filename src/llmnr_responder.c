@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #ifndef IN6ADDR_LLMNR_INIT
 #define IN6ADDR_LLMNR_INIT { \
@@ -281,16 +282,21 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
 int llmnr_responder_handle_query(unsigned int ifindex,
         const struct llmnr_header *restrict header,
         const struct sockaddr_in6 *restrict sender) {
+    assert(sender->sin6_family == AF_INET6);
+
     char ifname[IF_NAMESIZE];
+    char addrstr[INET6_ADDRSTRLEN];
     if_indextoname(ifindex, ifname);
-    syslog(LOG_DEBUG, "Received valid query on %s", ifname);
+    inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
+    syslog(LOG_INFO, "Received query on %s from %s%%%" PRIu32 " port %"
+            PRIu16, ifname, addrstr, sender->sin6_scope_id,
+            ntohs(sender->sin6_port));
 
     struct in6_addr addr;
     int err = ifaddr_lookup(ifindex, &addr);
     if (err == 0) {
-        char str[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, &addr, str, INET6_ADDRSTRLEN);
-        syslog(LOG_DEBUG, "  Local address is %s", str);
+        inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
+        syslog(LOG_DEBUG, "Interface address is %s", addrstr);
 
         /* TODO: Handle the query.  */
     }

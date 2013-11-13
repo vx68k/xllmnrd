@@ -17,17 +17,17 @@
  */
 
 #if HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 #define _GNU_SOURCE 1
 
 #include "llmnr_responder.h"
 
 #include "ifaddr.h"
-#include "llmnr_header.h"
-#include <arpa/inet.h>
+#include "llmnr_packet.h"
+#include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
-#include <net/if.h>
+#include <net/if.h> /* if_indextoname */
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -37,14 +37,88 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
+#include <assert.h>
 
-static const struct in6_addr in6addr_llmnr = {
-    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}
-};
+#ifndef IN6ADDR_LLMNR_INIT
+#define IN6ADDR_LLMNR_INIT { \
+    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3} \
+}
+#endif
 
-static int responder_udp_socket = -1;
+static const struct in6_addr in6addr_llmnr = IN6ADDR_LLMNR_INIT;
 
-static int llmnr_open_udp_socket(void);
+/**
+ * Sets socket options for an IPv6 UDP responder socket.
+ * @param fd file descriptor of a socket.
+ * @return 0 on success, or non-zero error number.
+ */
+static inline int set_options_udp6(int fd) {
+    // We are not interested in IPv4 packets.
+    static const int v6only = true;
+    // We want the interface index for each received datagram.
+    static const int recvpktinfo = true;
+    // The unicast hop limit SHOULD be 1.
+    static const int unicast_hops = 1;
+
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only,
+            sizeof (int)) != 0) {
+        return errno;
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &recvpktinfo,
+            sizeof (int)) != 0) {
+        return errno;
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &unicast_hops,
+            sizeof (int)) != 0) {
+        syslog(LOG_WARNING,
+                "Could not set IPV6_UNICAST_HOPS to %d: %s",
+                unicast_hops, strerror(errno));
+    }
+
+    // TODO: Joining must be done later for each interface.
+    const struct ipv6_mreq mr = {
+        .ipv6mr_multiaddr = in6addr_llmnr,
+        .ipv6mr_interface = 0,
+    };
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr,
+            sizeof (struct ipv6_mreq)) < 0) {
+        return errno;
+    }
+
+    return 0;
+}
+
+/**
+ * Opens an IPv6 UDP responder socket.
+ * @param port port number in the network byte order.
+ * @param fd_out [out] pointer to a file descriptor.
+ * @return 0 on success, or non-zero error number.
+ */
+static inline int open_udp6(in_port_t port, int *fd_out) {
+    int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    int err = errno;
+    if (fd >= 0) {
+        err = set_options_udp6(fd);
+        if (err == 0) {
+            const struct sockaddr_in6 addr = {
+                .sin6_family = AF_INET6,
+                .sin6_port = port,
+                .sin6_flowinfo = 0,
+                .sin6_addr = in6addr_any,
+                .sin6_scope_id = 0,
+            };
+            if (bind(fd, (const struct sockaddr *) &addr,
+                    sizeof (struct sockaddr_in6)) == 0) {
+                *fd_out = fd;
+                return 0;
+            }
+            err = errno;
+        }
+        close(fd);
+    }
+    return err;
+}
+
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
@@ -68,45 +142,82 @@ static inline void log_discarded(const char *restrict message,
     }
 }
 
-int llmnr_responder_initialize(void) {
-    if (responder_udp_socket >= 0) {
-        errno = EPERM;
-        return -1;
+/**
+ * True if this module is initialized.
+ */
+static bool initialized;
+
+/**
+ * File descriptor of the IPv6 UDP socket.
+ * This value is valid only if this module is initialized.
+ */
+static int udp6_socket;
+
+/**
+ * Returns true if this module is initialized.
+ * @return true if initialized, or false.
+ */
+static inline int llmnr_responder_initialized(void) {
+    return initialized;
+}
+
+/**
+ * Handles a LLMNR query.
+ * @param __ifindex interface index.
+ * @param __header pointer to the LLMNR packet header.
+ * @param __sender socket address of the sender.
+ * @return 0 on success, or non-zero error number on failure.
+ */
+static int llmnr_responder_handle_query(unsigned int __ifindex,
+        const struct llmnr_header *__header,
+        const struct sockaddr_in6 *__sender);
+
+int llmnr_responder_initialize(in_port_t port) {
+    if (llmnr_responder_initialized()) {
+        return EBUSY;
     }
 
-    int udp = llmnr_open_udp_socket();
-    if (udp >= 0) {
-        responder_udp_socket = udp;
+    // If the specified port number is 0, we use the default port number.
+    if (port == htons(0)) {
+        port = htons(LLMNR_PORT);
+    }
+
+    int err = open_udp6(port, &udp6_socket);
+    if (err == 0) {
+        // TODO: Make the socket join the LLMNR multicast group for each
+        // interface.
+        initialized = true;
         return 0;
     }
-    return -1;
+    return err;
 }
 
 void llmnr_responder_finalize(void) {
-    if (responder_udp_socket >= 0) {
-        close(responder_udp_socket);
-        responder_udp_socket = -1;
+    if (llmnr_responder_initialized()) {
+        initialized = false;
+
+        close(udp6_socket);
     }
 }
 
 int llmnr_responder_run(void) {
     while (!responder_terminated) {
-        unsigned char packetbuf[1500];
+        unsigned char data[1500];
         struct sockaddr_in6 sender;
-        struct in6_pktinfo pktinfo;
-        ssize_t recv_size = llmnr_receive_udp6(responder_udp_socket,
-                packetbuf, sizeof packetbuf, &sender, &pktinfo);
-        if (recv_size >= 0) {
-            if (IN6_IS_ADDR_MULTICAST(&pktinfo.ipi6_addr)) {
-                struct llmnr_header *header =
-                        (struct llmnr_header *) packetbuf;
-                if ((size_t) recv_size >= sizeof *header &&
-                        llmnr_header_is_valid_query(header)) {
-                    char ifname[IF_NAMESIZE];
-                    if_indextoname(pktinfo.ipi6_ifindex, ifname);
-                    syslog(LOG_DEBUG, "Received query on %s", ifname);
-
-                    /* TODO: Handle the query.  */
+        struct in6_pktinfo pi = {
+            .ipi6_addr = IN6ADDR_ANY_INIT,
+        };
+        ssize_t recv_len = llmnr_receive_udp6(udp6_socket,
+                data, sizeof data, &sender, &pi);
+        if (recv_len >= 0) {
+            // The destination MUST be the LLMNR multicast address.
+            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_llmnr) &&
+                    (size_t) recv_len >= sizeof (struct llmnr_header)) {
+                const struct llmnr_header *header =
+                        (const struct llmnr_header *) data;
+                if (llmnr_query_is_valid(header)) {
+                    llmnr_responder_handle_query(pi.ipi6_ifindex, header,
+                            &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
                 }
@@ -122,46 +233,6 @@ int llmnr_responder_run(void) {
 
 void llmnr_responder_terminate(void) {
     responder_terminated = true;
-}
-
-int llmnr_open_udp_socket(void) {
-    int udp_socket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-    if (udp_socket >= 0) {
-        const struct ipv6_mreq mreq = {
-            .ipv6mr_multiaddr = in6addr_llmnr,
-        };
-        const int v6only = 1;
-        const int recvpktinfo = 1;
-        if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-                &mreq, sizeof mreq) == 0 &&
-                setsockopt(udp_socket, IPPROTO_IPV6, IPV6_V6ONLY,
-                &v6only, sizeof v6only) == 0 &&
-                setsockopt(udp_socket, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-                &recvpktinfo, sizeof recvpktinfo) == 0) {
-            const int unicast_hops = 1;
-            if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-                    &unicast_hops, sizeof unicast_hops) != 0) {
-                // Not fatal.
-                syslog(LOG_WARNING,
-                        "setsockopt IPV6_UNICAST_HOPS=%d failed: %m",
-                        unicast_hops);
-            }
-
-            const struct sockaddr_in6 addr = {
-                .sin6_family = AF_INET6,
-                .sin6_port = htons(LLMNR_PORT),
-                .sin6_addr = in6addr_any,
-            };
-            if (bind(udp_socket, (const void *) &addr, sizeof addr) == 0) {
-                return udp_socket;
-            }
-        }
-
-        int saved_errno = errno;
-        close(udp_socket);
-        errno = saved_errno;
-    }
-    return -1;
 }
 
 ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
@@ -203,6 +274,31 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
                 memcpy(pktinfo, CMSG_DATA(cmsg), sizeof *pktinfo);
             }
         }
+    }
+
+    return 0;
+}
+
+int llmnr_responder_handle_query(unsigned int ifindex,
+        const struct llmnr_header *restrict header,
+        const struct sockaddr_in6 *restrict sender) {
+    assert(sender->sin6_family == AF_INET6);
+
+    char ifname[IF_NAMESIZE];
+    char addrstr[INET6_ADDRSTRLEN];
+    if_indextoname(ifindex, ifname);
+    inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
+    syslog(LOG_INFO, "Received query on %s from %s%%%" PRIu32 " port %"
+            PRIu16, ifname, addrstr, sender->sin6_scope_id,
+            ntohs(sender->sin6_port));
+
+    struct in6_addr addr;
+    int err = ifaddr_lookup(ifindex, &addr);
+    if (err == 0) {
+        inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
+        syslog(LOG_DEBUG, "Interface address is %s", addrstr);
+
+        /* TODO: Handle the query.  */
     }
 
     return 0;

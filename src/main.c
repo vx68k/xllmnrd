@@ -17,7 +17,7 @@
  */
 
 #if HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 #define _GNU_SOURCE 1
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[argc + 1]) {
         }
         atexit(&ifaddr_finalize);
 
-        if (llmnr_responder_initialize() < 0) {
+        if (llmnr_responder_initialize(0) < 0) {
             syslog(LOG_ERR, "Could not create a responder object: %m");
             syslog(LOG_INFO, "Exiting");
             exit(EXIT_FAILURE);

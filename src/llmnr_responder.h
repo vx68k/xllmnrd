@@ -1,5 +1,5 @@
 /*
- * <llmnr_responder.h> - LLMNR responder (interface)
+ * LLMNR responder (interface)
  * Copyright (C) 2013  Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -19,18 +19,23 @@
 #ifndef LLMNR_RESPONDER_H
 #define	LLMNR_RESPONDER_H 1
 
+#include <netinet/in.h> /* in_port_t */
+
 /*
  * Port number.
  */
 #define LLMNR_PORT 5355
 
-/*
- * Initializes the responder.
+/**
+ * Initializes this module.
+ * @param __port port number in the network byte order; if this value is 0,
+ * the default port number will be used.
+ * @return 0 on success, or non-zero error number.
  */
-int llmnr_responder_initialize(void);
+int llmnr_responder_initialize(in_port_t __port);
 
 /*
- * Finalizes the responder.
+ * Finalizes this module.
  */
 void llmnr_responder_finalize(void);
 

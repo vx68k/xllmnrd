@@ -101,6 +101,10 @@ public:
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
         ifaddr_initialize(SIGUSR2);
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This still MUST fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+        ifaddr_start();
         CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup(0, &addr));
         ifaddr_finalize();
         CPPUNIT_ASSERT_ASSERTION_FAIL(

@@ -25,7 +25,8 @@
  * Initializes this module.
  * @param __sig signal number that will be used to interrupt the worker
  * thread; if its value is 0, no signal will be used.
- * @return 0 on success, or non-zero error number on failure.
+ * @return 0 if no error is detected, 'EBUSY' if this module is already
+ * initialized, or any non-zero error number.
  */
 extern int ifaddr_initialize(int __sig);
 
@@ -33,23 +34,27 @@ extern void ifaddr_finalize(void);
 
 /**
  * Starts the internal worker thread.
+ * This module MUST be initialized.
  * This function will do nothing and return 0 if already started.
- * @return 0 on success, or non-zero error number on failure.
+ * @return 0 if no error is detected, or any non-zero error number.
  */
 extern int ifaddr_start(void);
 
 /**
  * Refreshes the interface table.
- * @return 0 on success, or non-zero error number on failure
+ * This module MUST be initialized and started.
+ * @return 0 if no error is detected, 'ENXIO' if this module is not started,
+ * or any non-zero error number.
  */
 extern int ifaddr_refresh(void);
 
 /**
  * Looks up the address of an interface.
+ * This module MUST be initialized and started.
  * @param __ifindex interface index.
  * @param __addr [out] pointer to the address.
- * @return 0 if found, ENODEV if not found, or other non-zero error number on
- * failure.
+ * @return 0 if any address is found, 'ENODEV' if no address is found, 'ENXIO'
+ * if this module is not started, or any non-zero error number.
  */
 extern int ifaddr_lookup(unsigned int __ifindex, struct in6_addr *__addr);
 

@@ -6,6 +6,16 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
 
+# Define the unique revision if 'config.rev' sets it.
+PACKAGE_REVISION=
+if test -f $(srcdir)/config.rev; then
+  . $(srcdir)/config.revision
+fi
+if test -n "$PACKAGE_REVISION"; then
+  AC_DEFINE_UNQUOTED([PACKAGE_REVISION], ["$PACKAGE_REVISION"],
+  [Define to the unique revision of this package.])dnl
+fi
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC_STDC

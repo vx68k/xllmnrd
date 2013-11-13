@@ -99,6 +99,11 @@ static int rtnetlink_fd;
  */
 static pthread_mutex_t iftable_mutex;
 
+/**
+ * Pointer to the interface change handler.
+ */
+static ifaddr_change_handler change_handler;
+
 static const size_t iftable_capacity = 32;
 static size_t iftable_size;
 static struct ifaddr_record iftable[32]; // TODO: Allocate dynamically.
@@ -165,6 +170,14 @@ static inline void ifaddr_add_interface(unsigned int ifindex,
     iftable[i].ifindex = ifindex;
     iftable[i].addr = *addr;
 
+    if (change_handler) {
+        struct ifaddr_change change = {
+            .type = IFADDR_ADDED,
+            .ifindex = ifindex,
+        };
+        (*change_handler)(&change);
+    }
+
     abort_if_error(pthread_mutex_unlock(&iftable_mutex),
             "ifaddr: Could not lock 'iftable_mutex'");
 
@@ -189,6 +202,14 @@ static inline void ifaddr_remove_interface(unsigned int ifindex,
         while (i != iftable_size) {
             iftable[i] = iftable[i + 1];
             ++i;
+        }
+
+        if (change_handler) {
+            struct ifaddr_change change = {
+                .type = IFADDR_REMOVED,
+                .ifindex = ifindex,
+            };
+            (*change_handler)(&change);
         }
 
         abort_if_error(pthread_mutex_unlock(&iftable_mutex),
@@ -260,6 +281,10 @@ int ifaddr_initialize(int sig) {
         return EBUSY;
     }
     interrupt_signo = sig;
+    change_handler = NULL;
+    iftable_size = 0;
+    started = false;
+    refresh_not_in_progress = true;
 
     int err = open_rtnetlink(&rtnetlink_fd);
     if (err == 0) {
@@ -269,7 +294,6 @@ int ifaddr_initialize(int sig) {
             if (err == 0) {
                 err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    started = false;
                     initialized = true;
                     return 0;
                 }
@@ -304,6 +328,27 @@ void ifaddr_finalize(void) {
     }
 }
 
+int ifaddr_set_change_handler(ifaddr_change_handler handler,
+        ifaddr_change_handler *old_handler_out) {
+    if (!ifaddr_initialized()) {
+        return ENXIO;
+    }
+
+    // This lock might be unnecessary, but it looks safer.
+    abort_if_error(pthread_mutex_lock(&iftable_mutex),
+            "ifaddr: Could not lock 'iftable_mutex'");
+
+    if (old_handler_out) {
+        *old_handler_out = change_handler;
+    }
+    change_handler = handler;
+
+    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
+            "ifaddr: Could not lock 'iftable_mutex'");
+
+    return 0;
+}
+
 int ifaddr_start(void) {
     if (!ifaddr_initialized()) {
         return ENXIO;
@@ -326,7 +371,6 @@ int ifaddr_start(void) {
             pthread_sigmask(SIG_SETMASK, &oset, 0); // Any error is ignored.
 
             if (err == 0) {
-                refresh_not_in_progress = true;
                 started = true;
                 return ifaddr_refresh();
             }

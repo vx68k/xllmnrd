@@ -21,6 +21,18 @@
 
 #include <netinet/in.h>
 
+enum ifaddr_change_type {
+    IFADDR_ADDED,
+    IFADDR_REMOVED,
+};
+
+struct ifaddr_change {
+    enum ifaddr_change_type type;
+    unsigned int ifindex;
+};
+
+typedef void (*ifaddr_change_handler)(const struct ifaddr_change *);
+
 /**
  * Initializes this module.
  * @param __sig signal number that will be used to interrupt the worker
@@ -31,6 +43,19 @@
 extern int ifaddr_initialize(int __sig);
 
 extern void ifaddr_finalize(void);
+
+/**
+ * Sets the interface change handler.
+ * It will be called on each interface address change.
+ * No handler function is set right after initialization.
+ * @param __handler pointer to the handler function; if its value is null, no
+ * handler function will be called.
+ * @param __old_handler [out] pointer to the old handler function; if its
+ * value is null, no output will be retrieved.
+ * @return 0 if no error is detected, or any non-zero error number.
+ */
+extern int ifaddr_set_change_handler(ifaddr_change_handler __handler,
+        ifaddr_change_handler *__old_handler);
 
 /**
  * Starts the internal worker thread.

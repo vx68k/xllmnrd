@@ -36,6 +36,7 @@ using CppUnit::TestFixture;
 class IfaddrTest : public TestFixture {
     CPPUNIT_TEST_SUITE(IfaddrTest);
     CPPUNIT_TEST(testInitialize);
+    CPPUNIT_TEST(testSetHandler);
     CPPUNIT_TEST(testStart);
     CPPUNIT_TEST(testRefresh);
     CPPUNIT_TEST(testLookup);
@@ -63,6 +64,42 @@ public:
         // This MUST succeed again.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
         ifaddr_finalize();
+    }
+
+    void testSetHandler() {
+        ifaddr_change_handler handler = &handle_change;
+        // Before initialization, an error MUST be detected.
+        CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        ifaddr_initialize(SIGUSR2);
+        // After initialization, the handler function MUST be null.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        CPPUNIT_ASSERT(handler == NULL);
+        // The function MUST be retrieved.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
+        CPPUNIT_ASSERT(handler == &handle_change);
+        // And null MUST be retrieved again.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        CPPUNIT_ASSERT(handler == NULL);
+        // The handler function remains set.
+        ifaddr_finalize();
+        // After finalization, an error MUST be detected.
+        CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        ifaddr_initialize(SIGUSR2);
+        // After initialization, the handler function MUST be null again.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
+        CPPUNIT_ASSERT(handler == NULL);
+        // Setting the function without retrieving the old one.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
+                NULL));
+        // And the function MUST be retrieved.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
+        CPPUNIT_ASSERT(handler == &handle_change);
+
+        // TODO: The handler function MUST be called on each interface change.
     }
 
     void testStart() {
@@ -114,6 +151,9 @@ public:
 
 protected:
     static void handle_signal(int sig) {
+    }
+
+    static void handle_change(const struct ifaddr_change *change) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTest);

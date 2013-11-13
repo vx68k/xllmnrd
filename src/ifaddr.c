@@ -306,7 +306,7 @@ void ifaddr_finalize(void) {
 
 int ifaddr_start(void) {
     if (!ifaddr_initialized()) {
-        return ESRCH;
+        return ENXIO;
     }
 
     int err = 0;
@@ -418,6 +418,7 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
         const struct rtattr *rta = (const struct rtattr *)
                 ((const char *) nlmsg + rta_offset);
         size_t rta_len = nlmsg->nlmsg_len - rta_offset;
+
         while (RTA_OK(rta, rta_len)) {
             switch (ifa->ifa_family) {
             case AF_INET6:
@@ -453,7 +454,7 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
 
 int ifaddr_refresh(void) {
     if (!ifaddr_initialized() || !ifaddr_started()) {
-        return ESRCH;
+        return ENXIO;
     }
 
     abort_if_error(pthread_mutex_lock(&refresh_mutex),

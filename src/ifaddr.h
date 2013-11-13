@@ -44,6 +44,13 @@ extern int ifaddr_start(void);
  */
 extern int ifaddr_refresh(void);
 
+/**
+ * Looks up the address of an interface.
+ * @param __ifindex interface index.
+ * @param __addr [out] pointer to the address.
+ * @return 0 if found, ENODEV if not found, or other non-zero error number on
+ * failure.
+ */
 extern int ifaddr_lookup(unsigned int __ifindex, struct in6_addr *__addr);
 
 #endif

@@ -500,30 +500,30 @@ int ifaddr_refresh(void) {
 
 int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
     if (!ifaddr_initialized()) {
-        return ESRCH;
+        return ENXIO;
     }
 
-    if (!ifaddr_started()) {
-        ifaddr_start();
+    int err = ifaddr_start();
+    if (err == 0) {
+        ifaddr_wait_for_refresh_completion();
+
+        abort_if_error(pthread_mutex_lock(&iftable_mutex),
+                "ifaddr: Could not lock 'ifable_mutex'");
+
+        unsigned int i = 0;
+        while (i != iftable_size && iftable[i].ifindex != ifindex) {
+            ++i;
+        }
+
+        if (i != iftable_size) {
+            *addr_out = iftable[i].addr;
+        } else {
+            err = ENODEV;
+        }
+
+        abort_if_error(pthread_mutex_unlock(&iftable_mutex),
+                "ifaddr: Could not unlock 'ifable_mutex'");
     }
-    ifaddr_wait_for_refresh_completion();
-
-    abort_if_error(pthread_mutex_lock(&iftable_mutex),
-            "ifaddr: Could not lock 'ifable_mutex'");
-
-    unsigned int i = 0;
-    while (i != iftable_size && iftable[i].ifindex != ifindex) {
-        ++i;
-    }
-
-    int err = EINVAL;
-    if (i != iftable_size) {
-        *addr_out = iftable[i].addr;
-        err = 0;
-    }
-
-    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-            "ifaddr: Could not unlock 'ifable_mutex'");
 
     return err;
 }

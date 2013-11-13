@@ -35,9 +35,10 @@ using CppUnit::TestFixture;
 
 class IfaddrTest : public TestFixture {
     CPPUNIT_TEST_SUITE(IfaddrTest);
-    CPPUNIT_TEST(testUninitialized);
-    CPPUNIT_TEST(testNormal);
+    CPPUNIT_TEST(testInitialize);
+    CPPUNIT_TEST(testStart);
     CPPUNIT_TEST(testRefresh);
+    CPPUNIT_TEST(testLookup);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -55,35 +56,56 @@ public:
         sigaction(SIGUSR2, &sa, NULL);
     }
 
-    void testUninitialized() {
-        CPPUNIT_ASSERT(ifaddr_start() != 0);
+    void testInitialize() {
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
+        CPPUNIT_ASSERT_EQUAL(EBUSY, ifaddr_initialize(SIGUSR2));
+        ifaddr_finalize();
+        // This MUST succeed again.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
+        ifaddr_finalize();
     }
 
-    void testNormal() {
-        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) == 0);
-        CPPUNIT_ASSERT(ifaddr_initialize(SIGUSR2) != 0);
-        CPPUNIT_ASSERT(ifaddr_start() == 0);
-        CPPUNIT_ASSERT(ifaddr_start() == 0); // Multiple calls are OK.
-        
-        struct in6_addr address;
-        ifaddr_lookup(0, &address);
+    void testStart() {
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This MUST fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_start()));
+        ifaddr_initialize(SIGUSR2);
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
+        // This MUST succeed.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
         ifaddr_finalize();
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This MUST fail again.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_start()));
     }
 
     void testRefresh() {
         CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This must fail.
+                // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
         ifaddr_initialize(SIGUSR2);
         CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This still must fail.
+                // This still MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
         ifaddr_start();
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
         ifaddr_finalize();
         CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This also must fail.
+                // This MUST fail again.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
+    }
+
+    void testLookup() {
+        struct in6_addr addr;
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This MUST fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+        ifaddr_initialize(SIGUSR2);
+        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup(0, &addr));
+        ifaddr_finalize();
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This MUST fail again.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
     }
 
 protected:

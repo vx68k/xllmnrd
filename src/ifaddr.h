@@ -52,7 +52,8 @@ extern int ifaddr_refresh(void);
  * Looks up the address of an interface.
  * This module MUST be initialized and started.
  * @param __ifindex interface index.
- * @param __addr [out] pointer to the address.
+ * @param __addr [out] interface address; if its value is null, no output will
+ * be retrieved.
  * @return 0 if any address is found, 'ENODEV' if no address is found, 'ENXIO'
  * if this module is not started, or any non-zero error number.
  */

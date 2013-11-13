@@ -516,7 +516,9 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     int err = 0;
     if (i != iftable_size) {
-        *addr_out = iftable[i].addr;
+        if (addr_out) {
+            *addr_out = iftable[i].addr;
+        }
     } else {
         err = ENODEV;
     }

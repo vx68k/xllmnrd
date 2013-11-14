@@ -73,7 +73,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     return err;
 }
 
-struct ifaddr_record {
+struct ifaddr_if {
     unsigned int ifindex;
     struct in6_addr addr;
 };
@@ -97,16 +97,16 @@ static int rtnetlink_fd;
 /**
  * Mutex for the interface table.
  */
-static pthread_mutex_t iftable_mutex;
+static pthread_mutex_t if_mutex;
 
 /**
  * Pointer to the interface change handler.
  */
-static ifaddr_change_handler change_handler;
+static ifaddr_change_handler if_change_handler;
 
-static const size_t iftable_capacity = 32;
-static size_t iftable_size;
-static struct ifaddr_record iftable[32]; // TODO: Allocate dynamically.
+static const size_t if_table_capacity = 32;
+static size_t if_table_size;
+static struct ifaddr_if if_table[32]; // TODO: Allocate dynamically.
 
 /**
  * Mutex for refresh_not_in_progress.
@@ -154,32 +154,32 @@ static inline int ifaddr_started(void) {
 
 static inline void ifaddr_add_interface(unsigned int ifindex,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&iftable_mutex),
-            "ifaddr: Could not lock 'iftable_mutex'");
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 
     unsigned int i = 0;
-    while (i != iftable_size && iftable[i].ifindex != ifindex) {
+    while (i != if_table_size && if_table[i].ifindex != ifindex) {
         ++i;
     }
-    if (i == iftable_size) {
-        if (iftable_size == iftable_capacity) {
+    if (i == if_table_size) {
+        if (if_table_size == if_table_capacity) {
             abort(); // TODO: Think later.
         }
-        ++iftable_size;
+        ++if_table_size;
     }
-    iftable[i].ifindex = ifindex;
-    iftable[i].addr = *addr;
+    if_table[i].ifindex = ifindex;
+    if_table[i].addr = *addr;
 
-    if (change_handler) {
+    if (if_change_handler) {
         struct ifaddr_change change = {
             .type = IFADDR_ADDED,
             .ifindex = ifindex,
         };
-        (*change_handler)(&change);
+        (*if_change_handler)(&change);
     }
 
-    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-            "ifaddr: Could not lock 'iftable_mutex'");
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 
     char ifname[IF_NAMESIZE];
     char str[INET6_ADDRSTRLEN];
@@ -190,30 +190,30 @@ static inline void ifaddr_add_interface(unsigned int ifindex,
 
 static inline void ifaddr_remove_interface(unsigned int ifindex,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&iftable_mutex),
-            "ifaddr: Could not lock 'iftable_mutex'");
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 
     unsigned int i = 0;
-    while (i != iftable_size && iftable[i].ifindex != ifindex) {
+    while (i != if_table_size && if_table[i].ifindex != ifindex) {
         ++i;
     }
-    if (i != iftable_size && IN6_ARE_ADDR_EQUAL(&iftable[i].addr, addr)) {
-        --iftable_size;
-        while (i != iftable_size) {
-            iftable[i] = iftable[i + 1];
+    if (i != if_table_size && IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
+        --if_table_size;
+        while (i != if_table_size) {
+            if_table[i] = if_table[i + 1];
             ++i;
         }
 
-        if (change_handler) {
+        if (if_change_handler) {
             struct ifaddr_change change = {
                 .type = IFADDR_REMOVED,
                 .ifindex = ifindex,
             };
-            (*change_handler)(&change);
+            (*if_change_handler)(&change);
         }
 
-        abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-                "ifaddr: Could not unlock 'iftable_mutex'");
+        abort_if_error(pthread_mutex_unlock(&if_mutex),
+                "ifaddr: Could not unlock 'if_mutex'");
 
         char ifname[IF_NAMESIZE];
         char str[INET6_ADDRSTRLEN];
@@ -221,8 +221,8 @@ static inline void ifaddr_remove_interface(unsigned int ifindex,
         inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
         syslog(LOG_INFO, "ifaddr: Removed interface %s = %s", ifname, str);
     } else {
-        abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-                "ifaddr: Could not unlock 'iftable_mutex'");
+        abort_if_error(pthread_mutex_unlock(&if_mutex),
+                "ifaddr: Could not unlock 'if_mutex'");
     }
 }
 
@@ -281,14 +281,14 @@ int ifaddr_initialize(int sig) {
         return EBUSY;
     }
     interrupt_signo = sig;
-    change_handler = NULL;
-    iftable_size = 0;
+    if_change_handler = NULL;
+    if_table_size = 0;
     started = false;
     refresh_not_in_progress = true;
 
     int err = open_rtnetlink(&rtnetlink_fd);
     if (err == 0) {
-        err = pthread_mutex_init(&iftable_mutex, NULL);
+        err = pthread_mutex_init(&if_mutex, NULL);
         if (err == 0) {
             err = pthread_mutex_init(&refresh_mutex, 0);
             if (err == 0) {
@@ -301,7 +301,7 @@ int ifaddr_initialize(int sig) {
             }
             pthread_mutex_destroy(&refresh_mutex); // Any error is ignored.
         }
-        pthread_mutex_destroy(&iftable_mutex); // Any error is ignored.
+        pthread_mutex_destroy(&if_mutex); // Any error is ignored.
 
         close(rtnetlink_fd);
     }
@@ -322,8 +322,8 @@ void ifaddr_finalize(void) {
 
         pthread_cond_destroy(&refresh_cond);
         pthread_mutex_destroy(&refresh_mutex);
-        abort_if_error(pthread_mutex_destroy(&iftable_mutex),
-                "ifaddr: Could not destroy 'iftable_mutex'");
+        abort_if_error(pthread_mutex_destroy(&if_mutex),
+                "ifaddr: Could not destroy 'if_mutex'");
         close(rtnetlink_fd);
     }
 }
@@ -335,16 +335,16 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     }
 
     // This lock might be unnecessary, but it looks safer.
-    abort_if_error(pthread_mutex_lock(&iftable_mutex),
-            "ifaddr: Could not lock 'iftable_mutex'");
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 
     if (old_handler_out) {
-        *old_handler_out = change_handler;
+        *old_handler_out = if_change_handler;
     }
-    change_handler = handler;
+    if_change_handler = handler;
 
-    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-            "ifaddr: Could not lock 'iftable_mutex'");
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 
     return 0;
 }
@@ -506,11 +506,11 @@ int ifaddr_refresh(void) {
 
     int err = 0;
     if (refresh_not_in_progress) {
-        abort_if_error(pthread_mutex_lock(&iftable_mutex),
-                "ifaddr: Could not lock 'iftable_mutex'");
-        iftable_size = 0;
-        abort_if_error(pthread_mutex_unlock(&iftable_mutex),
-                "ifaddr: Could not unlock 'iftable_mutex'");
+        abort_if_error(pthread_mutex_lock(&if_mutex),
+                "ifaddr: Could not lock 'if_mutex'");
+        if_table_size = 0;
+        abort_if_error(pthread_mutex_unlock(&if_mutex),
+                "ifaddr: Could not unlock 'if_mutex'");
 
         unsigned char buf[128];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
@@ -550,24 +550,24 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     ifaddr_wait_for_refresh_completion();
 
-    abort_if_error(pthread_mutex_lock(&iftable_mutex),
+    abort_if_error(pthread_mutex_lock(&if_mutex),
             "ifaddr: Could not lock 'ifable_mutex'");
 
     unsigned int i = 0;
-    while (i != iftable_size && iftable[i].ifindex != ifindex) {
+    while (i != if_table_size && if_table[i].ifindex != ifindex) {
         ++i;
     }
 
     int err = 0;
-    if (i != iftable_size) {
+    if (i != if_table_size) {
         if (addr_out) {
-            *addr_out = iftable[i].addr;
+            *addr_out = if_table[i].addr;
         }
     } else {
         err = ENODEV;
     }
 
-    abort_if_error(pthread_mutex_unlock(&iftable_mutex),
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
             "ifaddr: Could not unlock 'ifable_mutex'");
 
     return err;

@@ -297,11 +297,11 @@ int ifaddr_initialize(int sig) {
                     initialized = true;
                     return 0;
                 }
-                pthread_cond_destroy(&refresh_cond); // Any error is ignored.
+                pthread_cond_destroy(&refresh_cond);
             }
-            pthread_mutex_destroy(&refresh_mutex); // Any error is ignored.
+            pthread_mutex_destroy(&refresh_mutex);
         }
-        pthread_mutex_destroy(&if_mutex); // Any error is ignored.
+        pthread_mutex_destroy(&if_mutex);
 
         close(rtnetlink_fd);
     }
@@ -315,16 +315,22 @@ void ifaddr_finalize(void) {
         if (ifaddr_started()) {
             terminated = true;
             if (interrupt_signo != 0) {
-                pthread_kill(worker_thread, interrupt_signo);
+                pthread_kill(worker_thread, interrupt_signo); // TODO: Check for an error.
             }
-            pthread_join(worker_thread, NULL);
+            pthread_join(worker_thread, NULL); // TODO: Check for an error.
         }
 
-        pthread_cond_destroy(&refresh_cond);
-        pthread_mutex_destroy(&refresh_mutex);
+        abort_if_error(pthread_cond_destroy(&refresh_cond),
+                "ifaddr: Could not destroy 'refresh_cond'");
+        abort_if_error(pthread_mutex_destroy(&refresh_mutex),
+                "ifaddr: Could not destroy 'refresh_mutex'");
         abort_if_error(pthread_mutex_destroy(&if_mutex),
                 "ifaddr: Could not destroy 'if_mutex'");
-        close(rtnetlink_fd);
+        if (close(rtnetlink_fd) != 0) {
+            syslog(LOG_CRIT, "ifaddr: Could not close 'rtnetlink_fd': %s",
+                    strerror(errno));
+            abort();
+        }
     }
 }
 
@@ -368,7 +374,8 @@ int ifaddr_start(void) {
         if (err == 0) {
             err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
             // Restores the signal mask before proceeding.
-            pthread_sigmask(SIG_SETMASK, &oset, 0); // Any error is ignored.
+            abort_if_error(pthread_sigmask(SIG_SETMASK, &oset, 0),
+                    "ifaddr: Could not restore the signal mask");
 
             if (err == 0) {
                 started = true;

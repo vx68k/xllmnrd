@@ -1,5 +1,5 @@
 /*
- * Experimental LLMNR responder daemon
+ * IPv6 LLMNR responder daemon (main)
  * Copyright (C) 2013  Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -41,11 +41,22 @@
 #define EX_USAGE 64
 #endif
 
+#ifndef _
+#define _(message) (message)
+#endif
+
 struct program_options {
     bool foreground;
 };
 
 static int parse_options(int, char *[*], struct program_options *);
+
+/**
+ * Shows the command help.
+ * @param __name command name
+ */
+static void show_help(const char *__name);
+
 static void handle_signal_to_terminate(int __sig);
 
 static volatile sig_atomic_t caught_signal;
@@ -131,8 +142,6 @@ int parse_options(int argc, char *argv[argc + 1],
         {0, 0, 0, 0},
     };
 
-    bool help = false;
-    bool version = false;
     int opt;
     do {
         opt = getopt_long(argc, argv, "f", longopts, 0);
@@ -141,26 +150,28 @@ int parse_options(int argc, char *argv[argc + 1],
             options->foreground = true;
             break;
         case OPT_HELP:
-            help = true;
-            break;
+            show_help(basename(argv[0]));
+            exit(EXIT_SUCCESS);
         case OPT_VERSION:
-            version = true;
-            break;
+            printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
+            exit(EXIT_SUCCESS);
         case '?':
             exit(EX_USAGE);
         }
     } while (opt >= 0);
 
-    if (version) {
-        printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-        return -1;
-    }
-    if (help) {
-        // TODO: Show help.
-        fputs("No help yet.\n", stderr);
-        return -1;
-    }
     return 0;
+}
+
+void show_help(const char *restrict name) {
+    printf(_("Usage: %s [OPTIONS]...\n"), name);
+    printf(_("Respond to IPv6 LLMNR queries.\n"));
+    putchar('\n');
+    printf(_("  -f, --foreground      run in foreground\n"));
+    printf(_("      --help            display this help and exit\n"));
+    printf(_("      --version         output version information and exit\n"));
+    putchar('\n');
+    printf(_("Report bugs to %s\n"), PACKAGE_BUGREPORT);
 }
 
 /*

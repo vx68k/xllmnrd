@@ -57,6 +57,11 @@ static int parse_options(int, char *[*], struct program_options *);
  */
 static void show_help(const char *__name);
 
+/**
+ * Shows the version information.
+ */
+static void show_version(void);
+
 static void handle_signal_to_terminate(int __sig);
 
 static volatile sig_atomic_t caught_signal;
@@ -153,7 +158,7 @@ int parse_options(int argc, char *argv[argc + 1],
             show_help(basename(argv[0]));
             exit(EXIT_SUCCESS);
         case OPT_VERSION:
-            printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
+            show_version();
             exit(EXIT_SUCCESS);
         case '?':
             exit(EX_USAGE);
@@ -172,6 +177,13 @@ void show_help(const char *restrict name) {
     printf(_("      --version         output version information and exit\n"));
     putchar('\n');
     printf(_("Report bugs to %s\n"), PACKAGE_BUGREPORT);
+}
+
+void show_version(void) {
+    printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
+    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), "2013");
+    printf(_("This is free software: you are free to change and redistribute it.\n" \
+            "There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
 /*

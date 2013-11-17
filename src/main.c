@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -45,11 +46,26 @@
 #define _(message) (message)
 #endif
 
+#ifndef COPYRIGHT_YEARS
+#define COPYRIGHT_YEARS "2013"
+#endif
+
 struct program_options {
     bool foreground;
 };
 
-static int parse_options(int, char *[*], struct program_options *);
+/**
+ * Parses command-line arguments for options.
+ * If an option that causes an immediate exit is used, this function does not
+ * return but terminates this program with a zero exit status.
+ * If an invalid option is used, this function does not return but prints a
+ * diagnostic message and terminates this program with a non-zero exit status.
+ * @param __argc number of command-line arguments
+ * @param __argv pointer array of command-line arguments
+ * @param __options [out] parsed options.
+ */
+static void parse_arguments(int __argc, char *__argv[__argc + 1],
+        struct program_options *__options);
 
 /**
  * Shows the command help.
@@ -83,60 +99,66 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
 }
 
 int main(int argc, char *argv[argc + 1]) {
+    setlocale(LC_ALL, "");
+
     struct program_options options = {
         .foreground = false,
     };
-    if (parse_options(argc, argv, &options) >= 0) {
-        openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
+    parse_arguments(argc, argv, &options);
 
-        int err = ifaddr_initialize(SIGUSR2);
-        if (err != 0) {
-            syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
-                    strerror(err));
-            exit(EXIT_FAILURE);
-        }
-        atexit(&ifaddr_finalize);
+    // Set the locale back to the default to keep logs untranslated.
+    setlocale(LC_ALL, "POSIX");
 
-        if (llmnr_responder_initialize(0) < 0) {
-            syslog(LOG_ERR, "Could not create a responder object: %m");
-            syslog(LOG_INFO, "Exiting");
-            exit(EXIT_FAILURE);
-        }
+    openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
 
-        if (options.foreground || daemon(false, false) == 0) {
-            sigset_t mask;
-            sigemptyset(&mask);
-            sigaddset(&mask, SIGINT);
-            sigaddset(&mask, SIGTERM);
+    int err = ifaddr_initialize(SIGUSR2);
+    if (err != 0) {
+        syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
+                strerror(err));
+        exit(EXIT_FAILURE);
+    }
+    atexit(&ifaddr_finalize);
 
-            set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
-            set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
+    if (llmnr_responder_initialize(0) < 0) {
+        syslog(LOG_ERR, "Could not create a responder object: %m");
+        syslog(LOG_INFO, "Exiting");
+        exit(EXIT_FAILURE);
+    }
 
-            ifaddr_start();
-            llmnr_responder_run();
-        }
+    if (options.foreground || daemon(false, false) == 0) {
+        sigset_t mask;
+        sigemptyset(&mask);
+        sigaddset(&mask, SIGINT);
+        sigaddset(&mask, SIGTERM);
 
-        llmnr_responder_finalize();
+        set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
+        set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
 
-        if (caught_signal != 0) {
-            // Resets the handler to default and reraise the same signal.
+        ifaddr_start();
+        llmnr_responder_run();
+    }
 
-            ifaddr_finalize(); // The exit functions will not be called.
+    llmnr_responder_finalize();
 
-            const struct sigaction default_action = {
-                .sa_handler = SIG_DFL,
-            };
-            if (sigaction(caught_signal, &default_action, 0) == 0) {
-                raise(caught_signal);
-            }
+    if (caught_signal != 0) {
+        // Resets the handler to default and reraise the same signal.
+
+        ifaddr_finalize(); // The exit functions will not be called.
+
+        const struct sigaction default_action = {
+            .sa_handler = SIG_DFL,
+        };
+        if (sigaction(caught_signal, &default_action, 0) == 0) {
+            raise(caught_signal);
         }
     }
-    return 0;
+
+    return EXIT_SUCCESS;
 }
 
-int parse_options(int argc, char *argv[argc + 1],
+void parse_arguments(int argc, char *argv[argc + 1],
         struct program_options *restrict options) {
-    enum opt {
+    enum opt_char {
         OPT_VERSION = UCHAR_MAX + 1,
         OPT_HELP,
     };
@@ -155,17 +177,16 @@ int parse_options(int argc, char *argv[argc + 1],
             options->foreground = true;
             break;
         case OPT_HELP:
-            show_help(basename(argv[0]));
+            show_help(argv[0]);
             exit(EXIT_SUCCESS);
         case OPT_VERSION:
             show_version();
             exit(EXIT_SUCCESS);
         case '?':
+            printf(_("Try '%s --help' for more information.\n"), argv[0]);
             exit(EX_USAGE);
         }
     } while (opt >= 0);
-
-    return 0;
 }
 
 void show_help(const char *restrict name) {
@@ -181,7 +202,7 @@ void show_help(const char *restrict name) {
 
 void show_version(void) {
     printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
-    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), "2013");
+    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
     printf(_("This is free software: you are free to change and redistribute it.\n" \
             "There is NO WARRANTY, to the extent permitted by law.\n"));
 }

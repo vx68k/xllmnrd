@@ -43,9 +43,9 @@
  * @param e value to be checked for an error.
  * @param message error message.
  */
-static inline void abort_if_error(int e, const char *restrict message) {
-    if (e != 0) {
-        syslog(LOG_CRIT, "%s: %s", message, strerror(e));
+static inline void abort_if_error(int err, const char *restrict message) {
+    if (err != 0) {
+        syslog(LOG_CRIT, "%s: %s", message, strerror(err));
         abort();
     }
 }

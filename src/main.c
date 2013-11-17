@@ -60,8 +60,8 @@ struct program_options {
  * return but terminates this program with a zero exit status.
  * If an invalid option is used, this function does not return but prints a
  * diagnostic message and terminates this program with a non-zero exit status.
- * @param __argc number of command-line arguments
- * @param __argv pointer array of command-line arguments
+ * @param __argc number of command-line arguments.
+ * @param __argv pointer array of command-line arguments.
  * @param __options [out] parsed options.
  */
 static void parse_arguments(int __argc, char *__argv[__argc + 1],
@@ -69,7 +69,7 @@ static void parse_arguments(int __argc, char *__argv[__argc + 1],
 
 /**
  * Shows the command help.
- * @param __name command name
+ * @param __name command name.
  */
 static void show_help(const char *__name);
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[argc + 1]) {
     };
     parse_arguments(argc, argv, &options);
 
-    // Set the locale back to the default to keep logs untranslated.
+    // Sets the locale back to the default to keep logs untranslated.
     setlocale(LC_ALL, "POSIX");
 
     openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);

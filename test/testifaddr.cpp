@@ -29,6 +29,7 @@ extern "C" {
 #include <cppunit/TestFixture.h>
 #include <netinet/in.h>
 #include <csignal>
+#include <cerrno>
 
 using namespace std;
 using CppUnit::TestFixture;

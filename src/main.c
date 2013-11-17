@@ -233,9 +233,8 @@ void show_version(void) {
             "There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
+// We expect a warning about unused parameter 'sig' in this function.
 void discard_signal(int sig) {
-    // Any argument about unused parameters SHOULD be ignored.
-    sig = sig;
     // This function does nothing.
 }
 

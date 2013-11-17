@@ -58,4 +58,13 @@ static inline int llmnr_query_is_valid(
     return 0;
 }
 
+/**
+ * Returns a pointer to the first data in a LLMNR packet.
+ * @param header pointer to a LLMNR header.
+ * @return pointer to the first data in the packet.
+ */
+static inline void *llmnr_data(struct llmnr_header *header) {
+    return (char *) header + 12;
+}
+
 #endif

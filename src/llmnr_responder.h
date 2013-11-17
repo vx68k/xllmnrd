@@ -19,6 +19,7 @@
 #ifndef LLMNR_RESPONDER_H
 #define	LLMNR_RESPONDER_H 1
 
+#include "ifaddr.h" /* struct ifaddr_change */
 #include <netinet/in.h> /* in_port_t */
 
 /*
@@ -49,5 +50,12 @@ int llmnr_responder_run(void);
  * This function is atomic regarding signals.
  */
 extern void llmnr_responder_terminate(void);
+
+/**
+ * Handles interface address changes.
+ * @param __change [in] change notification.
+ */
+extern void llmnr_responder_handle_ifaddr_change(
+        const struct ifaddr_change *__change);
 
 #endif

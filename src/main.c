@@ -78,6 +78,12 @@ static void show_help(const char *__name);
  */
 static void show_version(void);
 
+/**
+ * Do nothing on a signal.
+ * @param __sig signal number.
+ */
+static void discard_signal(int __sig);
+
 static void handle_signal_to_terminate(int __sig);
 
 static volatile sig_atomic_t caught_signal;
@@ -86,11 +92,16 @@ static volatile sig_atomic_t caught_signal;
  * Sets the handler for a signal and makes a log entry if it failed.
  */
 static inline int set_signal_handler(int sig, void (*handler)(int __sig),
-        sigset_t mask) {
-    const struct sigaction action = {
+        const sigset_t *restrict mask) {
+    struct sigaction action = {
         .sa_handler = handler,
-        .sa_mask = mask,
     };
+    if (mask) {
+        action.sa_mask = *mask;
+    } else {
+        sigemptyset(&action.sa_mask);
+    }
+
     int ret = sigaction(sig, &action, 0);
     if (ret != 0) {
         syslog(LOG_ERR, "Failed to set handler for %s", strsignal(sig));
@@ -110,6 +121,9 @@ int main(int argc, char *argv[argc + 1]) {
     setlocale(LC_ALL, "POSIX");
 
     openlog(basename(argv[0]), LOG_PERROR, LOG_DAEMON);
+
+    // Sets the handler for SIGUSR2 to interrupt a blocking system call.
+    set_signal_handler(SIGUSR2, &discard_signal, NULL);
 
     int err = ifaddr_initialize(SIGUSR2);
     if (err != 0) {
@@ -131,8 +145,8 @@ int main(int argc, char *argv[argc + 1]) {
         sigaddset(&mask, SIGINT);
         sigaddset(&mask, SIGTERM);
 
-        set_signal_handler(SIGINT, handle_signal_to_terminate, mask);
-        set_signal_handler(SIGTERM, handle_signal_to_terminate, mask);
+        set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
+        set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
         ifaddr_start();
         llmnr_responder_run();
@@ -205,6 +219,12 @@ void show_version(void) {
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
     printf(_("This is free software: you are free to change and redistribute it.\n" \
             "There is NO WARRANTY, to the extent permitted by law.\n"));
+}
+
+void discard_signal(int sig) {
+    // Any argument about unused parameters SHOULD be ignored.
+    sig = sig;
+    // This function does nothing.
 }
 
 /*

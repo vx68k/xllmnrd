@@ -1,4 +1,6 @@
-This file describes major changes and other important notes in each release of xllmnrd.
+<!-- -*-Markdown-*- --> 
+This file describes major changes and other important notes in each release of
+xllmnrd.
 
 # Version 1.0y1
 
@@ -6,9 +8,10 @@ This release is the first milestone for version 1.0.0.
 
 ## New features
 
-* It now joins the LLMNR multicast group automatically for each network interface that has a link-scope IPv6 address.
+* It now joins the LLMNR multicast group automatically for each network
+  interface that has a link-scope IPv6 address.
 
 ## Known limitations
 
-* It _does not_ respond yet but logs each received query via syslog.
-  This feature is planned in the next milestone.
+* It _does not_ respond yet but logs each received query via syslog.  This
+  feature is planned to be implemented in the next release.

@@ -1,6 +1,5 @@
 <!-- -*-Markdown-*- --> 
-This file describes major changes and other important notes in each release of
-xllmnrd.
+This file describes major changes and other notes in each release.
 
 # Version 1.0y1
 
@@ -13,5 +12,5 @@ This release is the first milestone for version 1.0.0.
 
 ## Known limitations
 
-* It _does not_ respond yet but logs each received query via syslog.  This
-  feature is planned to be implemented in the next release.
+* It _does not_ respond yet but logs each received query via syslog.  The
+  working responding code is planned to be implemented in the next release.

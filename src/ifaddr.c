@@ -26,9 +26,7 @@
 #if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
-#include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
-#include <net/if.h> /* if_indextoname */
 #include <sys/socket.h>
 #include <pthread.h>
 #include <syslog.h>
@@ -45,9 +43,9 @@
  * @param e value to be checked for an error.
  * @param message error message.
  */
-static inline void abort_if_error(int e, const char *restrict message) {
-    if (e != 0) {
-        syslog(LOG_CRIT, "%s: %s", message, strerror(e));
+static inline void abort_if_error(int err, const char *restrict message) {
+    if (err != 0) {
+        syslog(LOG_CRIT, "%s: %s", message, strerror(err));
         abort();
     }
 }
@@ -166,26 +164,30 @@ static inline void ifaddr_add_interface(unsigned int ifindex,
             abort(); // TODO: Think later.
         }
         ++if_table_size;
-    }
-    if_table[i].ifindex = ifindex;
-    if_table[i].addr = *addr;
 
-    if (if_change_handler) {
-        struct ifaddr_change change = {
-            .type = IFADDR_ADDED,
-            .ifindex = ifindex,
-        };
-        (*if_change_handler)(&change);
+        if_table[i].ifindex = ifindex;
+        if_table[i].addr = *addr;
+        if (if_change_handler) {
+            struct ifaddr_change change = {
+                .type = IFADDR_ADDED,
+                .ifindex = ifindex,
+            };
+            (*if_change_handler)(&change);
+        }
+    } else if (!IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
+        // Handles an address-only change.
+        if_table[i].addr = *addr;
+        if (if_change_handler) {
+            struct ifaddr_change change = {
+                .type = IFADDR_ADDED,
+                .ifindex = ifindex,
+            };
+            (*if_change_handler)(&change);
+        }        
     }
 
     abort_if_error(pthread_mutex_unlock(&if_mutex),
             "ifaddr: Could not lock 'if_mutex'");
-
-    char ifname[IF_NAMESIZE];
-    char str[INET6_ADDRSTRLEN];
-    if_indextoname(ifindex, ifname);
-    inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
-    syslog(LOG_INFO, "ifaddr: Added interface %s = %s", ifname, str);
 }
 
 static inline void ifaddr_remove_interface(unsigned int ifindex,
@@ -211,19 +213,10 @@ static inline void ifaddr_remove_interface(unsigned int ifindex,
             };
             (*if_change_handler)(&change);
         }
-
-        abort_if_error(pthread_mutex_unlock(&if_mutex),
-                "ifaddr: Could not unlock 'if_mutex'");
-
-        char ifname[IF_NAMESIZE];
-        char str[INET6_ADDRSTRLEN];
-        if_indextoname(ifindex, ifname);
-        inet_ntop(AF_INET6, addr, str, INET6_ADDRSTRLEN);
-        syslog(LOG_INFO, "ifaddr: Removed interface %s = %s", ifname, str);
-    } else {
-        abort_if_error(pthread_mutex_unlock(&if_mutex),
-                "ifaddr: Could not unlock 'if_mutex'");
     }
+
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Could not unlock 'if_mutex'");
 }
 
 /**

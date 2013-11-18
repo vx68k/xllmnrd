@@ -235,7 +235,7 @@ void show_version(void) {
 
 // We expect a warning about unused parameter 'sig' in this function.
 void discard_signal(int sig) {
-    // This function does nothing.
+    // Does nothing.
 }
 
 /*

@@ -1,19 +1,16 @@
-This directory contains the source code for an experimental IPv6 LLMNR
-responder for GNU/Linux operating systems.  It makes it possible for Microsoft
-Windows clients to get the IPv6 addresses of local GNU/Linux servers without
-any DNS configuration.  It is intended to be used on an unmanaged small/home
-network to improve interoperability between GNU/Linux and Microsoft Windows.
-For more information, visit <https://bitbucket.org/kazssym/xllmnrd/wiki>.
+This package contains the source code for xllmnrd.
 
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License.  You should have received a copy
-of it in the 'COPYING' file.
+xllmnrd is an IPv6 LLMNR responder daemon for GNU/Linux operating systems,
+which allows Microsoft Windows clients to get the IPv6 address of a GNU/Linux
+server on the same local network _without any DNS configuration_.
 
+xllmnrd is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License.  You should have received a copy of
+it as the file 'COPYING' in this directory.
 
-Installation
-------------
+# Installation
 
-For generic installation instructions, see the 'INSTALL' file.  If you have
-got a copy of this program from our repository, you must first generate a
-configure script and Makefile templates before your installation.  Just type
-'autoreconf --install' and see if it can generate them successfully.
+For generic installation instructions, read the file 'INSTALL' in this
+directory.  If you are also planning to run the included test suite with GCC,
+you will have to set the environment variable 'CXX' to 'g++ -std=gnu++11' or
+'g++ -std=gnu++0x' before installation, depending on the compiler version.

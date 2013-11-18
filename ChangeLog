@@ -1,4 +1,259 @@
+2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* README:
+	Updated the file contents for release (see issue #13).
+	[628eeeeef5f9] [tip] <release>
+
+	* NEWS:
+	Removed the Emacs mode line.
+	[d6d823ab4fcd] <release>
+
+2013-11-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Modified a comment.
+	[256a9956db95] <release>
+
+	* src/ifaddr.c:
+	Renamed a variable.
+	[4e45de9a2ae6] <release>
+
+2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Edited the file contents.
+	[19358ba185cd] <release>
+
+	* NEWS:
+	Reformatted the file contents (see issue #13).
+	[f850029c7961] <release>
+
+	* NEWS:
+	Updated the 'NEWS' contents. See issue #13.
+	[049017406837] <release>
+
+2013-11-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Reduced verbose logs and cleaned up code.
+	[9e2f2a4865f2] <release>
+
+	* src/main.c:
+	Removed no-op code added to suppress a warning.
+	[1e340a6b1c26]
+
+	* src/llmnr_responder.c, src/llmnr_responder.h:
+	Added an ifaddr_change handler, and fixed issue #8.
+	[f5b1a788e501] <feature/responder>
+
+	* src/main.c:
+	Changed the syslog settings.
+	[2aa1fd5aaa4f]
+
+	* src/main.c:
+	Added the handler for SIGUSR2, and fixed issue #16.
+	[01e781cb15ce]
+
+	* src/main.c:
+	Just modified comments.
+	[269a2ef01aab]
+
+	* configure.ac, src/main.c:
+	Changed the option parsing once more taking care of locale changes.
+	[7651d81cadbc]
+
+	* test/testifaddr.cpp:
+	Included <cerrno>.
+	[31204d552fc1]
+
+2013-11-16  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Modified the version information output.
+	[0294839a2a00]
+
+	* configure.ac, src/main.c:
+	Modified some option handling, fixing issue #6.
+	[96877c8283bd]
+
+2013-11-14  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/llmnr_packet.h:
+	Added new function 'llmnr_data'.
+	[c15c88bed435] <feature/responder>
+
+	* src/ifaddr.c:
+	Modified error handling.
+	[fb6f61bcd8bc]
+
+	* src/ifaddr.c:
+	Renamed variables for clarity.
+	[a484cba1d309]
+
+2013-11-13  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h, test/testifaddr.cpp:
+	Implemented interface change notification.
+	[5909dbd30c40] <feature/ifaddr>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Allowed the second argument of 'ifaddr_lookup' to be null.
+	[266e54ae2a67] <feature/ifaddr>
+
+	* src/ifaddr.c, src/ifaddr.h, test/testifaddr.cpp:
+	Made the ifaddr interface clearer.
+	[3fcc2937e0aa] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Changed several error numbers.
+	[0e81bd70f2e3] <feature/ifaddr>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Modified 'ifaddr_lookup' regarding error handling.
+	[fc96411f02d8] <feature/ifaddr>
+
+	* test/testifaddr.cpp:
+	Updated the unit tests for ifaddr.
+	[0384ed9554e3] <feature/ifaddr>
+
+2013-11-12  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/llmnr_responder.c:
+	Added code to 'llmnr_responder_handle_query'.
+	[900f14f06132] <feature/responder>
+
+	* src/llmnr_packet.h:
+	Used uint_fast16_t for a local variable.
+	[8f212b8f2a64] <feature/responder>
+
+	* src/llmnr_responder.c:
+	Renamed a local variable.
+	[8d12ce8f57c5] <feature/responder>
+
+	* src/Makefile.am:
+	Fixed forgotten rename in the Makefile.
+	[e29f1baecd06] <feature/responder>
+
+	* src/llmnr_header.h, src/llmnr_packet.h, src/llmnr_responder.c:
+	Renamed file 'llmnr_header.h' to 'llmnr_packet.h'. Renamed function
+	'llmnr_header_is_valid_query' to 'llmnr_is_valid_query'.
+	[2a1b0c29d224] <feature/responder>
+
+	* src/llmnr_responder.c, src/llmnr_responder.h, src/main.c:
+	Modified the module initialization and finalization.
+	[3f6e8629e5a3] <feature/responder>
+
+	* src/llmnr_responder.c:
+	Added new function 'llmnr_responder_handle_query'.
+	[838603487d40] <feature/responder>
+
+	* src/llmnr_responder.c:
+	Rewrote 'llmnr_open_udp_socket' with a rename to 'open_udp6'
+	[399a1585203e] <feature/responder>
+
+	* src/llmnr_responder.c:
+	Defined IN6ADDR_LLMNR_INIT as a macro.
+	[1e9fd3be96e8] <feature/responder>
+
+	* src/llmnr_responder.c, src/main.c:
+	Modified the config.h inclusion to angle brackets.
+	[d0de0857ab1a]
+
+2013-11-11  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* .hgignore:
+	Modified the Mercurial ignore patterns.
+	[24161f0df942]
+
+	* test/testifaddr.cpp:
+	Reorganized tests.
+	[43a858c62433] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Implemented 'ifaddr_lookup'.
+	[2341ecce78cc] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Added a mutex to synchronize accesses to the interface table.
+	[8f0bfe1233a1] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Suppressed log output when an interface address is not actually
+	removed.
+	[5c337d7cd754] <feature/ifaddr>
+
+2013-11-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Made the interface table.
+	[fbcff6ab151e] <feature/ifaddr>
+
+	* test/Makefile.am, test/testmain.cpp:
+	Changed to make the CppUnit output in a separate XML file.
+	[0b28e0a190c5]
+
+	* test/testmain.cpp:
+	Changed the output to XML.
+	[dad36b1c8a75]
+
+2013-11-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added a restrict qualifier to the second argument of
+	'abort_if_error'.
+	[421dd055f676] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Changed the signature of 'open_rtnetlink'.
+	[095124aa0d96] <feature/ifaddr>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Renamed the argument of 'ifaddr_initialize'.
+	[c818f6b56b7d] <feature/ifaddr>
+
+	* src/ifaddr.c, test/testifaddr.cpp:
+	Added two helper functions for thread synchronization.
+	[12e3b432430c] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Moved code to clear the 'terminated' flag.
+	[cbe76cd52c7d] <feature/ifaddr>
+
+	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
+	Changed 'ifaddr_refresh' to return an error number on failure.
+	[090bb2d6ef8e] <feature/ifaddr>
+
 2013-11-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Made <linux/rtnetlink.h> be included conditionally.
+	[3a5f6c76238c]
+
+2013-11-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
+	Splitted the start of the worker thread into a new function.
+	[892ead4002bb] <feature/ifaddr>
+
+2013-11-06  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Changed the version number for upcoming milestone 1.0y1.
+	[f5f6e09e08fc]
+
+2013-11-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* ChangeLog:
+	Updated from the revision history.
+	[33e30aaae9e3]
+
+	* src/ifaddr.c:
+	Moved `open_rtnetlink` to make it inline.
+	[584180bff739] <feature/ifaddr>
+
+	* src/ifaddr.c:
+	Excluded <limits.h>.
+	[674df1e4eb6e] <feature/ifaddr>
 
 	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
 	Added code to make the worker thread terminated properly to fix

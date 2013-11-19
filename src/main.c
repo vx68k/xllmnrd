@@ -38,6 +38,10 @@
 #include <limits.h>
 #include <stdbool.h>
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 // We just ignore 'LOG_PERROR' if it is not defined.
 #ifndef LOG_PERROR
 #define LOG_PERROR 0
@@ -92,6 +96,26 @@ static void discard_signal(int __sig);
 static void handle_signal_to_terminate(int __sig);
 
 static volatile sig_atomic_t caught_signal;
+
+/**
+ * Sets the host name of the LLMNR responder.
+ */
+static inline void set_host_name(void) {
+    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
+    if (host_name_max < 0) {
+        host_name_max = HOST_NAME_MAX;
+    } else if (host_name_max > 255) {
+        // Avoids allocation overflow.
+        host_name_max = 255;
+    }
+
+    char host_name[host_name_max + 1];
+    if (gethostname(host_name, host_name_max + 1) != 0) {
+        syslog(LOG_CRIT, "Failed to get the host name: %s", strerror(errno));
+        abort();
+    }
+    llmnr_responder_set_host_name(host_name);
+}
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.
@@ -150,6 +174,8 @@ int main(int argc, char *argv[argc + 1]) {
         syslog(LOG_INFO, "Exiting");
         exit(EXIT_FAILURE);
     }
+
+    set_host_name();
 
     if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;

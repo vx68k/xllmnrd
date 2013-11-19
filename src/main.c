@@ -216,7 +216,7 @@ void parse_arguments(int argc, char *argv[argc + 1],
 }
 
 void show_help(const char *restrict name) {
-    printf(_("Usage: %s [OPTIONS]...\n"), name);
+    printf(_("Usage: %s [OPTION]...\n"), name);
     printf(_("Respond to IPv6 LLMNR queries.\n"));
     putchar('\n');
     printf(_("  -f, --foreground      run in foreground\n"));

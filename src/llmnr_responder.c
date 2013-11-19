@@ -144,6 +144,11 @@ static bool initialized;
 static int udp6_socket;
 
 /**
+ * First label of the host name in the DNS label format.
+ */
+static uint8_t host_label[1 + LLMNR_LABEL_MAX];
+
+/**
  * Returns true if this module is initialized.
  * @return true if initialized, or false.
  */
@@ -195,6 +200,18 @@ void llmnr_responder_finalize(void) {
 
         close(udp6_socket);
     }
+}
+
+void llmnr_responder_set_host_name(const char *restrict name) {
+    const char *label_end = strchrnul(name, '.');
+    size_t length = label_end - name;
+
+    if (length > LLMNR_LABEL_MAX) {
+        syslog(LOG_WARNING, "Host name truncated");
+        length = LLMNR_LABEL_MAX;
+    }
+    memcpy(host_label + 1, name, length);
+    host_label[0] = length;
 }
 
 int llmnr_responder_run(void) {

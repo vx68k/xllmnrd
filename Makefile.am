@@ -1,6 +1,8 @@
 ## Process this file with automake to produce a Makefile.in.
 
-SUBDIRS = src test
+ACLOCAL_AMFLAGS = -Im4
+
+SUBDIRS = src test po
 
 dist-hook:
 	@rm -f SHA1SUM-t

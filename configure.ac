@@ -6,6 +6,8 @@ AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18.1])
 
 # Checks for programs.
 AC_PROG_CC
@@ -32,5 +34,5 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([atexit setlocale socket strerror])
 
 AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])
 AC_OUTPUT

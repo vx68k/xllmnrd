@@ -25,9 +25,9 @@
 
 #include "ifaddr.h"
 #include "llmnr_packet.h"
+#include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
-#include <net/if.h> /* if_indextoname */
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -73,16 +73,6 @@ static inline int set_options_udp6(int fd) {
         syslog(LOG_WARNING,
                 "Could not set IPV6_UNICAST_HOPS to %d: %s",
                 unicast_hops, strerror(errno));
-    }
-
-    // TODO: Joining must be done later for each interface.
-    const struct ipv6_mreq mr = {
-        .ipv6mr_multiaddr = in6addr_llmnr,
-        .ipv6mr_interface = 0,
-    };
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr,
-            sizeof (struct ipv6_mreq)) < 0) {
-        return errno;
     }
 
     return 0;
@@ -184,10 +174,17 @@ int llmnr_responder_initialize(in_port_t port) {
 
     int err = open_udp6(port, &udp6_socket);
     if (err == 0) {
-        // TODO: Make the socket join the LLMNR multicast group for each
-        // interface.
-        initialized = true;
-        return 0;
+        err = ifaddr_set_change_handler(&llmnr_responder_handle_ifaddr_change, NULL);
+        if (err == 0) {
+            initialized = true;
+            return 0;
+        }
+
+        if (close(udp6_socket) != 0) {
+            syslog(LOG_CRIT, "Failed to close 'udp6_socket': %s",
+                    strerror(errno));
+            abort();
+        }
     }
     return err;
 }
@@ -233,6 +230,47 @@ int llmnr_responder_run(void) {
 
 void llmnr_responder_terminate(void) {
     responder_terminated = true;
+}
+
+void llmnr_responder_handle_ifaddr_change(
+        const struct ifaddr_change *restrict change) {
+    if (llmnr_responder_initialized()) {
+        if (change->ifindex != 0) {
+            const struct ipv6_mreq mr = {
+                .ipv6mr_multiaddr = in6addr_llmnr,
+                .ipv6mr_interface = change->ifindex,
+            };
+
+            char ifname[IF_NAMESIZE];
+            if_indextoname(change->ifindex, ifname);
+
+            switch (change->type) {
+            case IFADDR_ADDED:
+                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+                        &mr, sizeof (struct ipv6_mreq)) == 0) {
+                    syslog(LOG_NOTICE,
+                            "Joined the LLMNR multicast group on %s", ifname);
+                } else {
+                    syslog(LOG_ERR,
+                            "Failed to join the LLMNR multicast group on %s",
+                            ifname);
+                }
+                break;
+
+            case IFADDR_REMOVED:
+                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
+                        &mr, sizeof (struct ipv6_mreq)) == 0) {
+                    syslog(LOG_NOTICE,
+                            "Left the LLMNR multicast group on %s", ifname);
+                } else {
+                    syslog(LOG_ERR,
+                            "Failed to leave the LLMNR multicast group on %s",
+                            ifname);
+                }
+                break;
+            }
+        }
+    }
 }
 
 ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,

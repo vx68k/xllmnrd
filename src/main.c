@@ -223,7 +223,7 @@ void show_help(const char *restrict name) {
     printf(_("      --help            display this help and exit\n"));
     printf(_("      --version         output version information and exit\n"));
     putchar('\n');
-    printf(_("Report bugs to %s\n"), PACKAGE_BUGREPORT);
+    printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
 void show_version(void) {

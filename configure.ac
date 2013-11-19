@@ -8,11 +8,9 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
 
 # Define the unique revision if 'config.rev' sets it.
-PACKAGE_REVISION=
-if test -f $(srcdir)/config.rev; then
-  . $(srcdir)/config.revision
-fi
-if test -n "$PACKAGE_REVISION"; then
+if test -f $srcdir/config.revision; then
+  PACKAGE_REVISION=
+  . $srcdir/config.revision
   AC_DEFINE_UNQUOTED([PACKAGE_REVISION], ["$PACKAGE_REVISION"],
   [Define to the unique revision of this package.])dnl
 fi

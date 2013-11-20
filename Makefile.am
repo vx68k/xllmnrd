@@ -3,7 +3,7 @@
 SUBDIRS = src test
 
 dist-hook:
-	revision="`cd $(srcdir) && hg identify -i 2> /dev/null`"; \
+	revision=`cd $(srcdir) && hg identify -i 2> /dev/null`; \
 	if test -n "$$revision"; then \
 	  echo "PACKAGE_REVISION='$$revision'" > $(distdir)/config.revision; \
 	fi

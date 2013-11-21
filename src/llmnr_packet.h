@@ -22,6 +22,11 @@
 #include <arpa/inet.h>
 #include <stdint.h>
 
+/*
+ * Size of a header in octets.
+ */
+#define LLMNR_HEADER_SIZE 12
+
 #define LLMNR_HEADER_QR     0x8000
 #define LLMNR_HEADER_OPCODE 0x7800
 #define LLMNR_HEADER_C      0x0400
@@ -60,11 +65,11 @@ static inline int llmnr_query_is_valid(
 
 /**
  * Returns a pointer to the first data in a LLMNR packet.
- * @param header pointer to a LLMNR header.
- * @return pointer to the first data in the packet.
+ * @param header [in] LLMNR header.
+ * @return pointer to the first data in the LLMNR packet.
  */
-static inline void *llmnr_data(struct llmnr_header *header) {
-    return (char *) header + 12;
+static inline const uint8_t *llmnr_data(const struct llmnr_header *header) {
+    return (const uint8_t *) header + LLMNR_HEADER_SIZE;
 }
 
 #endif

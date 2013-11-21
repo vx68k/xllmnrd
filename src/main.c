@@ -254,6 +254,9 @@ void show_help(const char *restrict name) {
 
 void show_version(void) {
     printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
+#ifdef PACKAGE_REVISION
+    printf(_("Packaged from revision %s\n"), PACKAGE_REVISION);
+#endif
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
     printf(_("This is free software: you are free to change and redistribute it.\n" \
             "There is NO WARRANTY, to the extent permitted by law.\n"));

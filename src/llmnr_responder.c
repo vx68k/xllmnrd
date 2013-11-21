@@ -159,12 +159,13 @@ static inline int llmnr_responder_initialized(void) {
 /**
  * Handles a LLMNR query.
  * @param __ifindex interface index.
- * @param __header pointer to the LLMNR packet header.
+ * @param __header pointer to the header.
+ * @param __length length of the packet including the header in octets.
  * @param __sender socket address of the sender.
  * @return 0 on success, or non-zero error number on failure.
  */
 static int llmnr_responder_handle_query(unsigned int __ifindex,
-        const struct llmnr_header *__header,
+        const struct llmnr_header *__header, size_t __length,
         const struct sockaddr_in6 *__sender);
 
 int llmnr_responder_initialize(in_port_t port) {
@@ -231,7 +232,7 @@ int llmnr_responder_run(void) {
                         (const struct llmnr_header *) data;
                 if (llmnr_query_is_valid(header)) {
                     llmnr_responder_handle_query(pi.ipi6_ifindex, header,
-                            &sender);
+                            recv_len, &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
                 }
@@ -336,24 +337,53 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
 
 int llmnr_responder_handle_query(unsigned int ifindex,
         const struct llmnr_header *restrict header,
+        size_t length,
         const struct sockaddr_in6 *restrict sender) {
+    assert(length >= LLMNR_HEADER_SIZE);
     assert(sender->sin6_family == AF_INET6);
 
     char ifname[IF_NAMESIZE];
     char addrstr[INET6_ADDRSTRLEN];
     if_indextoname(ifindex, ifname);
     inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
-    syslog(LOG_INFO, "Received query on %s from %s%%%" PRIu32 " port %"
+    syslog(LOG_DEBUG, "Received query on %s from %s%%%" PRIu32 " port %"
             PRIu16, ifname, addrstr, sender->sin6_scope_id,
             ntohs(sender->sin6_port));
 
-    struct in6_addr addr;
-    int err = ifaddr_lookup(ifindex, &addr);
-    if (err == 0) {
-        inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
-        syslog(LOG_DEBUG, "Interface address is %s", addrstr);
+    const uint8_t *question = llmnr_data(header);
+    length -= LLMNR_HEADER_SIZE;
 
-        /* TODO: Handle the query.  */
+    const uint8_t *p = llmnr_skip_name(question, &length);
+    if (p && length >= 4) {
+        // TODO: Check the host name.
+
+        uint_fast16_t qtype = (p[0] << 16) | p[1];
+        uint_fast16_t qclass = (p[2] << 16) | p[3];
+        if (qclass == LLMNR_CLASS_IN) {
+            syslog(LOG_DEBUG, "  QTYPE is %" PRIuFAST16, qtype);
+
+            struct in6_addr addr;
+            int err = ifaddr_lookup(ifindex, &addr);
+            if (err == 0) {
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "  Interface address %s", addrstr);
+
+                switch (qtype) {
+                case LLMNR_TYPE_AAAA:
+                case LLMNR_QTYPE_ANY:
+                    /* TODO: Respond to the query.  */
+                    break;
+
+                default:
+                    break;
+                }
+            }
+        } else {
+            log_discarded("Unknown QCLASS", sender);
+        }
+    } else {
+        log_discarded("Invalid question", sender);
     }
 
     return 0;

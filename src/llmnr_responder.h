@@ -27,12 +27,6 @@
  */
 #define LLMNR_PORT 5355
 
-/*
- * Maximum number of octets in a label excluding a length prefix.
- * This value is derived from RFC 1035.
- */
-#define LLMNR_LABEL_MAX 63
-
 /**
  * Initializes this module.
  * @param __port port number in the network byte order; if this value is 0,

@@ -21,11 +21,19 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 /*
  * Size of a header in octets.
  */
 #define LLMNR_HEADER_SIZE 12
+
+/*
+ * Maximum number of octets in a label excluding a length prefix.
+ * This value is derived from RFC 1035.
+ */
+#define LLMNR_LABEL_MAX 63
 
 #define LLMNR_HEADER_QR     0x8000
 #define LLMNR_HEADER_OPCODE 0x7800
@@ -33,6 +41,19 @@
 #define LLMNR_HEADER_TC     0x0200
 #define LLMNR_HEADER_T      0x0100
 #define LLMNR_HEADER_RCODE  0x000f
+
+/*
+ * TYPE and QTYPE values.
+ */
+#define LLMNR_TYPE_A       1
+#define LLMNR_TYPE_PTR    12
+#define LLMNR_TYPE_AAAA   28
+#define LLMNR_QTYPE_ANY  255
+
+/*
+ * CLASS and QCLASS value.
+ */
+#define LLMNR_CLASS_IN   1
 
 /*
  * LLMNR header structure.
@@ -70,6 +91,51 @@ static inline int llmnr_query_is_valid(
  */
 static inline const uint8_t *llmnr_data(const struct llmnr_header *header) {
     return (const uint8_t *) header + LLMNR_HEADER_SIZE;
+}
+
+/**
+ * Skips a name in a LLMNR packet.
+ * @param i [in] first octet of the name.
+ * @param n [inout] number of unused octets.
+ * @return pointer after the name, or null if an error is detected.
+ */
+static inline const uint8_t *llmnr_skip_name(const uint8_t *restrict i,
+        size_t *restrict n) {
+    bool done;
+    do {
+        if (*n < 1) {
+            return NULL;
+        }
+        size_t length = *i++;
+        --(*n);
+
+        // Checks the most significant two bits.
+        switch (length >> 6) {
+        case 3:
+            if (*n < 1) {
+                return NULL;
+            }
+            ++i;
+            --(*n);
+            done = true;
+            break;
+
+        case 0:
+            if (*n < length) {
+                return NULL;
+            }
+            i += length;
+            *n -= length;
+            done = length == 0;
+            break;
+
+        default:
+            // Handles exceptional cases.
+            return NULL;
+        }
+    } while (!done);
+
+    return i;
 }
 
 #endif

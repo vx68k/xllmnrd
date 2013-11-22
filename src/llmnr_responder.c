@@ -24,7 +24,6 @@
 #include "llmnr_responder.h"
 
 #include "ifaddr.h"
-#include "ascii.h"
 #include "llmnr_packet.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
@@ -212,14 +211,7 @@ void llmnr_responder_set_host_name(const char *restrict name) {
         syslog(LOG_WARNING, "Host name truncated");
         length = LLMNR_LABEL_MAX;
     }
-
-    // Copies the name while converting to uppercase letters.
-    const char *p = name;
-    uint8_t *q = host_label + 1;
-    size_t n = length;
-    while (n--) {
-        *q++ = ascii_to_upper((uint8_t) *p++);
-    }
+    memcpy(host_label + 1, name, length);
     host_label[0] = length;
 }
 

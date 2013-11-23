@@ -24,6 +24,7 @@
 #include "llmnr_responder.h"
 
 #include "ifaddr.h"
+#include "ascii.h"
 #include "llmnr_packet.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
@@ -109,6 +110,10 @@ static inline int open_udp6(in_port_t port, int *fd_out) {
     return err;
 }
 
+/*
+ * == Implementation of the LLMNR responder ==
+ */
+
 static ssize_t llmnr_receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
@@ -149,14 +154,6 @@ static int udp6_socket;
 static uint8_t host_label[1 + LLMNR_LABEL_MAX];
 
 /**
- * Returns true if this module is initialized.
- * @return true if initialized, or false.
- */
-static inline int llmnr_responder_initialized(void) {
-    return initialized;
-}
-
-/**
  * Handles a LLMNR query.
  * @param __ifindex interface index.
  * @param __header pointer to the header.
@@ -167,6 +164,35 @@ static inline int llmnr_responder_initialized(void) {
 static int llmnr_responder_handle_query(unsigned int __ifindex,
         const struct llmnr_header *__header, size_t __length,
         const struct sockaddr_in6 *__sender);
+
+/**
+ * Returns true if this module is initialized.
+ * @return true if initialized, or false.
+ */
+static inline int llmnr_responder_initialized(void) {
+    return initialized;
+}
+/**
+ *
+ * @param question
+ * @return
+ */
+static inline int llmnr_responder_name_matches(
+        const uint8_t * restrict question) {
+    size_t n = host_label[0];
+    if (*question++ == n) {
+        const uint8_t *restrict p = host_label + 1;
+        while (n--) {
+            if (ascii_to_upper(*question++) != ascii_to_upper(*p++)) {
+                return false;
+            }
+        }
+        if (*question == 0) {
+            return true;
+        }
+    }
+    return false;
+}
 
 int llmnr_responder_initialize(in_port_t port) {
     if (llmnr_responder_initialized()) {
@@ -336,51 +362,55 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
 }
 
 int llmnr_responder_handle_query(unsigned int ifindex,
-        const struct llmnr_header *restrict header,
-        size_t length,
+        const struct llmnr_header *restrict header, size_t length,
         const struct sockaddr_in6 *restrict sender) {
     assert(length >= LLMNR_HEADER_SIZE);
     assert(sender->sin6_family == AF_INET6);
-
-    char ifname[IF_NAMESIZE];
-    char addrstr[INET6_ADDRSTRLEN];
-    if_indextoname(ifindex, ifname);
-    inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
-    syslog(LOG_DEBUG, "Received query on %s from %s%%%" PRIu32 " port %"
-            PRIu16, ifname, addrstr, sender->sin6_scope_id,
-            ntohs(sender->sin6_port));
 
     const uint8_t *question = llmnr_data(header);
     length -= LLMNR_HEADER_SIZE;
 
     const uint8_t *p = llmnr_skip_name(question, &length);
     if (p && length >= 4) {
-        // TODO: Check the host name.
-
         uint_fast16_t qtype = (p[0] << 16) | p[1];
         uint_fast16_t qclass = (p[2] << 16) | p[3];
         if (qclass == LLMNR_CLASS_IN) {
-            syslog(LOG_DEBUG, "  QTYPE is %" PRIuFAST16, qtype);
+            char ifname[IF_NAMESIZE];
+            char addrstr[INET6_ADDRSTRLEN];
+            if_indextoname(ifindex, ifname);
+            inet_ntop(AF_INET6, &sender->sin6_addr, addrstr,
+                    INET6_ADDRSTRLEN);
+            syslog(LOG_DEBUG, "Received IN query for QTYPE %" PRIuFAST16 \
+                    " on %s from %s%%%" PRIu32, qtype, ifname, addrstr,
+                    sender->sin6_scope_id);
 
-            struct in6_addr addr;
-            int err = ifaddr_lookup(ifindex, &addr);
-            if (err == 0) {
-                char addrstr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "  Interface address %s", addrstr);
+            if (llmnr_responder_name_matches(question)) {
+                syslog(LOG_DEBUG, "  QNAME matched");
 
-                switch (qtype) {
-                case LLMNR_TYPE_AAAA:
-                case LLMNR_QTYPE_ANY:
-                    /* TODO: Respond to the query.  */
-                    break;
+                struct in6_addr addr;
+                int err = ifaddr_lookup(ifindex, &addr);
+                if (err == 0) {
+                    char addrstr[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
+                    syslog(LOG_DEBUG, "  Interface address is %s", addrstr);
 
-                default:
-                    break;
+                    switch (qtype) {
+                    case LLMNR_TYPE_AAAA:
+                    case LLMNR_QTYPE_ANY:
+                        /* TODO: Respond to the query.  */
+                        break;
+
+                    case LLMNR_TYPE_A:
+                    default:
+                        // TODO: Respond with no answer.
+                        break;
+                    }
+                } else {
+                    char ifname[IF_NAMESIZE];
+                    if_indextoname(ifindex, ifname);
+                    syslog(LOG_NOTICE, "Address not found for %s", ifname);
                 }
             }
-        } else {
-            log_discarded("Unknown QCLASS", sender);
         }
     } else {
         log_discarded("Invalid question", sender);

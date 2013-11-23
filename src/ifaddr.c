@@ -223,9 +223,6 @@ static inline void ifaddr_remove_interface(unsigned int ifindex,
  * Waits for the running refresh operation to complete.
  */
 static inline void ifaddr_wait_for_refresh_completion(void) {
-    assert(ifaddr_initialized());
-    assert(ifaddr_started());
-
     abort_if_error(pthread_mutex_lock(&refresh_mutex),
             "ifaddr: Could not lock 'refresh_mutex'");
 
@@ -239,9 +236,6 @@ static inline void ifaddr_wait_for_refresh_completion(void) {
 }
 
 static inline void ifaddr_complete_refresh(void) {
-    assert(ifaddr_initialized());
-    assert(ifaddr_started());
-
     abort_if_error(pthread_mutex_lock(&refresh_mutex),
             "ifaddr: Could not lock 'refresh_mutex'");
 
@@ -307,6 +301,7 @@ void ifaddr_finalize(void) {
 
         if (ifaddr_started()) {
             terminated = true;
+
             if (interrupt_signo != 0) {
                 pthread_kill(worker_thread, interrupt_signo); // TODO: Check for an error.
             }

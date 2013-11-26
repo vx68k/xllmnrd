@@ -1,6 +1,6 @@
 /*
  * Interface address lookups (implementation)
- * Copyright (C) 2013  Kaz Nishimura
+ * Copyright (C) 2013 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -392,16 +392,14 @@ void *ifaddr_run(void *data) {
         } else {
             unsigned char buf[recv_size];
             ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
-            if (recv_len < 0) {
-                if (errno != EINTR) {
-                    syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
-                            strerror(errno));
-                    return data;
-                }
-            } else {
+            if (recv_len >= 0) {
                 const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
                 assert(recv_len == recv_size);
                 ifaddr_decode_nlmsg(nlmsg, recv_len);
+            } else if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                        strerror(errno));
+                return data;
             }
         }
     }

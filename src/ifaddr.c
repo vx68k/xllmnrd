@@ -205,7 +205,7 @@ static inline int ifaddr_started(void) {
  * @param index interface index.
  * @param addr IPv6 address.
  */
-static inline void ifaddr_add_if_addr_v6(unsigned int index,
+static inline void ifaddr_add_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
     abort_if_error(pthread_mutex_lock(&if_mutex),
             "ifaddr: Could not lock 'if_mutex'");
@@ -252,7 +252,7 @@ static inline void ifaddr_add_if_addr_v6(unsigned int index,
  * @param index interface index.
  * @param addr IPv6 address.
  */
-static inline void ifaddr_remove_interface(unsigned int index,
+static inline void ifaddr_remove_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
     abort_if_error(pthread_mutex_lock(&if_mutex),
             "ifaddr: Could not lock 'if_mutex'");
@@ -281,7 +281,12 @@ static inline void ifaddr_remove_interface(unsigned int index,
             "ifaddr: Could not unlock 'if_mutex'");
 }
 
-static inline void ifaddr_add_if_addr_v4(unsigned int index,
+/**
+ * Adds an IPv4 address to an interface.
+ * @param index interface index.
+ * @param addr IPv4 address to be added.
+ */
+static inline void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     abort_if_error(pthread_mutex_lock(&if_mutex),
             "ifaddr: Could not lock 'if_mutex'");
@@ -323,7 +328,12 @@ static inline void ifaddr_add_if_addr_v4(unsigned int index,
             "ifaddr: Could not lock 'if_mutex'");
 }
 
-static inline void ifaddr_remove_if_addr_v4(unsigned int index,
+/**
+ * Removes an IPv4 address from an interface.
+ * @param index interface index.
+ * @param addr IPv4 address to be removed.
+ */
+static inline void ifaddr_remove_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     abort_if_error(pthread_mutex_lock(&if_mutex),
             "ifaddr: Could not lock 'if_mutex'");
@@ -619,11 +629,11 @@ void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
                     RTA_DATA(rta);
             switch (nlmsg_type) {
             case RTM_NEWADDR:
-                ifaddr_add_if_addr_v4(index, addr);
+                ifaddr_add_addr_v4(index, addr);
                 break;
 
             case RTM_DELADDR:
-                ifaddr_remove_if_addr_v4(index, addr);
+                ifaddr_remove_addr_v4(index, addr);
                 break;
             }
         }
@@ -643,11 +653,11 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
             if (IN6_IS_ADDR_LINKLOCAL(addr)) {
                 switch (nlmsg_type) {
                 case RTM_NEWADDR:
-                    ifaddr_add_if_addr_v6(index, addr);
+                    ifaddr_add_addr_v6(index, addr);
                     break;
 
                 case RTM_DELADDR:
-                    ifaddr_remove_interface(index, addr);
+                    ifaddr_remove_addr_v6(index, addr);
                     break;
                 }
             }

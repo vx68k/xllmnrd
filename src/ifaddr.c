@@ -26,7 +26,6 @@
 #if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
-#include <arpa/inet.h> /* inet_ntop */
 #include <net/if.h> /* if_indextoname */
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -284,16 +283,79 @@ static inline void ifaddr_remove_interface(unsigned int index,
 
 static inline void ifaddr_add_if_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    char addrstr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, addr, addrstr, INET_ADDRSTRLEN);
-    syslog(LOG_DEBUG, "Added interface %u address %s", index, addrstr);
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i == if_table + if_table_size) {
+        if (if_table_size == if_table_capacity) {
+            abort(); // TODO: Think later.
+        }
+        *i = (struct ifaddr_if){
+            .ifindex = index,
+            .addr_v4_size = 0,
+        };
+        ++if_table_size;
+    }
+
+    struct in_addr *j = i->addr_v4;
+    while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
+        ++j;
+    }
+    if (j == i->addr_v4 + i->addr_v4_size) {
+        if (i->addr_v4_size == ADDR_V4_CAPACITY) {
+            abort(); // TODO: Think later.
+        }
+
+        *j = *addr;
+        ++(i->addr_v4_size);
+
+        char ifname[IF_NAMESIZE];
+        if_indextoname(index, ifname);
+        syslog(LOG_DEBUG, "Added an IPv4 address on %s [%zu]", ifname,
+                i->addr_v4_size);
+    }
+
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
 }
 
 static inline void ifaddr_remove_if_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    char addrstr[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, addr, addrstr, INET_ADDRSTRLEN);
-    syslog(LOG_DEBUG, "Removeed interface %u address %s", index, addrstr);
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Could not lock 'if_mutex'");
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i != if_table + if_table_size) {
+        struct in_addr *j = i->addr_v4;
+        while (j != i->addr_v4 + i->addr_v4_size &&
+                j->s_addr != addr->s_addr) {
+            ++j;
+        }
+        if (j != i->addr_v4 + i->addr_v4_size) {
+            struct in_addr *k = j++;
+            while (j != i->addr_v4 + i->addr_v4_size) {
+                *k++ = *j++;
+            }
+            --(i->addr_v4_size);
+
+            char ifname[IF_NAMESIZE];
+            if_indextoname(index, ifname);
+            syslog(LOG_DEBUG, "Removed an IPv4 address on %s [%zu]", ifname,
+                    i->addr_v4_size);
+
+            // TODO: Remove the interface if no address remains.
+        }
+    }
+
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Could not unlock 'if_mutex'");
 }
 
 /**

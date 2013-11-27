@@ -50,6 +50,9 @@
 #ifndef EX_USAGE
 #define EX_USAGE 64
 #endif
+#ifndef EX_OSERR
+#define EX_OSERR 71
+#endif
 
 #ifndef _
 #define _(message) (message)
@@ -61,8 +64,16 @@
 
 struct program_options {
     bool foreground;
-    const char *name;
+    const char *host_name;
 };
+
+static volatile sig_atomic_t caught_signal;
+
+/**
+ * Sets the default host name of the responder object.
+ * @return 0 if succeeded, or non-zero error number.
+ */
+static int set_default_host_name(void);
 
 /**
  * Parses command-line arguments for options.
@@ -95,28 +106,6 @@ static void show_version(void);
 static void discard_signal(int __sig);
 
 static void handle_signal_to_terminate(int __sig);
-
-static volatile sig_atomic_t caught_signal;
-
-/**
- * Sets the host name of the LLMNR responder.
- */
-static inline void set_host_name(void) {
-    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
-    if (host_name_max < 0) {
-        host_name_max = HOST_NAME_MAX;
-    } else if (host_name_max > 255) {
-        // Avoids allocation overflow.
-        host_name_max = 255;
-    }
-
-    char host_name[host_name_max + 1];
-    if (gethostname(host_name, host_name_max + 1) != 0) {
-        syslog(LOG_CRIT, "Failed to get the host name: %s", strerror(errno));
-        abort();
-    }
-    responder_set_host_name(host_name);
-}
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.
@@ -176,7 +165,18 @@ int main(int argc, char *argv[argc + 1]) {
         exit(EXIT_FAILURE);
     }
 
-    set_host_name();
+    if (options.host_name) {
+        syslog(LOG_NOTICE,
+                "Setting the host name to be responded for to '%s'",
+                options.host_name);
+        responder_set_host_name(options.host_name);
+    } else {
+        int err = set_default_host_name();
+        if (err != 0) {
+            syslog(LOG_ERR, "Failed to get the default host name");
+            exit(EX_OSERR);
+        }
+    }
 
     if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;
@@ -209,6 +209,25 @@ int main(int argc, char *argv[argc + 1]) {
     return EXIT_SUCCESS;
 }
 
+int set_default_host_name(void) {
+    // Gets the maximum length of the host name.
+    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
+    if (host_name_max < 0) {
+        host_name_max = HOST_NAME_MAX;
+    } else if (host_name_max > 255) {
+        // Avoids allocation overflow.
+        host_name_max = 255;
+    }
+
+    char host_name[host_name_max + 1];
+    if (gethostname(host_name, host_name_max + 1) == 0) {
+        responder_set_host_name(host_name);
+        return 0;
+    }
+
+    return errno;
+}
+
 void parse_arguments(int argc, char *argv[argc + 1],
         struct program_options *restrict options) {
     enum opt_char {
@@ -231,7 +250,7 @@ void parse_arguments(int argc, char *argv[argc + 1],
             options->foreground = true;
             break;
         case 'n':
-            options->name = optarg;
+            options->host_name = optarg;
             break;
         case OPT_HELP:
             show_help(argv[0]);
@@ -253,7 +272,7 @@ void show_help(const char *restrict name) {
     printf(_("\
   -f, --foreground      run in foreground\n"));
     printf(_("\
-  -n, --name=NAME       change the name this program responds to NAME\n"));
+  -n, --name=NAME       set the host name to be responded for to NAME\n"));
     printf(_("\
       --help            display this help and exit\n"));
     printf(_("\

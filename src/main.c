@@ -21,7 +21,7 @@
 #endif
 #define _GNU_SOURCE 1
 
-#include "llmnr_responder.h"
+#include "responder.h"
 #include "ifaddr.h"
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
@@ -114,7 +114,7 @@ static inline void set_host_name(void) {
         syslog(LOG_CRIT, "Failed to get the host name: %s", strerror(errno));
         abort();
     }
-    llmnr_responder_set_host_name(host_name);
+    responder_set_host_name(host_name);
 }
 
 /*
@@ -169,7 +169,7 @@ int main(int argc, char *argv[argc + 1]) {
     }
     atexit(&ifaddr_finalize);
 
-    if (llmnr_responder_initialize(0) < 0) {
+    if (responder_initialize(0) < 0) {
         syslog(LOG_ERR, "Could not create a responder object: %m");
         syslog(LOG_INFO, "Exiting");
         exit(EXIT_FAILURE);
@@ -187,10 +187,10 @@ int main(int argc, char *argv[argc + 1]) {
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
         ifaddr_start();
-        llmnr_responder_run();
+        responder_run();
     }
 
-    llmnr_responder_finalize();
+    responder_finalize();
 
     if (caught_signal != 0) {
         // Resets the handler to default and reraise the same signal.
@@ -274,6 +274,6 @@ void handle_signal_to_terminate(int sig) {
     if (caught_signal == 0) {
         caught_signal = sig;
 
-        llmnr_responder_terminate();
+        responder_terminate();
     }
 }

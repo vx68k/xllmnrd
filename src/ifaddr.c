@@ -1,6 +1,6 @@
 /*
  * Interface address lookups (implementation)
- * Copyright (C) 2013  Kaz Nishimura
+ * Copyright (C) 2013 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -392,16 +392,14 @@ void *ifaddr_run(void *data) {
         } else {
             unsigned char buf[recv_size];
             ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
-            if (recv_len < 0) {
-                if (errno != EINTR) {
-                    syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
-                            strerror(errno));
-                    return data;
-                }
-            } else {
+            if (recv_len >= 0) {
                 const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
                 assert(recv_len == recv_size);
                 ifaddr_decode_nlmsg(nlmsg, recv_len);
+            } else if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from rtnetlink: %s",
+                        strerror(errno));
+                return data;
             }
         }
     }
@@ -454,39 +452,44 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     if (nlmsg->nlmsg_len >= rta_offset) {
         const struct ifaddrmsg *ifa = (const struct ifaddrmsg *)
                 NLMSG_DATA(nlmsg);
-        const struct rtattr *rta = (const struct rtattr *)
-                ((const char *) nlmsg + rta_offset);
-        size_t rta_len = nlmsg->nlmsg_len - rta_offset;
+        // Handles link-local or wider scoped interfaces only.
+        if (ifa->ifa_scope <= RT_SCOPE_LINK) {
+            const struct rtattr *rta = (const struct rtattr *)
+                    ((const char *) nlmsg + rta_offset);
+            size_t rta_len = nlmsg->nlmsg_len - rta_offset;
 
-        while (RTA_OK(rta, rta_len)) {
-            switch (ifa->ifa_family) {
-            case AF_INET6:
-                if (rta->rta_len >= RTA_LENGTH(sizeof (struct in6_addr)) &&
-                        rta->rta_type == IFA_ADDRESS) {
-                    const struct in6_addr *addr = (const struct in6_addr *)
-                            RTA_DATA(rta);
-                    if (IN6_IS_ADDR_LINKLOCAL(addr)) {
-                        switch (nlmsg->nlmsg_type) {
-                        case RTM_NEWADDR:
-                            ifaddr_add_interface(ifa->ifa_index, addr);
-                            break;
+            while (RTA_OK(rta, rta_len)) {
+                switch (ifa->ifa_family) {
+                case AF_INET6:
+                    if (rta->rta_len >=
+                            RTA_LENGTH(sizeof (struct in6_addr)) &&
+                            rta->rta_type == IFA_ADDRESS) {
+                        const struct in6_addr *addr =
+                                (const struct in6_addr *) RTA_DATA(rta);
+                        // TODO: Add support for global addresses.
+                        if (IN6_IS_ADDR_LINKLOCAL(addr)) {
+                            switch (nlmsg->nlmsg_type) {
+                            case RTM_NEWADDR:
+                                ifaddr_add_interface(ifa->ifa_index, addr);
+                                break;
 
-                        case RTM_DELADDR:
-                            ifaddr_remove_interface(ifa->ifa_index, addr);
-                            break;
+                            case RTM_DELADDR:
+                                ifaddr_remove_interface(ifa->ifa_index, addr);
+                                break;
+                            }
                         }
                     }
-                }
-                break;
+                    break;
 
-            case AF_INET:
-                if (rta->rta_len >= RTA_LENGTH(sizeof (struct in_addr)) &&
-                        rta->rta_type == IFA_ADDRESS) {
-                    // TODO: Implement IPv4 handler.
+                case AF_INET:
+                    if (rta->rta_len >= RTA_LENGTH(sizeof (struct in_addr)) &&
+                            rta->rta_type == IFA_ADDRESS) {
+                        // TODO: Implement IPv4 handler.
+                    }
+                    break;
                 }
-                break;
+                rta = RTA_NEXT(rta, rta_len);
             }
-            rta = RTA_NEXT(rta, rta_len);
         }
     }
 }

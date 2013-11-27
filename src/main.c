@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013  Kaz Nishimura
+ * Copyright (C) 2013 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -21,7 +21,7 @@
 #endif
 #define _GNU_SOURCE 1
 
-#include "llmnr_responder.h"
+#include "responder.h"
 #include "ifaddr.h"
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
@@ -38,6 +38,10 @@
 #include <limits.h>
 #include <stdbool.h>
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 // We just ignore 'LOG_PERROR' if it is not defined.
 #ifndef LOG_PERROR
 #define LOG_PERROR 0
@@ -45,6 +49,9 @@
 
 #ifndef EX_USAGE
 #define EX_USAGE 64
+#endif
+#ifndef EX_OSERR
+#define EX_OSERR 71
 #endif
 
 #ifndef _
@@ -57,7 +64,16 @@
 
 struct program_options {
     bool foreground;
+    const char *host_name;
 };
+
+static volatile sig_atomic_t caught_signal;
+
+/**
+ * Sets the default host name of the responder object.
+ * @return 0 if succeeded, or non-zero error number.
+ */
+static int set_default_host_name(void);
 
 /**
  * Parses command-line arguments for options.
@@ -90,8 +106,6 @@ static void show_version(void);
 static void discard_signal(int __sig);
 
 static void handle_signal_to_terminate(int __sig);
-
-static volatile sig_atomic_t caught_signal;
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.
@@ -145,10 +159,23 @@ int main(int argc, char *argv[argc + 1]) {
     }
     atexit(&ifaddr_finalize);
 
-    if (llmnr_responder_initialize(0) < 0) {
+    if (responder_initialize(0) < 0) {
         syslog(LOG_ERR, "Could not create a responder object: %m");
         syslog(LOG_INFO, "Exiting");
         exit(EXIT_FAILURE);
+    }
+
+    if (options.host_name) {
+        syslog(LOG_NOTICE,
+                "Setting the host name to be responded for to '%s'",
+                options.host_name);
+        responder_set_host_name(options.host_name);
+    } else {
+        int err = set_default_host_name();
+        if (err != 0) {
+            syslog(LOG_ERR, "Failed to get the default host name");
+            exit(EX_OSERR);
+        }
     }
 
     if (options.foreground || daemon(false, false) == 0) {
@@ -161,10 +188,10 @@ int main(int argc, char *argv[argc + 1]) {
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
         ifaddr_start();
-        llmnr_responder_run();
+        responder_run();
     }
 
-    llmnr_responder_finalize();
+    responder_finalize();
 
     if (caught_signal != 0) {
         // Resets the handler to default and reraise the same signal.
@@ -182,25 +209,48 @@ int main(int argc, char *argv[argc + 1]) {
     return EXIT_SUCCESS;
 }
 
+int set_default_host_name(void) {
+    // Gets the maximum length of the host name.
+    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
+    if (host_name_max < 0) {
+        host_name_max = HOST_NAME_MAX;
+    } else if (host_name_max > 255) {
+        // Avoids allocation overflow.
+        host_name_max = 255;
+    }
+
+    char host_name[host_name_max + 1];
+    if (gethostname(host_name, host_name_max + 1) == 0) {
+        responder_set_host_name(host_name);
+        return 0;
+    }
+
+    return errno;
+}
+
 void parse_arguments(int argc, char *argv[argc + 1],
         struct program_options *restrict options) {
     enum opt_char {
         OPT_VERSION = UCHAR_MAX + 1,
         OPT_HELP,
     };
-    static const struct option longopts[] = {
+    static const struct option long_options[] = {
         {"foreground", no_argument, 0, 'f'},
+        {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
-        {0, 0, 0, 0},
+        {NULL},
     };
 
     int opt;
     do {
-        opt = getopt_long(argc, argv, "f", longopts, 0);
+        opt = getopt_long(argc, argv, "fn:", long_options, 0);
         switch (opt) {
         case 'f':
             options->foreground = true;
+            break;
+        case 'n':
+            options->host_name = optarg;
             break;
         case OPT_HELP:
             show_help(argv[0]);
@@ -219,18 +269,27 @@ void show_help(const char *restrict name) {
     printf(_("Usage: %s [OPTION]...\n"), name);
     printf(_("Respond to IPv6 LLMNR queries.\n"));
     putchar('\n');
-    printf(_("  -f, --foreground      run in foreground\n"));
-    printf(_("      --help            display this help and exit\n"));
-    printf(_("      --version         output version information and exit\n"));
+    printf(_("\
+  -f, --foreground      run in foreground\n"));
+    printf(_("\
+  -n, --name=NAME       set the host name to be responded for to NAME\n"));
+    printf(_("\
+      --help            display this help and exit\n"));
+    printf(_("\
+      --version         output version information and exit\n"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
 void show_version(void) {
     printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
+#ifdef PACKAGE_REVISION
+    printf(_("Packaged from revision %s\n"), PACKAGE_REVISION);
+#endif
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
-    printf(_("This is free software: you are free to change and redistribute it.\n" \
-            "There is NO WARRANTY, to the extent permitted by law.\n"));
+    printf(_("\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
 // We expect a warning about unused parameter 'sig' in this function.
@@ -245,6 +304,6 @@ void handle_signal_to_terminate(int sig) {
     if (caught_signal == 0) {
         caught_signal = sig;
 
-        llmnr_responder_terminate();
+        responder_terminate();
     }
 }

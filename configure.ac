@@ -9,6 +9,14 @@ AM_INIT_AUTOMAKE([no-define])
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.18.1])
 
+# Define the unique package revision if 'config.revision' exists.
+if test -f $srcdir/config.revision; then
+  PACKAGE_REVISION=
+  . $srcdir/config.revision
+  AC_DEFINE_UNQUOTED([PACKAGE_REVISION], ["$PACKAGE_REVISION"],
+  [Define to the unique revision of this package.])dnl
+fi
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC_STDC
@@ -27,11 +35,13 @@ AC_C_INLINE
 AC_C_RESTRICT
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
+AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([atexit setlocale socket strerror])
+AC_CHECK_FUNCS([atexit basename gethostname setlocale socket strchrnul \
+strerror])
 
 AM_PATH_CPPUNIT([1.12.1])
 AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])

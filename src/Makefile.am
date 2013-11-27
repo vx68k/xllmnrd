@@ -1,5 +1,7 @@
 ## Process this file with automake to produce a Makefile.in.
 
+AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
+
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 

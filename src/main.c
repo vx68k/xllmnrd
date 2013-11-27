@@ -23,6 +23,7 @@
 
 #include "responder.h"
 #include "ifaddr.h"
+#include "gettext.h"
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
 #endif
@@ -54,13 +55,15 @@
 #define EX_OSERR 71
 #endif
 
-#ifndef _
-#define _(message) (message)
-#endif
-
+// Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
 #define COPYRIGHT_YEARS "2013"
 #endif
+
+// Marks localization strings.
+#define _(s) gettext(s)
+#define N_(s) gettext_noop(s)
+
 
 struct program_options {
     bool foreground;
@@ -130,6 +133,8 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
 
 int main(int argc, char *argv[argc + 1]) {
     setlocale(LC_ALL, "");
+    bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
+    textdomain(PACKAGE_TARNAME);
 
     struct program_options options = {
         .foreground = false,

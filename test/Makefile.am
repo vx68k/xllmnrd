@@ -6,10 +6,9 @@ AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
 check_PROGRAMS = runtest
 check_DATA = unit.test
-CLEANFILES = unit.test
+CLEANFILES = unit.test $(TEST_LOGS:.log=.xml)
 
 TESTS = unit.test
-MOSTLYCLEANFILES = $(TEST_LOGS:.log=.xml)
 
 TEST_LOG_COMPILER = ./runtest
 AM_TEST_LOG_FLAGS = -x $(@:.log=.xml)

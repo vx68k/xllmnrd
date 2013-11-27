@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013  Kaz Nishimura
+ * Copyright (C) 2013 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -61,6 +61,7 @@
 
 struct program_options {
     bool foreground;
+    const char *name;
 };
 
 /**
@@ -214,19 +215,23 @@ void parse_arguments(int argc, char *argv[argc + 1],
         OPT_VERSION = UCHAR_MAX + 1,
         OPT_HELP,
     };
-    static const struct option longopts[] = {
+    static const struct option long_options[] = {
         {"foreground", no_argument, 0, 'f'},
+        {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
-        {0, 0, 0, 0},
+        {NULL},
     };
 
     int opt;
     do {
-        opt = getopt_long(argc, argv, "f", longopts, 0);
+        opt = getopt_long(argc, argv, "fn:", long_options, 0);
         switch (opt) {
         case 'f':
             options->foreground = true;
+            break;
+        case 'n':
+            options->name = optarg;
             break;
         case OPT_HELP:
             show_help(argv[0]);
@@ -245,9 +250,14 @@ void show_help(const char *restrict name) {
     printf(_("Usage: %s [OPTION]...\n"), name);
     printf(_("Respond to IPv6 LLMNR queries.\n"));
     putchar('\n');
-    printf(_("  -f, --foreground      run in foreground\n"));
-    printf(_("      --help            display this help and exit\n"));
-    printf(_("      --version         output version information and exit\n"));
+    printf(_("\
+  -f, --foreground      run in foreground\n"));
+    printf(_("\
+  -n, --name=NAME       change the name this program responds to NAME\n"));
+    printf(_("\
+      --help            display this help and exit\n"));
+    printf(_("\
+      --version         output version information and exit\n"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
@@ -258,8 +268,9 @@ void show_version(void) {
     printf(_("Packaged from revision %s\n"), PACKAGE_REVISION);
 #endif
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
-    printf(_("This is free software: you are free to change and redistribute it.\n" \
-            "There is NO WARRANTY, to the extent permitted by law.\n"));
+    printf(_("\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
 // We expect a warning about unused parameter 'sig' in this function.

@@ -21,7 +21,7 @@
 #endif
 #define _GNU_SOURCE 1
 
-#include "llmnr_responder.h"
+#include "responder.h"
 #include "ifaddr.h"
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>

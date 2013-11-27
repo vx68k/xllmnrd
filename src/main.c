@@ -171,8 +171,7 @@ int main(int argc, char *argv[argc + 1]) {
     }
 
     if (options.host_name) {
-        syslog(LOG_NOTICE,
-                "Setting the host name to be responded for to '%s'",
+        syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
                 options.host_name);
         responder_set_host_name(options.host_name);
     } else {
@@ -277,7 +276,7 @@ void show_help(const char *restrict name) {
     printf(_("\
   -f, --foreground      run in foreground\n"));
     printf(_("\
-  -n, --name=NAME       set the host name to be responded for to NAME\n"));
+  -n, --name=NAME       set the host name of the responder to NAME\n"));
     printf(_("\
       --help            display this help and exit\n"));
     printf(_("\

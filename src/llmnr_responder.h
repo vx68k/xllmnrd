@@ -28,43 +28,36 @@
 #define LLMNR_PORT 5355
 
 /**
- * Initializes this module.
+ * Initializes the responder object.
  * @param __port port number in the network byte order; if this value is 0,
  * the default port number will be used.
- * @return 0 on success, or non-zero error number.
+ * @return 0 if succeeded, or non-zero error number.
  */
-int llmnr_responder_initialize(in_port_t __port);
+int responder_initialize(in_port_t __port);
 
 /*
- * Finalizes this module.
+ * Finalizes the responder object.
  */
-void llmnr_responder_finalize(void);
+void responder_finalize(void);
 
 /**
- * Sets the host name of this responder.
+ * Sets the host name for which the responder object is authoritative.
  * Only the first label of the host name is used.  If it is longer than
  * 'LLMNR_LABEL_MAX' octets, it will be truncated.
  * @param __name host name.
  * @return 0 if succeeded, or non-zero error number.
  */
-extern void llmnr_responder_set_host_name(const char *__name);
+extern void responder_set_host_name(const char *__name);
 
 /*
  * Runs the responder in a loop.
  */
-int llmnr_responder_run(void);
+int responder_run(void);
 
 /*
  * Requests the termination of the responder loop.
  * This function is atomic regarding signals.
  */
-extern void llmnr_responder_terminate(void);
-
-/**
- * Handles interface address changes.
- * @param __change [in] change notification.
- */
-extern void llmnr_responder_handle_ifaddr_change(
-        const struct ifaddr_change *__change);
+extern void responder_terminate(void);
 
 #endif

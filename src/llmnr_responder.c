@@ -155,9 +155,16 @@ static volatile sig_atomic_t responder_terminated;
  * ## Declarations for static functions.
  */
 
-static ssize_t llmnr_receive_udp6(int, void *, size_t,
+/**
+ * Handles a change notification for a network interface.
+ * @param __change [in] change notification.
+ */
+static void responder_handle_ifaddr_change(
+        const struct ifaddr_change *__change);
+
+static ssize_t receive_udp6(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
-static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
+static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
 /**
  * Handles a LLMNR query.
@@ -167,11 +174,13 @@ static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
  * @param __sender socket address of the sender.
  * @return 0 on success, or non-zero error number on failure.
  */
-static int llmnr_responder_handle_query(unsigned int __ifindex,
+static int responder_handle_query(unsigned int __ifindex,
         const struct llmnr_header *__header, size_t __length,
         const struct sockaddr_in6 *__sender);
 
-static int llmnr_responder_respond_empty(const struct llmnr_header *__query,
+/*
+ */
+static int responder_respond_empty(const struct llmnr_header *__query,
         size_t __query_size, const struct sockaddr_in6 *__sender);
 
 /*
@@ -182,16 +191,15 @@ static int llmnr_responder_respond_empty(const struct llmnr_header *__query,
  * Returns true if this module is initialized.
  * @return true if initialized, or false.
  */
-static inline int llmnr_responder_initialized(void) {
+static inline int responder_initialized(void) {
     return initialized;
 }
 /**
- *
+ * Checks if the name in a question matches the host name.
  * @param question
  * @return
  */
-static inline int llmnr_responder_name_matches(
-        const uint8_t * restrict question) {
+static inline int responder_name_matches(const uint8_t *restrict question) {
     size_t n = host_label[0];
     if (*question++ == n) {
         const uint8_t *restrict p = host_label + 1;
@@ -211,8 +219,8 @@ static inline int llmnr_responder_name_matches(
  * ## Out-of-line functions.
  */
 
-int llmnr_responder_initialize(in_port_t port) {
-    if (llmnr_responder_initialized()) {
+int responder_initialize(in_port_t port) {
+    if (responder_initialized()) {
         return EBUSY;
     }
 
@@ -223,7 +231,7 @@ int llmnr_responder_initialize(in_port_t port) {
 
     int err = open_udp6(port, &udp6_socket);
     if (err == 0) {
-        err = ifaddr_set_change_handler(&llmnr_responder_handle_ifaddr_change, NULL);
+        err = ifaddr_set_change_handler(&responder_handle_ifaddr_change, NULL);
         if (err == 0) {
             initialized = true;
             return 0;
@@ -238,15 +246,15 @@ int llmnr_responder_initialize(in_port_t port) {
     return err;
 }
 
-void llmnr_responder_finalize(void) {
-    if (llmnr_responder_initialized()) {
+void responder_finalize(void) {
+    if (responder_initialized()) {
         initialized = false;
 
         close(udp6_socket);
     }
 }
 
-void llmnr_responder_set_host_name(const char *restrict name) {
+void responder_set_host_name(const char *restrict name) {
     const char *label_end = strchrnul(name, '.');
     size_t length = label_end - name;
 
@@ -258,14 +266,14 @@ void llmnr_responder_set_host_name(const char *restrict name) {
     host_label[0] = length;
 }
 
-int llmnr_responder_run(void) {
+int responder_run(void) {
     while (!responder_terminated) {
         unsigned char data[1500];
         struct sockaddr_in6 sender;
         struct in6_pktinfo pi = {
             .ipi6_addr = IN6ADDR_ANY_INIT,
         };
-        ssize_t recv_len = llmnr_receive_udp6(udp6_socket,
+        ssize_t recv_len = receive_udp6(udp6_socket,
                 data, sizeof data, &sender, &pi);
         if (recv_len >= 0) {
             // The destination MUST be the LLMNR multicast address.
@@ -274,7 +282,7 @@ int llmnr_responder_run(void) {
                 const struct llmnr_header *header =
                         (const struct llmnr_header *) data;
                 if (llmnr_query_is_valid(header)) {
-                    llmnr_responder_handle_query(pi.ipi6_ifindex, header,
+                    responder_handle_query(pi.ipi6_ifindex, header,
                             recv_len, &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
@@ -289,13 +297,13 @@ int llmnr_responder_run(void) {
     return 0;
 }
 
-void llmnr_responder_terminate(void) {
+void responder_terminate(void) {
     responder_terminated = true;
 }
 
-void llmnr_responder_handle_ifaddr_change(
+void responder_handle_ifaddr_change(
         const struct ifaddr_change *restrict change) {
-    if (llmnr_responder_initialized()) {
+    if (responder_initialized()) {
         if (change->ifindex != 0) {
             const struct ipv6_mreq mr = {
                 .ipv6mr_multiaddr = in6addr_llmnr,
@@ -334,7 +342,7 @@ void llmnr_responder_handle_ifaddr_change(
     }
 }
 
-ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
+ssize_t receive_udp6(int sock, void *restrict buf, size_t bufsize,
         struct sockaddr_in6 *restrict sender,
         struct in6_pktinfo *restrict pktinfo) {
     struct iovec iov[1] = {
@@ -355,7 +363,7 @@ ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
     ssize_t recv_size = recvmsg(sock, &msg, 0);
     if (recv_size > 0) {
         if (msg.msg_namelen != sizeof *sender ||
-                llmnr_decode_cmsg(&msg, pktinfo) < 0) {
+                decode_cmsg(&msg, pktinfo) < 0) {
             errno = ENOMSG;
             return -1;
         }
@@ -363,7 +371,7 @@ ssize_t llmnr_receive_udp6(int sock, void *restrict buf, size_t bufsize,
     return recv_size;
 }
 
-int llmnr_decode_cmsg(struct msghdr *restrict msg,
+int decode_cmsg(struct msghdr *restrict msg,
         struct in6_pktinfo *restrict pktinfo) {
     for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg;
             cmsg = CMSG_NXTHDR(msg, cmsg)) {
@@ -378,7 +386,7 @@ int llmnr_decode_cmsg(struct msghdr *restrict msg,
     return 0;
 }
 
-int llmnr_responder_handle_query(unsigned int ifindex,
+int responder_handle_query(unsigned int ifindex,
         const struct llmnr_header *restrict header, size_t length,
         const struct sockaddr_in6 *restrict sender) {
     assert(length >= LLMNR_HEADER_SIZE);
@@ -401,7 +409,7 @@ int llmnr_responder_handle_query(unsigned int ifindex,
                     " on %s from %s%%%" PRIu32, qtype, ifname, addrstr,
                     sender->sin6_scope_id);
 
-            if (llmnr_responder_name_matches(question)) {
+            if (responder_name_matches(question)) {
                 syslog(LOG_DEBUG, "  QNAME matched");
 
                 struct in6_addr addr;
@@ -414,13 +422,13 @@ int llmnr_responder_handle_query(unsigned int ifindex,
                     switch (qtype) {
                     case LLMNR_TYPE_AAAA:
                     case LLMNR_QTYPE_ANY:
-                        llmnr_responder_respond_empty(header,
+                        responder_respond_empty(header,
                                 p + 4 - (const uint8_t *) header, sender);
                         break;
 
                     case LLMNR_TYPE_A:
                     default:
-                        llmnr_responder_respond_empty(header,
+                        responder_respond_empty(header,
                                 p + 4 - (const uint8_t *) header, sender);
                         break;
                     }
@@ -438,7 +446,7 @@ int llmnr_responder_handle_query(unsigned int ifindex,
     return 0;
 }
 
-int llmnr_responder_respond_empty(const struct llmnr_header *restrict query,
+int responder_respond_empty(const struct llmnr_header *restrict query,
         size_t query_size, const struct sockaddr_in6 *restrict sender) {
     assert(query_size <= 512);
 

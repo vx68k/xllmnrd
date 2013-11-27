@@ -1,6 +1,6 @@
 /*
  * LLMNR responder (implementation)
- * Copyright (C) 2013  Kaz Nishimura
+ * Copyright (C) 2013 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -111,16 +111,6 @@ static inline int open_udp6(in_port_t port, int *fd_out) {
 }
 
 /*
- * == Implementation of the LLMNR responder ==
- */
-
-static ssize_t llmnr_receive_udp6(int, void *, size_t,
-        struct sockaddr_in6 *, struct in6_pktinfo *);
-static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
-
-static volatile sig_atomic_t responder_terminated;
-
-/*
  * Logs a discarded packet with the sender address.
  */
 static inline void log_discarded(const char *restrict message,
@@ -136,6 +126,12 @@ static inline void log_discarded(const char *restrict message,
         syslog(LOG_INFO, "%s (discarded)", message);
     }
 }
+
+/*
+ * # Implementation of the LLMNR responder object.
+ *
+ * ## Static variables.
+ */
 
 /**
  * True if this module is initialized.
@@ -153,6 +149,16 @@ static int udp6_socket;
  */
 static uint8_t host_label[1 + LLMNR_LABEL_MAX];
 
+static volatile sig_atomic_t responder_terminated;
+
+/*
+ * ## Declarations for static functions.
+ */
+
+static ssize_t llmnr_receive_udp6(int, void *, size_t,
+        struct sockaddr_in6 *, struct in6_pktinfo *);
+static int llmnr_decode_cmsg(struct msghdr *, struct in6_pktinfo *);
+
 /**
  * Handles a LLMNR query.
  * @param __ifindex interface index.
@@ -164,6 +170,10 @@ static uint8_t host_label[1 + LLMNR_LABEL_MAX];
 static int llmnr_responder_handle_query(unsigned int __ifindex,
         const struct llmnr_header *__header, size_t __length,
         const struct sockaddr_in6 *__sender);
+
+/*
+ * ## In-line functions.
+ */
 
 /**
  * Returns true if this module is initialized.
@@ -193,6 +203,10 @@ static inline int llmnr_responder_name_matches(
     }
     return false;
 }
+
+/*
+ * ## Out-of-line functions.
+ */
 
 int llmnr_responder_initialize(in_port_t port) {
     if (llmnr_responder_initialized()) {

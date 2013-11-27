@@ -171,6 +171,9 @@ static int llmnr_responder_handle_query(unsigned int __ifindex,
         const struct llmnr_header *__header, size_t __length,
         const struct sockaddr_in6 *__sender);
 
+static int llmnr_responder_respond_empty(const struct llmnr_header *__query,
+        size_t __query_size, const struct sockaddr_in6 *__sender);
+
 /*
  * ## In-line functions.
  */
@@ -411,12 +414,14 @@ int llmnr_responder_handle_query(unsigned int ifindex,
                     switch (qtype) {
                     case LLMNR_TYPE_AAAA:
                     case LLMNR_QTYPE_ANY:
-                        /* TODO: Respond to the query.  */
+                        llmnr_responder_respond_empty(header,
+                                p + 4 - (const uint8_t *) header, sender);
                         break;
 
                     case LLMNR_TYPE_A:
                     default:
-                        // TODO: Respond with no answer.
+                        llmnr_responder_respond_empty(header,
+                                p + 4 - (const uint8_t *) header, sender);
                         break;
                     }
                 } else {
@@ -431,4 +436,31 @@ int llmnr_responder_handle_query(unsigned int ifindex,
     }
 
     return 0;
+}
+
+int llmnr_responder_respond_empty(const struct llmnr_header *restrict query,
+        size_t query_size, const struct sockaddr_in6 *restrict sender) {
+    assert(query_size <= 512);
+
+    uint8_t packet[512];
+    memcpy(packet, query, query_size);
+
+    struct llmnr_header *header = (struct llmnr_header *) packet;
+    header->flags = htons(LLMNR_HEADER_QR);
+
+    if (sendto(udp6_socket, packet, query_size, 0, sender,
+            sizeof (struct sockaddr_in6)) >= 0) {
+        return 0;
+    } else {
+        if (errno == EMSGSIZE) {
+            // TODO: Resend with truncation.
+            header->flags |= htons(LLMNR_HEADER_TC);
+            if (sendto(udp6_socket, packet, query_size, 0, sender,
+                    sizeof (struct sockaddr_in6)) >= 0) {
+                return 0;
+            }
+        }
+    }
+
+    return errno;
 }

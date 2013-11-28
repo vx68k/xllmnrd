@@ -44,5 +44,6 @@ AC_CHECK_FUNCS([atexit basename gethostname setlocale socket strchrnul \
 strerror])
 
 AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile src/Makefile lsb/Makefile test/Makefile \
+po/Makefile.in])
 AC_OUTPUT

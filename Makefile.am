@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -Im4
 
-SUBDIRS = src test po
+SUBDIRS = src lsb test po
 
 dist-hook:
 	revision=`cd $(srcdir) && hg identify -i 2> /dev/null`; \

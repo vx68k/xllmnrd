@@ -1,6 +1,21 @@
-This file describes major changes and other notes in each release.
+This file describes major changes and important notes in each release.
 
-# Version 1.0y1
+# Version 1.0y2 (milestone 1.0y2)
+
+This release is the second milestone for version 1.0.0.
+
+## New features
+
+* It now responds to queries that matches its host name, but with no answers.
+* A new command-line option is added to set its host name explicitly.
+* Localization support is added for localizing command-line interface.
+
+## Known limitations
+
+* All responses have no answer sections and senders will just get no addresses
+  both for IPv6 and for IPv4.
+
+# Version 1.0y1 (milestone 1.0y1)
 
 This release is the first milestone for version 1.0.0.
 

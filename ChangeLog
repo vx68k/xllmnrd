@@ -1,8 +1,197 @@
+2013-11-29  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Updated the news.
+	[3a3abc8ccb20] [tip] <release>
+
+2013-11-28  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/xllmnrd.8.in:
+	Updated the manual page, closing issue #14.
+	[4a5a8d2e43c9] <release>
+
+	* po/LINGUAS:
+	Added an initial set of languages.
+	[750b2a8b320e]
+
+2013-11-27  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Changed message strings.
+	[2877a84b1116]
+
+	* src/Makefile.am:
+	Added gettext.h into the distribution.
+	[b384bccc37c6] <feature/gettext>
+
+	* src/Makefile.am, src/main.c:
+	Enabled NLS.
+	[b3276114cfbf] <feature/gettext>
+
+2013-11-27  Free Software Foundation, Inc.  <Free Software Foundation, Inc.>
+
+	* src/gettext.h:
+	Added a file for localization.
+	[2036ad183b2c] <feature/gettext>
+
+2013-11-27  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Implemented option '-n', which closes issue #24.
+	[244c547a9276]
+
+	* src/main.c:
+	Added a new option (see issue #24).
+	[ebe3f8bc3524]
+
+	* src/Makefile.am, src/llmnr_responder.c, src/llmnr_responder.h,
+	src/main.c, src/responder.c, src/responder.h:
+	Changed file names shorter.
+	[1d11c28efa45] <feature/responder>
+
+	* src/llmnr_responder.c, src/llmnr_responder.h, src/main.c:
+	Removed the 'llmnr_' prefix from the responder symbols.
+	[0f5c88a2a32c] <feature/responder>
+
+	* src/llmnr_responder.c:
+	Made the responder respond with an empty answer section.
+	[276542a4ae31] <feature/responder>
+
+	* src/llmnr_responder.c, src/llmnr_responder.h:
+	Cleaned up the source code with commenting and reordering.
+	[2046e79e508a] <feature/responder>
+
+2013-11-26  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Restructed an if statement.
+	[d135b884a261]
+
+2013-11-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added a check for inteface scopes.
+	[cdb441511b09]
+
+	* src/llmnr_responder.c:
+	Implemented QNAME matching.
+	[186795e5c4ed] <feature/responder>
+
+	* test/Makefile.am:
+	Moved the deletion of XML result files to 'clean'.
+	[5b67527c5e21]
+
+	* build.makefile:
+	Added mostlyclean.
+	[985668c8703d]
+
+	* configure.ac:
+	Added 'strchrnul' to the configure checks.
+	[c7525458789e] <feature/responder>
+
+	* src/ifaddr.c:
+	Removed unnecessary assertions.
+	[29c661a0c922]
+
+	* configure.ac:
+	Added 'basename' to the configure checks.
+	[3069da99d99f]
+
+2013-11-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Added ascii.h into the package.
+	[ea62e772f59f] <feature/responder>
+
+2013-11-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/llmnr_responder.c:
+	Backed out changeset: a2f55ae5757e.
+	[f142efe818ac] <feature/responder>
+
+2013-11-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/llmnr_responder.c:
+	Added an uppercase conversion in 'llmnr_responder_set_host_name'.
+	[a2f55ae5757e] <feature/responder>
+
+	* src/ascii.h:
+	Added a new header.
+	[f9328c0b106a] <feature/responder>
+
+2013-11-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/llmnr_packet.h, src/llmnr_responder.c, src/llmnr_responder.h:
+	Implemented question decoding code.
+	[f2da6e55b2a9] <feature/responder>
+
+	* src/llmnr_packet.h:
+	Changed to use uint8_t for octets with a macro addtion.
+	[548a371010b1] <feature/responder>
+
+2013-11-20  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Modified comments (see issue #20).
+	[44d3f1f002b7] <feature/config-revision>
+
+	* src/main.c:
+	Added output for 'PACKAGE_REVISION' if defined (see issue #20).
+	[a8dbd79b51d8] <feature/config-revision>
+
+	* Makefile.am:
+	Removed a pair of quotes (see issue #20).
+	[8cef8fa2cbc0] <feature/config-revision>
+
+2013-11-19  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Makefile.am:
+	Added code to make 'config.revision' in the distdir.
+	[6ca777e54064] <feature/config-revision>
+
+	* configure.ac:
+	Changed 'PACKAGE_REVISON' to be defined only if 'config.revision'
+	exists.
+	[2957f9cfb620] <feature/config-revision>
+
+	* ABOUT-NLS:
+	Added the file 'ABOUT-NLS' into version control.
+	[3c340c4c1fcf] <feature/gettext>
+
+	* configure.ac, src/main.c:
+	Added code to set the host name.
+	[ad9c3b5299be] <feature/responder>
+
+	* configure.ac, src/llmnr_responder.c, src/llmnr_responder.h:
+	Added new function 'llmnr_responder_set_host_name'.
+	[c5e1fe0257e9] <feature/responder>
+
+	* Makefile.am, configure.ac, po/Makevars, po/POTFILES.in:
+	Applied minimal changes for gettext (see issue #19).
+	[336f9cb368e6] <feature/gettext>
+
+	* src/main.c:
+	Modified a message string.
+	[9817d0a388f8]
+
+	* configure.ac, src/main.c:
+	Corrected minor text formatting problems.
+	[4cfaac47e5e5]
+
 2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* .hgtags:
+	Added tag release-1.0y1 for changeset efcb7238dabf
+	[857418a3e7db] <release>
+
+	* ChangeLog:
+	Updated the change log from the revision history and closed issue
+	#13.
+	[efcb7238dabf] [release-1.0y1] <release>
 
 	* README:
 	Updated the file contents for release (see issue #13).
-	[628eeeeef5f9] [tip] <release>
+	[628eeeeef5f9] <release>
 
 	* NEWS:
 	Removed the Emacs mode line.
@@ -33,6 +222,10 @@
 	[049017406837] <release>
 
 2013-11-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Changed the version number.
+	[76bd62278a98]
 
 	* src/ifaddr.c:
 	Reduced verbose logs and cleaned up code.
@@ -115,6 +308,10 @@
 	* test/testifaddr.cpp:
 	Updated the unit tests for ifaddr.
 	[0384ed9554e3] <feature/ifaddr>
+
+	* configure.ac:
+	Added the 'PACKAGE_REVISION' definition in configure.ac.
+	[5088daded79c] <feature/config-revision>
 
 2013-11-12  Kaz Nishimura  <kazssym@vx68k.org>
 

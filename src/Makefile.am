@@ -1,11 +1,13 @@
 ## Process this file with automake to produce a Makefile.in.
 
+AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
+
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
-xllmnrd_SOURCES = main.c llmnr_responder.c ifaddr.c
+xllmnrd_SOURCES = main.c responder.c llmnr.c ifaddr.c
 
-noinst_HEADERS = llmnr_responder.h llmnr_packet.h ifaddr.h
+noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h gettext.h
 EXTRA_DIST = xllmnrd.8.in
 
 CLEANFILES = xllmnrd.8

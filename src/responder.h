@@ -20,12 +20,8 @@
 #define	LLMNR_RESPONDER_H 1
 
 #include "ifaddr.h" /* struct ifaddr_change */
+#include "llmnr.h"
 #include <netinet/in.h> /* in_port_t */
-
-/*
- * Port number.
- */
-#define LLMNR_PORT 5355
 
 /**
  * Initializes the responder object.

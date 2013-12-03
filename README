@@ -6,11 +6,14 @@ server on the same local network _without any DNS configuration_.
 
 xllmnrd is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License.  You should have received a copy of
-it as the file 'COPYING' in this directory.
+it as the 'COPYING' file.
 
 # Installation
 
-For generic installation instructions, read the file 'INSTALL' in this
-directory.  If you are also planning to run the included test suite with GCC,
-you will have to set the environment variable 'CXX' to 'g++ -std=gnu++11' or
-'g++ -std=gnu++0x' before installation, depending on the compiler version.
+For generic installation instructions, read the 'INSTALL' file.  If you are
+also planning to run the included test suite with GCC, you might have to set
+the environment variable 'CXX' to 'g++ -std=gnu++11' (or to 'g++ -std=gnu++0x'
+depending on the compiler version) before you run 'configure'.
+
+If you find any other problem while installation, please report it to our
+[issue tracker](https://bitbucket.org/kazssym/xllmnrd/issues).

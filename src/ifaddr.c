@@ -60,7 +60,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     if (fd >= 0) {
         struct sockaddr_nl addr = {
             .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV6_IFADDR,
+            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
         };
         if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
             *fd_out = fd;
@@ -141,6 +141,22 @@ static pthread_t worker_thread;
 
 static volatile sig_atomic_t terminated;
 
+/**
+ * Adds an IPv4 address to an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv4 address to be added.
+ */
+static void ifaddr_add_addr_v4(unsigned int __index,
+        const struct in_addr *__addr);
+
+/**
+ * Removes an IPv4 address from an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv4 address to be removed.
+ */
+static void ifaddr_remove_addr_v4(unsigned int __index,
+        const struct in_addr *__addr);
+
 /*
  * Declarations for static functions.
  */
@@ -199,6 +215,29 @@ static inline int ifaddr_initialized(void) {
 static inline int ifaddr_started(void) {
     return started;
 }
+/**
+ * Tests if an interface has no address.
+ * This function MUST be called while 'if_mutex' is locked.
+ * @param i [in] interface record to be tested.
+ * @return true if the interface has no address.
+ */
+static inline int ifaddr_interface_is_free(
+        const struct ifaddr_if * restrict i) {
+    return i->addr_v4_size == 0 && IN6_IS_ADDR_UNSPECIFIED(&i->addr);
+}
+
+/**
+ * Erases an interface.
+ * This function MUST be called while 'if_mutex' is locked.
+ * @param i [in] interface record to be erased.
+ */
+static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
+    struct ifaddr_if *j = i++;
+    while (i != if_table + if_table_size) {
+        *j++ = *i++;
+    }
+    --if_table_size;
+}
 
 /**
  * Adds an IPv6 address to an interface.
@@ -240,7 +279,7 @@ static inline void ifaddr_add_addr_v6(unsigned int index,
                 .ifindex = index,
             };
             (*if_change_handler)(&change);
-        }        
+        }
     }
 
     abort_if_error(pthread_mutex_unlock(&if_mutex),
@@ -262,10 +301,9 @@ static inline void ifaddr_remove_addr_v6(unsigned int index,
         ++i;
     }
     if (i != if_table_size && IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
-        --if_table_size;
-        while (i != if_table_size) {
-            if_table[i] = if_table[i + 1];
-            ++i;
+        if_table[i].addr = in6addr_any;
+        if (ifaddr_interface_is_free(&if_table[i])) {
+            ifaddr_erase_interface(&if_table[i]);
         }
 
         if (if_change_handler) {
@@ -274,93 +312,6 @@ static inline void ifaddr_remove_addr_v6(unsigned int index,
                 .ifindex = index,
             };
             (*if_change_handler)(&change);
-        }
-    }
-
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not unlock 'if_mutex'");
-}
-
-/**
- * Adds an IPv4 address to an interface.
- * @param index interface index.
- * @param addr IPv4 address to be added.
- */
-static inline void ifaddr_add_addr_v4(unsigned int index,
-        const struct in_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
-
-    struct ifaddr_if *i = if_table;
-    while (i != if_table + if_table_size && i->ifindex != index) {
-        ++i;
-    }
-    if (i == if_table + if_table_size) {
-        if (if_table_size == if_table_capacity) {
-            abort(); // TODO: Think later.
-        }
-        *i = (struct ifaddr_if){
-            .ifindex = index,
-            .addr_v4_size = 0,
-        };
-        ++if_table_size;
-    }
-
-    struct in_addr *j = i->addr_v4;
-    while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
-        ++j;
-    }
-    if (j == i->addr_v4 + i->addr_v4_size) {
-        if (i->addr_v4_size == ADDR_V4_CAPACITY) {
-            abort(); // TODO: Think later.
-        }
-
-        *j = *addr;
-        ++(i->addr_v4_size);
-
-        char ifname[IF_NAMESIZE];
-        if_indextoname(index, ifname);
-        syslog(LOG_DEBUG, "Added an IPv4 address on %s [%zu]", ifname,
-                i->addr_v4_size);
-    }
-
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
-}
-
-/**
- * Removes an IPv4 address from an interface.
- * @param index interface index.
- * @param addr IPv4 address to be removed.
- */
-static inline void ifaddr_remove_addr_v4(unsigned int index,
-        const struct in_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
-
-    struct ifaddr_if *i = if_table;
-    while (i != if_table + if_table_size && i->ifindex != index) {
-        ++i;
-    }
-    if (i != if_table + if_table_size) {
-        struct in_addr *j = i->addr_v4;
-        while (j != i->addr_v4 + i->addr_v4_size &&
-                j->s_addr != addr->s_addr) {
-            ++j;
-        }
-        if (j != i->addr_v4 + i->addr_v4_size) {
-            struct in_addr *k = j++;
-            while (j != i->addr_v4 + i->addr_v4_size) {
-                *k++ = *j++;
-            }
-            --(i->addr_v4_size);
-
-            char ifname[IF_NAMESIZE];
-            if_indextoname(index, ifname);
-            syslog(LOG_DEBUG, "Removed an IPv4 address on %s [%zu]", ifname,
-                    i->addr_v4_size);
-
-            // TODO: Remove the interface if no address remains.
         }
     }
 
@@ -478,6 +429,87 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
             "ifaddr: Could not lock 'if_mutex'");
 
     return 0;
+}
+
+void ifaddr_add_addr_v4(unsigned int index,
+        const struct in_addr *restrict addr) {
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Failed to lock 'if_mutex'");
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i == if_table + if_table_size) {
+        if (if_table_size == if_table_capacity) {
+            abort(); // TODO: Think later.
+        }
+        *i = (struct ifaddr_if){
+            .ifindex = index,
+            .addr_v4_size = 0,
+        };
+        ++if_table_size;
+    }
+
+    struct in_addr *j = i->addr_v4;
+    while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
+        ++j;
+    }
+    // Appends an address if no matching one is found
+    if (j == i->addr_v4 + i->addr_v4_size) {
+        if (i->addr_v4_size == ADDR_V4_CAPACITY) {
+            abort(); // TODO: Think later.
+        }
+
+        *j = *addr;
+        ++(i->addr_v4_size);
+
+        char ifname[IF_NAMESIZE];
+        if_indextoname(index, ifname);
+        syslog(LOG_DEBUG, "ifaddr: Added an IPv4 address on %s [%zu]", ifname,
+                i->addr_v4_size);
+    }
+
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Failed to unlock 'if_mutex'");
+}
+
+void ifaddr_remove_addr_v4(unsigned int index,
+        const struct in_addr *restrict addr) {
+    abort_if_error(pthread_mutex_lock(&if_mutex),
+            "ifaddr: Failed to lock 'if_mutex'");
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i != if_table + if_table_size) {
+        struct in_addr *j = i->addr_v4;
+        while (j != i->addr_v4 + i->addr_v4_size &&
+                j->s_addr != addr->s_addr) {
+            ++j;
+        }
+        // Erases a matching address if one is found.
+        if (j != i->addr_v4 + i->addr_v4_size) {
+            struct in_addr *k = j++;
+            while (j != i->addr_v4 + i->addr_v4_size) {
+                *k++ = *j++;
+            }
+            --(i->addr_v4_size);
+
+            char ifname[IF_NAMESIZE];
+            if_indextoname(index, ifname);
+            syslog(LOG_DEBUG, "ifaddr: Removed an IPv4 address on %s [%zu]",
+                    ifname, i->addr_v4_size);
+
+            if (ifaddr_interface_is_free(i)) {
+                ifaddr_erase_interface(i);
+            }
+        }
+    }
+
+    abort_if_error(pthread_mutex_unlock(&if_mutex),
+            "ifaddr: Failed to unlock 'if_mutex'");
 }
 
 int ifaddr_start(void) {
@@ -679,6 +711,7 @@ int ifaddr_refresh(void) {
     if (refresh_not_in_progress) {
         abort_if_error(pthread_mutex_lock(&if_mutex),
                 "ifaddr: Could not lock 'if_mutex'");
+        // TODO: Call the change handler for each interface.
         if_table_size = 0;
         abort_if_error(pthread_mutex_unlock(&if_mutex),
                 "ifaddr: Could not unlock 'if_mutex'");
@@ -723,7 +756,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
     ifaddr_wait_for_refresh_completion();
 
     abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'ifable_mutex'");
+            "ifaddr: Failed to lock 'if_mutex'");
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != ifindex) {
@@ -740,7 +773,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
     }
 
     abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not unlock 'ifable_mutex'");
+            "ifaddr: Failed to unlock 'if_mutex'");
 
     return err;
 }

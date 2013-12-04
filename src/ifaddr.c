@@ -40,13 +40,13 @@
 #include <assert.h>
 
 /**
- * Terminates the program abnormally if a error is detected.
- * @param e value to be checked for an error.
- * @param message error message.
+ * Terminates the program abnormally if an error is detected.
+ * @param err value to be checked for an error.
+ * @param name display name of the operation.
  */
-static inline void abort_if_error(int err, const char *restrict message) {
+static inline void assume_no_error(int err, const char *restrict name) {
     if (err != 0) {
-        syslog(LOG_CRIT, "%s: %s", message, strerror(err));
+        syslog(LOG_CRIT, "ifaddr: Failed to %s: %s", name, strerror(err));
         abort();
     }
 }
@@ -251,8 +251,7 @@ static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
  */
 static inline void ifaddr_add_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != index) {
@@ -287,8 +286,7 @@ static inline void ifaddr_add_addr_v6(unsigned int index,
         }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 }
 
 /**
@@ -298,8 +296,7 @@ static inline void ifaddr_add_addr_v6(unsigned int index,
  */
 static inline void ifaddr_remove_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != index) {
@@ -320,36 +317,31 @@ static inline void ifaddr_remove_addr_v6(unsigned int index,
         }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not unlock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 }
 
 /**
  * Waits for the running refresh operation to complete.
  */
 static inline void ifaddr_wait_for_refresh_completion(void) {
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
 
     while (!refresh_not_in_progress) {
-        abort_if_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
-                "ifaddr: Could not wait for 'refresh_cond'");
+        assume_no_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
+                "wait for a condition");
     }
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
 }
 
 static inline void ifaddr_complete_refresh(void) {
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
 
     refresh_not_in_progress = true;
-    abort_if_error(pthread_cond_broadcast(&refresh_cond),
-            "ifaddr: Could not broadcast 'refresh_cond'");
+    assume_no_error(pthread_cond_broadcast(&refresh_cond),
+            "broadcast a condition");
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
 }
 
 /*
@@ -401,14 +393,14 @@ void ifaddr_finalize(void) {
             pthread_join(worker_thread, NULL); // TODO: Check for an error.
         }
 
-        abort_if_error(pthread_cond_destroy(&refresh_cond),
-                "ifaddr: Could not destroy 'refresh_cond'");
-        abort_if_error(pthread_mutex_destroy(&refresh_mutex),
-                "ifaddr: Could not destroy 'refresh_mutex'");
-        abort_if_error(pthread_mutex_destroy(&if_mutex),
-                "ifaddr: Could not destroy 'if_mutex'");
+        assume_no_error(pthread_cond_destroy(&refresh_cond),
+                "destroy a condition");
+        assume_no_error(pthread_mutex_destroy(&refresh_mutex),
+                "destroy a mutex");
+        assume_no_error(pthread_mutex_destroy(&if_mutex),
+                "destroy a mutex");
         if (close(rtnetlink_fd) != 0) {
-            syslog(LOG_CRIT, "ifaddr: Could not close 'rtnetlink_fd': %s",
+            syslog(LOG_CRIT, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
             abort();
         }
@@ -422,24 +414,21 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     }
 
     // This lock might be unnecessary, but it looks safer.
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     if (old_handler_out) {
         *old_handler_out = if_change_handler;
     }
     if_change_handler = handler;
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 
     return 0;
 }
 
 void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Failed to lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     struct ifaddr_if *i = if_table;
     while (i != if_table + if_table_size && i->ifindex != index) {
@@ -478,18 +467,16 @@ void ifaddr_add_addr_v4(unsigned int index,
             syslog(LOG_DEBUG, "ifaddr: Added an IPv4 address on %s [%zu]",
                     ifname, i->addr_v4_size);
         } else {
-            syslog(LOG_ERR, "ifaddr: Failed to reallocate memory");
+            syslog(LOG_ERR, "ifaddr: Failed to reallocate an array");
         }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Failed to unlock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 }
 
 void ifaddr_remove_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Failed to lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     struct ifaddr_if *i = if_table;
     while (i != if_table + if_table_size && i->ifindex != index) {
@@ -520,8 +507,7 @@ void ifaddr_remove_addr_v4(unsigned int index,
         }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Failed to unlock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 }
 
 int ifaddr_start(void) {
@@ -543,8 +529,8 @@ int ifaddr_start(void) {
         if (err == 0) {
             err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
             // Restores the signal mask before proceeding.
-            abort_if_error(pthread_sigmask(SIG_SETMASK, &oset, 0),
-                    "ifaddr: Could not restore the signal mask");
+            assume_no_error(pthread_sigmask(SIG_SETMASK, &oset, 0),
+                    "restore the signal mask");
 
             if (err == 0) {
                 started = true;
@@ -716,17 +702,14 @@ int ifaddr_refresh(void) {
         return ENXIO;
     }
 
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
 
     int err = 0;
     if (refresh_not_in_progress) {
-        abort_if_error(pthread_mutex_lock(&if_mutex),
-                "ifaddr: Could not lock 'if_mutex'");
+        assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
         // TODO: Call the change handler for each interface.
         if_table_size = 0;
-        abort_if_error(pthread_mutex_unlock(&if_mutex),
-                "ifaddr: Could not unlock 'if_mutex'");
+        assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
@@ -754,8 +737,7 @@ int ifaddr_refresh(void) {
         refresh_not_in_progress = false;
     }
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
 
     return err;
 }
@@ -767,8 +749,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     ifaddr_wait_for_refresh_completion();
 
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Failed to lock 'if_mutex'");
+    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != ifindex) {
@@ -784,8 +765,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
         err = ENODEV;
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Failed to unlock 'if_mutex'");
+    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
 
     return err;
 }

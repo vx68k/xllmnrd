@@ -26,6 +26,7 @@
 #include "ifaddr.h"
 #include "ascii.h"
 #include "llmnr_packet.h"
+#include "llmnr.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
@@ -39,14 +40,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <assert.h>
-
-#ifndef IN6ADDR_LLMNR_INIT
-#define IN6ADDR_LLMNR_INIT { \
-    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3} \
-}
-#endif
-
-static const struct in6_addr in6addr_llmnr = IN6ADDR_LLMNR_INIT;
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.
@@ -277,7 +270,7 @@ int responder_run(void) {
                 data, sizeof data, &sender, &pi);
         if (recv_len >= 0) {
             // The destination MUST be the LLMNR multicast address.
-            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_llmnr) &&
+            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_mc_llmnr) &&
                     (size_t) recv_len >= sizeof (struct llmnr_header)) {
                 const struct llmnr_header *header =
                         (const struct llmnr_header *) data;
@@ -306,7 +299,7 @@ void responder_handle_ifaddr_change(
     if (responder_initialized()) {
         if (change->ifindex != 0) {
             const struct ipv6_mreq mr = {
-                .ipv6mr_multiaddr = in6addr_llmnr,
+                .ipv6mr_multiaddr = in6addr_mc_llmnr,
                 .ipv6mr_interface = change->ifindex,
             };
 

@@ -1,11 +1,13 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.67])
-AC_INIT([xllmnrd], [1.0y2], [https://bitbucket.org/kazssym/xllmnrd/issues],,
+AC_INIT([xllmnrd], [1.0y3], [https://bitbucket.org/kazssym/xllmnrd/issues],,
 [http://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18.1])
 
 # Define the unique package revision if 'config.revision' exists.
 if test -f $srcdir/config.revision; then
@@ -42,5 +44,5 @@ AC_CHECK_FUNCS([atexit basename gethostname setlocale socket strchrnul \
 strerror])
 
 AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])
 AC_OUTPUT

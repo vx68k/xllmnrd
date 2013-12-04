@@ -147,10 +147,10 @@ static pthread_mutex_t refresh_mutex;
 static pthread_cond_t refresh_cond;
 
 /**
- * True if a refresh operation is not in progress.
- * This flag is volatile as it is used from multiple threads.
+ * Flag to indicates if a refresh operation is not in progress.
+ * This flag MUST be accessed while 'refresh_mutex' is locked.
  */
-static volatile bool refresh_not_in_progress;
+static bool refresh_not_in_progress;
 
 /**
  * True if the worker thread is started.

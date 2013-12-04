@@ -52,6 +52,30 @@ static inline void assume_no_error(int err, const char *restrict name) {
 }
 
 /**
+ * Destroys a mutex assuming no error is detected.
+ * @param mutex [in] mutex to be destroyed.
+ */
+static inline void destroy_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_destroy(mutex), "destroy a mutex");
+}
+
+/**
+ * Locks a mutex assuming no error is detected.
+ * @param mutex [inout] mutex to be locked.
+ */
+static inline void lock_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_lock(mutex), "lock a mutex");
+}
+
+/**
+ * Unlocks a mutex assuming no error is detected.
+ * @param mutex [inout] mutex to be unlocked.
+ */
+static inline void unlock_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_unlock(mutex), "unlock a mutex");
+}
+
+/**
  * Opens a RTNETLINK socket and binds to necessary groups.
  */
 static inline int open_rtnetlink(int *restrict fd_out) {
@@ -251,7 +275,7 @@ static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
  */
 static inline void ifaddr_add_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != index) {
@@ -286,7 +310,7 @@ static inline void ifaddr_add_addr_v6(unsigned int index,
         }
     }
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 }
 
 /**
@@ -296,7 +320,7 @@ static inline void ifaddr_add_addr_v6(unsigned int index,
  */
 static inline void ifaddr_remove_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != index) {
@@ -317,31 +341,31 @@ static inline void ifaddr_remove_addr_v6(unsigned int index,
         }
     }
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 }
 
 /**
  * Waits for the running refresh operation to complete.
  */
 static inline void ifaddr_wait_for_refresh_completion(void) {
-    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
+    lock_mutex(&refresh_mutex);
 
     while (!refresh_not_in_progress) {
         assume_no_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
                 "wait for a condition");
     }
 
-    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
+    unlock_mutex(&refresh_mutex);
 }
 
 static inline void ifaddr_complete_refresh(void) {
-    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
+    lock_mutex(&refresh_mutex);
 
     refresh_not_in_progress = true;
     assume_no_error(pthread_cond_broadcast(&refresh_cond),
             "broadcast a condition");
 
-    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
+    unlock_mutex(&refresh_mutex);
 }
 
 /*
@@ -369,13 +393,17 @@ int ifaddr_initialize(int sig) {
                     initialized = true;
                     return 0;
                 }
-                pthread_cond_destroy(&refresh_cond);
+                assume_no_error(pthread_cond_destroy(&refresh_cond),
+                        "destroy a conditon");
             }
-            pthread_mutex_destroy(&refresh_mutex);
+            destroy_mutex(&refresh_mutex);
         }
-        pthread_mutex_destroy(&if_mutex);
+        destroy_mutex(&if_mutex);
 
-        close(rtnetlink_fd);
+        if (close(rtnetlink_fd) != 0) {
+            syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
+                    strerror(errno));
+        }
     }
     return err;
 }
@@ -395,14 +423,12 @@ void ifaddr_finalize(void) {
 
         assume_no_error(pthread_cond_destroy(&refresh_cond),
                 "destroy a condition");
-        assume_no_error(pthread_mutex_destroy(&refresh_mutex),
-                "destroy a mutex");
-        assume_no_error(pthread_mutex_destroy(&if_mutex),
-                "destroy a mutex");
+        destroy_mutex(&refresh_mutex);
+        destroy_mutex(&if_mutex);
+
         if (close(rtnetlink_fd) != 0) {
-            syslog(LOG_CRIT, "ifaddr: Failed to close a socket: %s",
+            syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
-            abort();
         }
     }
 }
@@ -413,22 +439,21 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
         return ENXIO;
     }
 
-    // This lock might be unnecessary, but it looks safer.
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     if (old_handler_out) {
         *old_handler_out = if_change_handler;
     }
     if_change_handler = handler;
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 
     return 0;
 }
 
 void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     struct ifaddr_if *i = if_table;
     while (i != if_table + if_table_size && i->ifindex != index) {
@@ -471,12 +496,12 @@ void ifaddr_add_addr_v4(unsigned int index,
         }
     }
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 }
 
 void ifaddr_remove_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     struct ifaddr_if *i = if_table;
     while (i != if_table + if_table_size && i->ifindex != index) {
@@ -507,7 +532,7 @@ void ifaddr_remove_addr_v4(unsigned int index,
         }
     }
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 }
 
 int ifaddr_start(void) {
@@ -702,14 +727,14 @@ int ifaddr_refresh(void) {
         return ENXIO;
     }
 
-    assume_no_error(pthread_mutex_lock(&refresh_mutex), "lock a mutex");
+    lock_mutex(&refresh_mutex);
 
     int err = 0;
     if (refresh_not_in_progress) {
-        assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+        lock_mutex(&if_mutex);
         // TODO: Call the change handler for each interface.
         if_table_size = 0;
-        assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+        unlock_mutex(&if_mutex);
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
@@ -737,7 +762,7 @@ int ifaddr_refresh(void) {
         refresh_not_in_progress = false;
     }
 
-    assume_no_error(pthread_mutex_unlock(&refresh_mutex), "unlock a mutex");
+    unlock_mutex(&refresh_mutex);
 
     return err;
 }
@@ -749,7 +774,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     ifaddr_wait_for_refresh_completion();
 
-    assume_no_error(pthread_mutex_lock(&if_mutex), "lock a mutex");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != ifindex) {
@@ -765,7 +790,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
         err = ENODEV;
     }
 
-    assume_no_error(pthread_mutex_unlock(&if_mutex), "unlock a mutex");
+    unlock_mutex(&if_mutex);
 
     return err;
 }

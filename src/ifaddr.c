@@ -78,8 +78,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
 struct ifaddr_if {
     unsigned int ifindex;
     size_t addr_v4_size;
-#define ADDR_V4_CAPACITY 8
-    struct in_addr addr_v4[ADDR_V4_CAPACITY]; // TODO: Allocate dynamically.
+    struct in_addr *addr_v4;
     struct in6_addr addr;
 };
 
@@ -215,6 +214,7 @@ static inline int ifaddr_initialized(void) {
 static inline int ifaddr_started(void) {
     return started;
 }
+
 /**
  * Tests if an interface has no address.
  * This function MUST be called while 'if_mutex' is locked.
@@ -232,11 +232,16 @@ static inline int ifaddr_interface_is_free(
  * @param i [in] interface record to be erased.
  */
 static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
+    free(i->addr_v4);
+
     struct ifaddr_if *j = i++;
     while (i != if_table + if_table_size) {
         *j++ = *i++;
     }
     --if_table_size;
+
+    // Clears the pointer that is no longer used though it is unnecessary.
+    if_table[if_table_size].addr_v4 = NULL;
 }
 
 /**
@@ -457,17 +462,24 @@ void ifaddr_add_addr_v4(unsigned int index,
     }
     // Appends an address if no matching one is found
     if (j == i->addr_v4 + i->addr_v4_size) {
-        if (i->addr_v4_size == ADDR_V4_CAPACITY) {
-            abort(); // TODO: Think later.
+        struct in_addr *addr_v4 = NULL;
+        // Avoids potential overflow in size calculation.
+        if (i->addr_v4_size + 1 <= SIZE_MAX / sizeof (struct in_addr)) {
+            addr_v4 = (struct in_addr *) realloc(i->addr_v4,
+                    (i->addr_v4_size + 1) * sizeof (struct in_addr));
         }
+        if (addr_v4) {
+            addr_v4[i->addr_v4_size] = *addr;
+            i->addr_v4 = addr_v4;
+            i->addr_v4_size += 1;
 
-        *j = *addr;
-        ++(i->addr_v4_size);
-
-        char ifname[IF_NAMESIZE];
-        if_indextoname(index, ifname);
-        syslog(LOG_DEBUG, "ifaddr: Added an IPv4 address on %s [%zu]", ifname,
-                i->addr_v4_size);
+            char ifname[IF_NAMESIZE];
+            if_indextoname(index, ifname);
+            syslog(LOG_DEBUG, "ifaddr: Added an IPv4 address on %s [%zu]",
+                    ifname, i->addr_v4_size);
+        } else {
+            syslog(LOG_ERR, "ifaddr: Failed to reallocate memory");
+        }
     }
 
     abort_if_error(pthread_mutex_unlock(&if_mutex),

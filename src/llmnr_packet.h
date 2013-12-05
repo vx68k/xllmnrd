@@ -43,17 +43,29 @@
 #define LLMNR_HEADER_RCODE  0x000f
 
 /*
- * TYPE and QTYPE values.
+ * TYPE constants.
  */
 #define LLMNR_TYPE_A       1
 #define LLMNR_TYPE_PTR    12
 #define LLMNR_TYPE_AAAA   28
+
+/*
+ * QTYPE constants.
+ */
+#define LLMNR_QTYPE_A    LLMNR_TYPE_A
+#define LLMNR_QTYPE_PTR  LLMNR_TYPE_PTR
+#define LLMNR_QTYPE_AAAA LLMNR_TYPE_AAAA
 #define LLMNR_QTYPE_ANY  255
 
 /*
- * CLASS and QCLASS value.
+ * CLASS constant.
  */
 #define LLMNR_CLASS_IN   1
+
+/*
+ * QCLASS constant.
+ */
+#define LLMNR_QCLASS_IN LLMNR_CLASS_IN
 
 /*
  * LLMNR header structure.

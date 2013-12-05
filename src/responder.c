@@ -121,9 +121,7 @@ static inline void log_discarded(const char *restrict message,
 }
 
 /*
- * # Implementation of the LLMNR responder object.
- *
- * ## Static variables.
+ * Implementation of the LLMNR responder object.
  */
 
 /**
@@ -145,7 +143,7 @@ static uint8_t host_label[1 + LLMNR_LABEL_MAX];
 static volatile sig_atomic_t responder_terminated;
 
 /*
- * ## Declarations for static functions.
+ * Declarations for static functions.
  */
 
 /**
@@ -161,23 +159,29 @@ static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
 /**
  * Handles a LLMNR query.
- * @param __ifindex interface index.
- * @param __header pointer to the header.
- * @param __length length of the packet including the header in octets.
+ * @param __index interface index.
+ * @param __header [in] header.
+ * @param __packet_size packet size including the header in octets.
  * @param __sender socket address of the sender.
- * @return 0 on success, or non-zero error number on failure.
+ * @return 0 if no error is detected, or non-zero error number.
  */
-static int responder_handle_query(unsigned int __ifindex,
-        const struct llmnr_header *__header, size_t __length,
+static int responder_handle_query(unsigned int __index,
+        const struct llmnr_header *__header, size_t __packet_size,
+        const struct sockaddr_in6 *__sender);
+
+/**
+ * Responds to a query for the host name.
+ * @param __index interface index.
+ * @param __query [in] query.
+ * @param __query_qname_end [in] end of the QNAME field in the query.
+ * @param __sender [in] socket address of the sender.
+ */
+static int responder_respond_for_name(unsigned int __index,
+        const struct llmnr_header *__query, const uint8_t *__query_qname_end,
         const struct sockaddr_in6 *__sender);
 
 /*
- */
-static int responder_respond_empty(const struct llmnr_header *__query,
-        size_t __query_size, const struct sockaddr_in6 *__sender);
-
-/*
- * ## In-line functions.
+ * Inline functions.
  */
 
 /**
@@ -209,7 +213,7 @@ static inline int responder_name_matches(const uint8_t *restrict question) {
 }
 
 /*
- * ## Out-of-line functions.
+ * Out-of-line functions.
  */
 
 int responder_initialize(in_port_t port) {
@@ -379,58 +383,21 @@ int decode_cmsg(struct msghdr *restrict msg,
     return 0;
 }
 
-int responder_handle_query(unsigned int ifindex,
-        const struct llmnr_header *restrict header, size_t length,
+int responder_handle_query(unsigned int index,
+        const struct llmnr_header *restrict header, size_t packet_size,
         const struct sockaddr_in6 *restrict sender) {
-    assert(length >= LLMNR_HEADER_SIZE);
+    assert(packet_size >= LLMNR_HEADER_SIZE);
     assert(sender->sin6_family == AF_INET6);
 
     const uint8_t *question = llmnr_data(header);
-    length -= LLMNR_HEADER_SIZE;
+    size_t length = packet_size - LLMNR_HEADER_SIZE;
 
-    const uint8_t *p = llmnr_skip_name(question, &length);
-    if (p && length >= 4) {
-        uint_fast16_t qtype = (p[0] << 16) | p[1];
-        uint_fast16_t qclass = (p[2] << 16) | p[3];
-        if (qclass == LLMNR_CLASS_IN) {
-            char ifname[IF_NAMESIZE];
-            char addrstr[INET6_ADDRSTRLEN];
-            if_indextoname(ifindex, ifname);
-            inet_ntop(AF_INET6, &sender->sin6_addr, addrstr,
-                    INET6_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Received IN query for QTYPE %" PRIuFAST16 \
-                    " on %s from %s%%%" PRIu32, qtype, ifname, addrstr,
-                    sender->sin6_scope_id);
+    const uint8_t *qname_end = llmnr_skip_name(question, &length);
+    if (qname_end && length >= 4) {
+        if (responder_name_matches(question)) {
+            syslog(LOG_DEBUG, "QNAME matched my host name");
 
-            if (responder_name_matches(question)) {
-                syslog(LOG_DEBUG, "  QNAME matched");
-
-                struct in6_addr addr;
-                int err = ifaddr_lookup(ifindex, &addr);
-                if (err == 0) {
-                    char addrstr[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "  Interface address is %s", addrstr);
-
-                    switch (qtype) {
-                    case LLMNR_TYPE_AAAA:
-                    case LLMNR_QTYPE_ANY:
-                        responder_respond_empty(header,
-                                p + 4 - (const uint8_t *) header, sender);
-                        break;
-
-                    case LLMNR_TYPE_A:
-                    default:
-                        responder_respond_empty(header,
-                                p + 4 - (const uint8_t *) header, sender);
-                        break;
-                    }
-                } else {
-                    char ifname[IF_NAMESIZE];
-                    if_indextoname(ifindex, ifname);
-                    syslog(LOG_NOTICE, "Address not found for %s", ifname);
-                }
-            }
+            responder_respond_for_name(index, header, qname_end, sender);
         }
     } else {
         log_discarded("Invalid question", sender);
@@ -439,27 +406,62 @@ int responder_handle_query(unsigned int ifindex,
     return 0;
 }
 
-int responder_respond_empty(const struct llmnr_header *restrict query,
-        size_t query_size, const struct sockaddr_in6 *restrict sender) {
-    assert(query_size <= 512);
+int responder_respond_for_name(unsigned int index,
+        const struct llmnr_header *query, const uint8_t *query_qname_end,
+        const struct sockaddr_in6 *restrict sender) {
+    size_t packet_size = query_qname_end + 4 - (const uint8_t *) query;
 
-    uint8_t packet[512];
-    memcpy(packet, query, query_size);
+    uint8_t packet[packet_size + 512]; // TODO: Check the array size.
+    memcpy(packet, query, packet_size);
 
-    struct llmnr_header *header = (struct llmnr_header *) packet;
-    header->flags = htons(LLMNR_HEADER_QR);
+    struct llmnr_header *response = (struct llmnr_header *) packet;
+    response->flags = htons(LLMNR_HEADER_QR);
+    response->ancount = htons(0);
+    response->nscount = htons(0);
+    response->arcount = htons(0);
 
-    if (sendto(udp6_socket, packet, query_size, 0, sender,
+    uint_fast16_t qtype = (query_qname_end[0] << 8) | query_qname_end[1];
+    uint_fast16_t qclass = (query_qname_end[2] << 8) | query_qname_end[3];
+    if (qclass == LLMNR_QCLASS_IN) {
+        switch (qtype) {
+            struct in6_addr addr_v6;
+            int err;
+
+        case LLMNR_QTYPE_AAAA:
+        case LLMNR_QTYPE_ANY:
+            err = ifaddr_lookup(index, &addr_v6);
+            if (err == 0) {
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "Found interface address %s", addrstr);
+
+                // TODO: Make an answer section.
+            } else {
+                char ifname[IF_NAMESIZE];
+                if_indextoname(index, ifname);
+                syslog(LOG_NOTICE, "Interface address not found for %s",
+                        ifname);
+            }
+            break;
+
+        default:
+            // Leaves the answer section empty.
+            break;
+        }
+    }
+
+    // Sends the response.
+    if (sendto(udp6_socket, packet, packet_size, 0, sender,
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;
-    } else {
-        if (errno == EMSGSIZE) {
-            // TODO: Resend with truncation.
-            header->flags |= htons(LLMNR_HEADER_TC);
-            if (sendto(udp6_socket, packet, query_size, 0, sender,
-                    sizeof (struct sockaddr_in6)) >= 0) {
-                return 0;
-            }
+    }
+
+    if (packet_size > 512 && errno == EMSGSIZE) {
+        // Resends with truncation.
+        response->flags |= htons(LLMNR_HEADER_TC);
+        if (sendto(udp6_socket, packet, 512, 0, sender,
+                sizeof (struct sockaddr_in6)) >= 0) {
+            return 0;
         }
     }
 

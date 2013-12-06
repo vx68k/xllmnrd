@@ -435,7 +435,29 @@ int responder_respond_for_name(unsigned int index,
                 inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
                 syslog(LOG_DEBUG, "Found interface address %s", addrstr);
 
-                // TODO: Make an answer section.
+                // TODO: Clean up the following code.
+                memcpy(packet + packet_size, host_label, 1 + host_label[0]);
+                packet_size += 1 + host_label[0];
+                packet[packet_size++] = '\0';
+                // TYPE
+                packet[packet_size++] = LLMNR_TYPE_AAAA >> 8;
+                packet[packet_size++] = LLMNR_TYPE_AAAA;
+                // CLASS
+                packet[packet_size++] = LLMNR_CLASS_IN >> 8;
+                packet[packet_size++] = LLMNR_CLASS_IN;
+                // TTL
+                packet[packet_size++] = 0;
+                packet[packet_size++] = 0;
+                packet[packet_size++] = 0;
+                packet[packet_size++] = 30;
+                // RDLENGTH
+                packet[packet_size++] = sizeof addr_v6 >> 8;
+                packet[packet_size++] = sizeof addr_v6;
+                // RDATA
+                memcpy(packet + packet_size, &addr_v6, sizeof addr_v6);
+                packet_size += sizeof (struct in6_addr);
+
+                response->ancount = htons(ntohs(response->ancount) + 1);
             } else {
                 char ifname[IF_NAMESIZE];
                 if_indextoname(index, ifname);

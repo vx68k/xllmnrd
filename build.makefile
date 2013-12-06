@@ -20,7 +20,7 @@ export CC CXX
 
 all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
-	@rm -f $(builddir)/xllmnrd-*.*
+	@rm -f $(builddir)/xllmnrd-*.tar.*
 	cd $(builddir) && $(MAKE) distcheck
 
 $(builddir)/Makefile: configure

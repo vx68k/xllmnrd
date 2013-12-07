@@ -106,6 +106,37 @@ static inline const uint8_t *llmnr_data(const struct llmnr_header *header) {
 }
 
 /**
+ * Reads a 16-bit value in a LLMNR packet.
+ * @param i [in] two octets to be read.
+ * @return read value.
+ */
+static inline uint16_t llmnr_get_uint16(const uint8_t *restrict i) {
+    return (i[0] << 8) | i[1];
+}
+
+/**
+ * Writes a 16-bit value in a LLMNR packet.
+ * @param x value to be written.
+ * @param i [out] two octets where the value is written.
+ */
+static inline void llmnr_put_uint16(uint16_t x, uint8_t *restrict i) {
+    i[0] = x >> 8;
+    i[1] = x;
+}
+
+/**
+ * Writes a 32-bit value in a LLMNR packet.
+ * @param x value to be written.
+ * @param i [out] four octets where the value is written.
+ */
+static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i) {
+    i[0] = x >> 24;
+    i[1] = x >> 16;
+    i[2] = x >>  8;
+    i[3] = x;
+}
+
+/**
  * Skips a name in a LLMNR packet.
  * @param i [in] first octet of the name.
  * @param n [inout] number of unused octets.

@@ -420,8 +420,8 @@ int responder_respond_for_name(unsigned int index,
     response->nscount = htons(0);
     response->arcount = htons(0);
 
-    uint_fast16_t qtype = (query_qname_end[0] << 8) | query_qname_end[1];
-    uint_fast16_t qclass = (query_qname_end[2] << 8) | query_qname_end[3];
+    uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
+    uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
     if (qclass == LLMNR_QCLASS_IN) {
         switch (qtype) {
             struct in6_addr addr_v6;
@@ -435,7 +435,27 @@ int responder_respond_for_name(unsigned int index,
                 inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
                 syslog(LOG_DEBUG, "Found interface address %s", addrstr);
 
-                // TODO: Make an answer section.
+                // TODO: Clean up the following code.
+                memcpy(packet + packet_size, host_label, 1 + host_label[0]);
+                packet_size += 1 + host_label[0];
+                packet[packet_size++] = '\0';
+                // TYPE
+                llmnr_put_uint16(LLMNR_TYPE_AAAA, packet + packet_size);
+                packet_size += 2;
+                // CLASS
+                llmnr_put_uint16(LLMNR_CLASS_IN, packet + packet_size);
+                packet_size += 2;
+                // TTL
+                llmnr_put_uint32(30, packet + packet_size);
+                packet_size += 4;
+                // RDLENGTH
+                llmnr_put_uint16(sizeof addr_v6, packet + packet_size);
+                packet_size += 2;
+                // RDATA
+                memcpy(packet + packet_size, &addr_v6, sizeof addr_v6);
+                packet_size += sizeof (struct in6_addr);
+
+                response->ancount = htons(ntohs(response->ancount) + 1);
             } else {
                 char ifname[IF_NAMESIZE];
                 if_indextoname(index, ifname);

@@ -420,8 +420,8 @@ int responder_respond_for_name(unsigned int index,
     response->nscount = htons(0);
     response->arcount = htons(0);
 
-    uint_fast16_t qtype = (query_qname_end[0] << 8) | query_qname_end[1];
-    uint_fast16_t qclass = (query_qname_end[2] << 8) | query_qname_end[3];
+    uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
+    uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
     if (qclass == LLMNR_QCLASS_IN) {
         switch (qtype) {
             struct in6_addr addr_v6;
@@ -440,19 +440,17 @@ int responder_respond_for_name(unsigned int index,
                 packet_size += 1 + host_label[0];
                 packet[packet_size++] = '\0';
                 // TYPE
-                packet[packet_size++] = LLMNR_TYPE_AAAA >> 8;
-                packet[packet_size++] = LLMNR_TYPE_AAAA;
+                llmnr_put_uint16(LLMNR_TYPE_AAAA, packet + packet_size);
+                packet_size += 2;
                 // CLASS
-                packet[packet_size++] = LLMNR_CLASS_IN >> 8;
-                packet[packet_size++] = LLMNR_CLASS_IN;
+                llmnr_put_uint16(LLMNR_CLASS_IN, packet + packet_size);
+                packet_size += 2;
                 // TTL
-                packet[packet_size++] = 0;
-                packet[packet_size++] = 0;
-                packet[packet_size++] = 0;
-                packet[packet_size++] = 30;
+                llmnr_put_uint32(30, packet + packet_size);
+                packet_size += 4;
                 // RDLENGTH
-                packet[packet_size++] = sizeof addr_v6 >> 8;
-                packet[packet_size++] = sizeof addr_v6;
+                llmnr_put_uint16(sizeof addr_v6, packet + packet_size);
+                packet_size += 2;
                 // RDATA
                 memcpy(packet + packet_size, &addr_v6, sizeof addr_v6);
                 packet_size += sizeof (struct in6_addr);

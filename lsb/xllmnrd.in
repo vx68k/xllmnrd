@@ -17,8 +17,31 @@
 # Description:
 ### END INIT INFO
 
+DAEMON=@sbindir@/xllmnrd
+DAEMON_ARGS=''
+
+if [ ! -x $DAEMON ]; then
+    exit 0
+fi
+
 . /lib/lsb/init-functions
 
 log_warning_msg $0 is a placeholder script
+
+case "$1" in
+start)
+    start_daemon /bin/su - daemon -c "$DAEMON $DAEMON_ARGS"
+    ;;
+stop)
+    #killproc -p /var/run/xllmnrd/xllmnrd.pid $DAEMON
+    killall -- $DAEMON
+    ;;
+restart|force-reload)
+    $0 stop
+    $0 start
+    ;;
+status)
+    ;;
+esac
 
 exit 0

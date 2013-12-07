@@ -46,7 +46,7 @@
  * @param fd file descriptor of a socket.
  * @return 0 on success, or non-zero error number.
  */
-static inline int set_options_udp6(int fd) {
+static inline int set_udp_options(int fd) {
     // We are not interested in IPv4 packets.
     static const int v6only = true;
     // We want the interface index for each received datagram.
@@ -78,11 +78,11 @@ static inline int set_options_udp6(int fd) {
  * @param fd_out [out] pointer to a file descriptor.
  * @return 0 on success, or non-zero error number.
  */
-static inline int open_udp6(in_port_t port, int *fd_out) {
+static inline int open_udp(in_port_t port, int *fd_out) {
     int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     int err = errno;
     if (fd >= 0) {
-        err = set_options_udp6(fd);
+        err = set_udp_options(fd);
         if (err == 0) {
             const struct sockaddr_in6 addr = {
                 .sin6_family = AF_INET6,
@@ -130,10 +130,10 @@ static inline void log_discarded(const char *restrict message,
 static bool initialized;
 
 /**
- * File descriptor of the IPv6 UDP socket.
+ * File descriptor of the UDP socket.
  * This value is valid only if this module is initialized.
  */
-static int udp6_socket;
+static int udp_fd;
 
 /**
  * First label of the host name in the DNS label format.
@@ -226,7 +226,7 @@ int responder_initialize(in_port_t port) {
         port = htons(LLMNR_PORT);
     }
 
-    int err = open_udp6(port, &udp6_socket);
+    int err = open_udp(port, &udp_fd);
     if (err == 0) {
         err = ifaddr_set_change_handler(&responder_handle_ifaddr_change, NULL);
         if (err == 0) {
@@ -234,10 +234,9 @@ int responder_initialize(in_port_t port) {
             return 0;
         }
 
-        if (close(udp6_socket) != 0) {
-            syslog(LOG_CRIT, "Failed to close 'udp6_socket': %s",
+        if (close(udp_fd) != 0) {
+            syslog(LOG_ERR, "Failed to close a socket: %s",
                     strerror(errno));
-            abort();
         }
     }
     return err;
@@ -247,7 +246,7 @@ void responder_finalize(void) {
     if (responder_initialized()) {
         initialized = false;
 
-        close(udp6_socket);
+        close(udp_fd);
     }
 }
 
@@ -267,20 +266,20 @@ int responder_run(void) {
     while (!responder_terminated) {
         unsigned char data[1500];
         struct sockaddr_in6 sender;
-        struct in6_pktinfo pi = {
+        struct in6_pktinfo pktinfo = {
             .ipi6_addr = IN6ADDR_ANY_INIT,
         };
-        ssize_t recv_len = receive_udp6(udp6_socket,
-                data, sizeof data, &sender, &pi);
-        if (recv_len >= 0) {
+        ssize_t packet_size = receive_udp6(udp_fd, data, sizeof data, &sender,
+                &pktinfo);
+        if (packet_size >= 0) {
             // The destination MUST be the LLMNR multicast address.
-            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_mc_llmnr) &&
-                    (size_t) recv_len >= sizeof (struct llmnr_header)) {
+            if (IN6_ARE_ADDR_EQUAL(&pktinfo.ipi6_addr, &in6addr_mc_llmnr) &&
+                    (size_t) packet_size >= sizeof (struct llmnr_header)) {
                 const struct llmnr_header *header =
                         (const struct llmnr_header *) data;
                 if (llmnr_query_is_valid(header)) {
-                    responder_handle_query(pi.ipi6_ifindex, header,
-                            recv_len, &sender);
+                    responder_handle_query(pktinfo.ipi6_ifindex, header,
+                            packet_size, &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
                 }
@@ -312,7 +311,7 @@ void responder_handle_ifaddr_change(
 
             switch (change->type) {
             case IFADDR_ADDED:
-                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Joined the LLMNR multicast group on %s", ifname);
@@ -324,7 +323,7 @@ void responder_handle_ifaddr_change(
                 break;
 
             case IFADDR_REMOVED:
-                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Left the LLMNR multicast group on %s", ifname);
@@ -471,7 +470,7 @@ int responder_respond_for_name(unsigned int index,
     }
 
     // Sends the response.
-    if (sendto(udp6_socket, packet, packet_size, 0, sender,
+    if (sendto(udp_fd, packet, packet_size, 0, sender,
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;
     }
@@ -479,7 +478,7 @@ int responder_respond_for_name(unsigned int index,
     if (packet_size > 512 && errno == EMSGSIZE) {
         // Resends with truncation.
         response->flags |= htons(LLMNR_HEADER_TC);
-        if (sendto(udp6_socket, packet, 512, 0, sender,
+        if (sendto(udp_fd, packet, 512, 0, sender,
                 sizeof (struct sockaddr_in6)) >= 0) {
             return 0;
         }

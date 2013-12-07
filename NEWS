@@ -1,4 +1,19 @@
-This file describes major changes and important notes in each release.
+This file describes major changes and important notes for each release.
+
+# Version 1.0.0
+
+This release is the first version of xllmnrd.
+
+## New features
+
+* It now responds to an AAAA query with the link-local address of the
+  interface on which the query has been received.
+
+## Known limitations
+
+* It does not implement all the requirements of the LLMNR specification, and
+  especially name conflicts are not handled at all.
+  So **do not** use this version in a mission-critical environment yet.
 
 # Version 1.0y2 (milestone 1.0y2)
 

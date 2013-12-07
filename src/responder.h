@@ -16,16 +16,12 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LLMNR_RESPONDER_H
-#define	LLMNR_RESPONDER_H 1
+#ifndef RESPONDER_H
+#define RESPONDER_H 1
 
 #include "ifaddr.h" /* struct ifaddr_change */
+#include "llmnr.h"
 #include <netinet/in.h> /* in_port_t */
-
-/*
- * Port number.
- */
-#define LLMNR_PORT 5355
 
 /**
  * Initializes the responder object.

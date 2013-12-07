@@ -26,6 +26,7 @@
 #include "ifaddr.h"
 #include "ascii.h"
 #include "llmnr_packet.h"
+#include "llmnr.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
@@ -40,20 +41,12 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#ifndef IN6ADDR_LLMNR_INIT
-#define IN6ADDR_LLMNR_INIT { \
-    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3} \
-}
-#endif
-
-static const struct in6_addr in6addr_llmnr = IN6ADDR_LLMNR_INIT;
-
 /**
  * Sets socket options for an IPv6 UDP responder socket.
  * @param fd file descriptor of a socket.
  * @return 0 on success, or non-zero error number.
  */
-static inline int set_options_udp6(int fd) {
+static inline int set_udp_options(int fd) {
     // We are not interested in IPv4 packets.
     static const int v6only = true;
     // We want the interface index for each received datagram.
@@ -85,11 +78,11 @@ static inline int set_options_udp6(int fd) {
  * @param fd_out [out] pointer to a file descriptor.
  * @return 0 on success, or non-zero error number.
  */
-static inline int open_udp6(in_port_t port, int *fd_out) {
+static inline int open_udp(in_port_t port, int *fd_out) {
     int fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     int err = errno;
     if (fd >= 0) {
-        err = set_options_udp6(fd);
+        err = set_udp_options(fd);
         if (err == 0) {
             const struct sockaddr_in6 addr = {
                 .sin6_family = AF_INET6,
@@ -128,9 +121,7 @@ static inline void log_discarded(const char *restrict message,
 }
 
 /*
- * # Implementation of the LLMNR responder object.
- *
- * ## Static variables.
+ * Implementation of the LLMNR responder object.
  */
 
 /**
@@ -139,10 +130,10 @@ static inline void log_discarded(const char *restrict message,
 static bool initialized;
 
 /**
- * File descriptor of the IPv6 UDP socket.
+ * File descriptor of the UDP socket.
  * This value is valid only if this module is initialized.
  */
-static int udp6_socket;
+static int udp_fd;
 
 /**
  * First label of the host name in the DNS label format.
@@ -152,7 +143,7 @@ static uint8_t host_label[1 + LLMNR_LABEL_MAX];
 static volatile sig_atomic_t responder_terminated;
 
 /*
- * ## Declarations for static functions.
+ * Declarations for static functions.
  */
 
 /**
@@ -168,23 +159,29 @@ static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
 /**
  * Handles a LLMNR query.
- * @param __ifindex interface index.
- * @param __header pointer to the header.
- * @param __length length of the packet including the header in octets.
+ * @param __index interface index.
+ * @param __header [in] header.
+ * @param __packet_size packet size including the header in octets.
  * @param __sender socket address of the sender.
- * @return 0 on success, or non-zero error number on failure.
+ * @return 0 if no error is detected, or non-zero error number.
  */
-static int responder_handle_query(unsigned int __ifindex,
-        const struct llmnr_header *__header, size_t __length,
+static int responder_handle_query(unsigned int __index,
+        const struct llmnr_header *__header, size_t __packet_size,
+        const struct sockaddr_in6 *__sender);
+
+/**
+ * Responds to a query for the host name.
+ * @param __index interface index.
+ * @param __query [in] query.
+ * @param __query_qname_end [in] end of the QNAME field in the query.
+ * @param __sender [in] socket address of the sender.
+ */
+static int responder_respond_for_name(unsigned int __index,
+        const struct llmnr_header *__query, const uint8_t *__query_qname_end,
         const struct sockaddr_in6 *__sender);
 
 /*
- */
-static int responder_respond_empty(const struct llmnr_header *__query,
-        size_t __query_size, const struct sockaddr_in6 *__sender);
-
-/*
- * ## In-line functions.
+ * Inline functions.
  */
 
 /**
@@ -216,7 +213,7 @@ static inline int responder_name_matches(const uint8_t *restrict question) {
 }
 
 /*
- * ## Out-of-line functions.
+ * Out-of-line functions.
  */
 
 int responder_initialize(in_port_t port) {
@@ -229,7 +226,7 @@ int responder_initialize(in_port_t port) {
         port = htons(LLMNR_PORT);
     }
 
-    int err = open_udp6(port, &udp6_socket);
+    int err = open_udp(port, &udp_fd);
     if (err == 0) {
         err = ifaddr_set_change_handler(&responder_handle_ifaddr_change, NULL);
         if (err == 0) {
@@ -237,10 +234,9 @@ int responder_initialize(in_port_t port) {
             return 0;
         }
 
-        if (close(udp6_socket) != 0) {
-            syslog(LOG_CRIT, "Failed to close 'udp6_socket': %s",
+        if (close(udp_fd) != 0) {
+            syslog(LOG_ERR, "Failed to close a socket: %s",
                     strerror(errno));
-            abort();
         }
     }
     return err;
@@ -250,7 +246,7 @@ void responder_finalize(void) {
     if (responder_initialized()) {
         initialized = false;
 
-        close(udp6_socket);
+        close(udp_fd);
     }
 }
 
@@ -270,20 +266,20 @@ int responder_run(void) {
     while (!responder_terminated) {
         unsigned char data[1500];
         struct sockaddr_in6 sender;
-        struct in6_pktinfo pi = {
+        struct in6_pktinfo pktinfo = {
             .ipi6_addr = IN6ADDR_ANY_INIT,
         };
-        ssize_t recv_len = receive_udp6(udp6_socket,
-                data, sizeof data, &sender, &pi);
-        if (recv_len >= 0) {
+        ssize_t packet_size = receive_udp6(udp_fd, data, sizeof data, &sender,
+                &pktinfo);
+        if (packet_size >= 0) {
             // The destination MUST be the LLMNR multicast address.
-            if (IN6_ARE_ADDR_EQUAL(&pi.ipi6_addr, &in6addr_llmnr) &&
-                    (size_t) recv_len >= sizeof (struct llmnr_header)) {
+            if (IN6_ARE_ADDR_EQUAL(&pktinfo.ipi6_addr, &in6addr_mc_llmnr) &&
+                    (size_t) packet_size >= sizeof (struct llmnr_header)) {
                 const struct llmnr_header *header =
                         (const struct llmnr_header *) data;
                 if (llmnr_query_is_valid(header)) {
-                    responder_handle_query(pi.ipi6_ifindex, header,
-                            recv_len, &sender);
+                    responder_handle_query(pktinfo.ipi6_ifindex, header,
+                            packet_size, &sender);
                 } else {
                     log_discarded("Invalid packet", &sender);
                 }
@@ -306,7 +302,7 @@ void responder_handle_ifaddr_change(
     if (responder_initialized()) {
         if (change->ifindex != 0) {
             const struct ipv6_mreq mr = {
-                .ipv6mr_multiaddr = in6addr_llmnr,
+                .ipv6mr_multiaddr = in6addr_mc_llmnr,
                 .ipv6mr_interface = change->ifindex,
             };
 
@@ -315,7 +311,7 @@ void responder_handle_ifaddr_change(
 
             switch (change->type) {
             case IFADDR_ADDED:
-                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Joined the LLMNR multicast group on %s", ifname);
@@ -327,7 +323,7 @@ void responder_handle_ifaddr_change(
                 break;
 
             case IFADDR_REMOVED:
-                if (setsockopt(udp6_socket, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Left the LLMNR multicast group on %s", ifname);
@@ -386,58 +382,21 @@ int decode_cmsg(struct msghdr *restrict msg,
     return 0;
 }
 
-int responder_handle_query(unsigned int ifindex,
-        const struct llmnr_header *restrict header, size_t length,
+int responder_handle_query(unsigned int index,
+        const struct llmnr_header *restrict header, size_t packet_size,
         const struct sockaddr_in6 *restrict sender) {
-    assert(length >= LLMNR_HEADER_SIZE);
+    assert(packet_size >= LLMNR_HEADER_SIZE);
     assert(sender->sin6_family == AF_INET6);
 
     const uint8_t *question = llmnr_data(header);
-    length -= LLMNR_HEADER_SIZE;
+    size_t length = packet_size - LLMNR_HEADER_SIZE;
 
-    const uint8_t *p = llmnr_skip_name(question, &length);
-    if (p && length >= 4) {
-        uint_fast16_t qtype = (p[0] << 16) | p[1];
-        uint_fast16_t qclass = (p[2] << 16) | p[3];
-        if (qclass == LLMNR_CLASS_IN) {
-            char ifname[IF_NAMESIZE];
-            char addrstr[INET6_ADDRSTRLEN];
-            if_indextoname(ifindex, ifname);
-            inet_ntop(AF_INET6, &sender->sin6_addr, addrstr,
-                    INET6_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Received IN query for QTYPE %" PRIuFAST16 \
-                    " on %s from %s%%%" PRIu32, qtype, ifname, addrstr,
-                    sender->sin6_scope_id);
+    const uint8_t *qname_end = llmnr_skip_name(question, &length);
+    if (qname_end && length >= 4) {
+        if (responder_name_matches(question)) {
+            syslog(LOG_DEBUG, "QNAME matched my host name");
 
-            if (responder_name_matches(question)) {
-                syslog(LOG_DEBUG, "  QNAME matched");
-
-                struct in6_addr addr;
-                int err = ifaddr_lookup(ifindex, &addr);
-                if (err == 0) {
-                    char addrstr[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &addr, addrstr, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "  Interface address is %s", addrstr);
-
-                    switch (qtype) {
-                    case LLMNR_TYPE_AAAA:
-                    case LLMNR_QTYPE_ANY:
-                        responder_respond_empty(header,
-                                p + 4 - (const uint8_t *) header, sender);
-                        break;
-
-                    case LLMNR_TYPE_A:
-                    default:
-                        responder_respond_empty(header,
-                                p + 4 - (const uint8_t *) header, sender);
-                        break;
-                    }
-                } else {
-                    char ifname[IF_NAMESIZE];
-                    if_indextoname(ifindex, ifname);
-                    syslog(LOG_NOTICE, "Address not found for %s", ifname);
-                }
-            }
+            responder_respond_for_name(index, header, qname_end, sender);
         }
     } else {
         log_discarded("Invalid question", sender);
@@ -446,27 +405,82 @@ int responder_handle_query(unsigned int ifindex,
     return 0;
 }
 
-int responder_respond_empty(const struct llmnr_header *restrict query,
-        size_t query_size, const struct sockaddr_in6 *restrict sender) {
-    assert(query_size <= 512);
+int responder_respond_for_name(unsigned int index,
+        const struct llmnr_header *query, const uint8_t *query_qname_end,
+        const struct sockaddr_in6 *restrict sender) {
+    size_t packet_size = query_qname_end + 4 - (const uint8_t *) query;
 
-    uint8_t packet[512];
-    memcpy(packet, query, query_size);
+    uint8_t packet[packet_size + 512]; // TODO: Check the array size.
+    memcpy(packet, query, packet_size);
 
-    struct llmnr_header *header = (struct llmnr_header *) packet;
-    header->flags = htons(LLMNR_HEADER_QR);
+    struct llmnr_header *response = (struct llmnr_header *) packet;
+    response->flags = htons(LLMNR_HEADER_QR);
+    response->ancount = htons(0);
+    response->nscount = htons(0);
+    response->arcount = htons(0);
 
-    if (sendto(udp6_socket, packet, query_size, 0, sender,
+    uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
+    uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
+    if (qclass == LLMNR_QCLASS_IN) {
+        switch (qtype) {
+            struct in6_addr addr_v6;
+            int err;
+
+        case LLMNR_QTYPE_AAAA:
+        case LLMNR_QTYPE_ANY:
+            err = ifaddr_lookup(index, &addr_v6);
+            if (err == 0) {
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "Found interface address %s", addrstr);
+
+                // TODO: Clean up the following code.
+                memcpy(packet + packet_size, host_label, 1 + host_label[0]);
+                packet_size += 1 + host_label[0];
+                packet[packet_size++] = '\0';
+                // TYPE
+                llmnr_put_uint16(LLMNR_TYPE_AAAA, packet + packet_size);
+                packet_size += 2;
+                // CLASS
+                llmnr_put_uint16(LLMNR_CLASS_IN, packet + packet_size);
+                packet_size += 2;
+                // TTL
+                llmnr_put_uint32(30, packet + packet_size);
+                packet_size += 4;
+                // RDLENGTH
+                llmnr_put_uint16(sizeof addr_v6, packet + packet_size);
+                packet_size += 2;
+                // RDATA
+                memcpy(packet + packet_size, &addr_v6, sizeof addr_v6);
+                packet_size += sizeof (struct in6_addr);
+
+                response->ancount = htons(ntohs(response->ancount) + 1);
+            } else {
+                char ifname[IF_NAMESIZE];
+                if_indextoname(index, ifname);
+                syslog(LOG_NOTICE, "Interface address not found for %s",
+                        ifname);
+            }
+            break;
+
+        default:
+            // Leaves the answer section empty.
+            break;
+        }
+    }
+
+    // Sends the response.
+    if (sendto(udp_fd, packet, packet_size, 0, sender,
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;
-    } else {
-        if (errno == EMSGSIZE) {
-            // TODO: Resend with truncation.
-            header->flags |= htons(LLMNR_HEADER_TC);
-            if (sendto(udp6_socket, packet, query_size, 0, sender,
-                    sizeof (struct sockaddr_in6)) >= 0) {
-                return 0;
-            }
+    }
+
+    if (packet_size > 512 && errno == EMSGSIZE) {
+        // Resends with truncation.
+        response->flags |= htons(LLMNR_HEADER_TC);
+        if (sendto(udp_fd, packet, 512, 0, sender,
+                sizeof (struct sockaddr_in6)) >= 0) {
+            return 0;
         }
     }
 

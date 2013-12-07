@@ -6,7 +6,7 @@ This release is the second milestone for version 1.0.0.
 
 ## New features
 
-* It now responds to queries that matches its host name, but with no answers.
+* It now responds to queries that match its host name, but with no answers.
 * A new command-line option is added to set its host name explicitly.
 * Localization support is added for localizing command-line interface.
 

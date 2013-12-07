@@ -26,6 +26,7 @@
 #if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
+#include <net/if.h> /* if_indextoname */
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <pthread.h>
@@ -39,15 +40,39 @@
 #include <assert.h>
 
 /**
- * Terminates the program abnormally if a error is detected.
- * @param e value to be checked for an error.
- * @param message error message.
+ * Terminates the program abnormally if an error is detected.
+ * @param err value to be checked for an error.
+ * @param name display name of the operation.
  */
-static inline void abort_if_error(int err, const char *restrict message) {
+static inline void assume_no_error(int err, const char *restrict name) {
     if (err != 0) {
-        syslog(LOG_CRIT, "%s: %s", message, strerror(err));
+        syslog(LOG_CRIT, "ifaddr: Failed to %s: %s", name, strerror(err));
         abort();
     }
+}
+
+/**
+ * Destroys a mutex assuming no error is detected.
+ * @param mutex [in] mutex to be destroyed.
+ */
+static inline void destroy_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_destroy(mutex), "destroy a mutex");
+}
+
+/**
+ * Locks a mutex assuming no error is detected.
+ * @param mutex [inout] mutex to be locked.
+ */
+static inline void lock_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_lock(mutex), "lock a mutex");
+}
+
+/**
+ * Unlocks a mutex assuming no error is detected.
+ * @param mutex [inout] mutex to be unlocked.
+ */
+static inline void unlock_mutex(pthread_mutex_t *mutex) {
+    assume_no_error(pthread_mutex_unlock(mutex), "unlock a mutex");
 }
 
 /**
@@ -59,7 +84,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     if (fd >= 0) {
         struct sockaddr_nl addr = {
             .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV6_IFADDR,
+            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
         };
         if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
             *fd_out = fd;
@@ -71,8 +96,13 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     return err;
 }
 
+/**
+ * Interface record.
+ */
 struct ifaddr_if {
     unsigned int ifindex;
+    size_t addr_v4_size;
+    struct in_addr *addr_v4;
     struct in6_addr addr;
 };
 
@@ -117,10 +147,10 @@ static pthread_mutex_t refresh_mutex;
 static pthread_cond_t refresh_cond;
 
 /**
- * True if a refresh operation is not in progress.
- * This flag is volatile as it is used from multiple threads.
+ * Flag to indicates if a refresh operation is not in progress.
+ * This flag MUST be accessed while 'refresh_mutex' is locked.
  */
-static volatile bool refresh_not_in_progress;
+static bool refresh_not_in_progress;
 
 /**
  * True if the worker thread is started.
@@ -133,6 +163,65 @@ static bool started;
 static pthread_t worker_thread;
 
 static volatile sig_atomic_t terminated;
+
+/**
+ * Adds an IPv4 address to an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv4 address to be added.
+ */
+static void ifaddr_add_addr_v4(unsigned int __index,
+        const struct in_addr *__addr);
+
+/**
+ * Removes an IPv4 address from an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv4 address to be removed.
+ */
+static void ifaddr_remove_addr_v4(unsigned int __index,
+        const struct in_addr *__addr);
+
+/*
+ * Declarations for static functions.
+ */
+
+static void *ifaddr_run(void *__data);
+
+/**
+ * Decodes netlink messages.
+ * @param __nlmsg pointer to the first netlink message
+ * @param __size total size of the netlink messages
+ */
+static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
+
+/**
+ * Handles a rtnetlink message of type 'struct ifaddrmsg'.
+ * @param __nlmsg pointer to the netlink message
+ */
+static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
+
+/**
+ * Handles a sequence of RTNETLINK attributes for an IPv4 ifaddrmsg.
+ * @param __nlmsg_type message type, either RTM_NEWADDR or RTM_DELADDR.
+ * @param __index interface index.
+ * @param __rta [in] first RTNETLINK attribute.
+ * @param __rta_size total size of all the RTNETLINK attributes.
+ */
+static void ifaddr_v4_handle_rtattrs(unsigned int __nlmsg_type,
+        unsigned int __index, const struct rtattr *__rta, size_t __rta_size);
+
+/**
+ * Handles a sequence of RTNETLINK attributes for an IPv6 ifaddrmsg.
+ * @param __nlmsg_type message type, either RTM_NEWADDR or RTM_DELADDR.
+ * @param __index interface index.
+ * @param __rta [in] first RTNETLINK attribute.
+ * @param __rta_size total size of all the RTNETLINK attributes.
+ */
+static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
+        unsigned int __index, const struct rtattr *__rta, size_t __rta_size);
+
+/*
+ * Definitions for in-line functions.
+ */
 
 /**
  * Returns non-zero if this module has been initialized.
@@ -150,13 +239,46 @@ static inline int ifaddr_started(void) {
     return started;
 }
 
-static inline void ifaddr_add_interface(unsigned int ifindex,
+/**
+ * Tests if an interface has no address.
+ * This function MUST be called while 'if_mutex' is locked.
+ * @param i [in] interface record to be tested.
+ * @return true if the interface has no address.
+ */
+static inline int ifaddr_interface_is_free(
+        const struct ifaddr_if * restrict i) {
+    return i->addr_v4_size == 0 && IN6_IS_ADDR_UNSPECIFIED(&i->addr);
+}
+
+/**
+ * Erases an interface.
+ * This function MUST be called while 'if_mutex' is locked.
+ * @param i [in] interface record to be erased.
+ */
+static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
+    free(i->addr_v4);
+
+    struct ifaddr_if *j = i++;
+    while (i != if_table + if_table_size) {
+        *j++ = *i++;
+    }
+    --if_table_size;
+
+    // Clears the pointer that is no longer used though it is unnecessary.
+    if_table[if_table_size].addr_v4 = NULL;
+}
+
+/**
+ * Adds an IPv6 address to an interface.
+ * @param index interface index.
+ * @param addr IPv6 address.
+ */
+static inline void ifaddr_add_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
-    while (i != if_table_size && if_table[i].ifindex != ifindex) {
+    while (i != if_table_size && if_table[i].ifindex != index) {
         ++i;
     }
     if (i == if_table_size) {
@@ -165,12 +287,14 @@ static inline void ifaddr_add_interface(unsigned int ifindex,
         }
         ++if_table_size;
 
-        if_table[i].ifindex = ifindex;
-        if_table[i].addr = *addr;
+        if_table[i] = (struct ifaddr_if){
+            .ifindex = index,
+            .addr = *addr,
+        };
         if (if_change_handler) {
             struct ifaddr_change change = {
                 .type = IFADDR_ADDED,
-                .ifindex = ifindex,
+                .ifindex = index,
             };
             (*if_change_handler)(&change);
         }
@@ -180,88 +304,73 @@ static inline void ifaddr_add_interface(unsigned int ifindex,
         if (if_change_handler) {
             struct ifaddr_change change = {
                 .type = IFADDR_ADDED,
-                .ifindex = ifindex,
+                .ifindex = index,
             };
             (*if_change_handler)(&change);
-        }        
+        }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    unlock_mutex(&if_mutex);
 }
 
-static inline void ifaddr_remove_interface(unsigned int ifindex,
+/**
+ * Removes an IPv6 address from an interface.
+ * @param index interface index.
+ * @param addr IPv6 address.
+ */
+static inline void ifaddr_remove_addr_v6(unsigned int index,
         const struct in6_addr *restrict addr) {
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
-    while (i != if_table_size && if_table[i].ifindex != ifindex) {
+    while (i != if_table_size && if_table[i].ifindex != index) {
         ++i;
     }
     if (i != if_table_size && IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
-        --if_table_size;
-        while (i != if_table_size) {
-            if_table[i] = if_table[i + 1];
-            ++i;
+        if_table[i].addr = in6addr_any;
+        if (ifaddr_interface_is_free(&if_table[i])) {
+            ifaddr_erase_interface(&if_table[i]);
         }
 
         if (if_change_handler) {
             struct ifaddr_change change = {
                 .type = IFADDR_REMOVED,
-                .ifindex = ifindex,
+                .ifindex = index,
             };
             (*if_change_handler)(&change);
         }
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not unlock 'if_mutex'");
+    unlock_mutex(&if_mutex);
 }
 
 /**
  * Waits for the running refresh operation to complete.
  */
 static inline void ifaddr_wait_for_refresh_completion(void) {
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    lock_mutex(&refresh_mutex);
 
     while (!refresh_not_in_progress) {
-        abort_if_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
-                "ifaddr: Could not wait for 'refresh_cond'");
+        assume_no_error(pthread_cond_wait(&refresh_cond, &refresh_mutex),
+                "wait for a condition");
     }
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    unlock_mutex(&refresh_mutex);
 }
 
 static inline void ifaddr_complete_refresh(void) {
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    lock_mutex(&refresh_mutex);
 
     refresh_not_in_progress = true;
-    abort_if_error(pthread_cond_broadcast(&refresh_cond),
-            "ifaddr: Could not broadcast 'refresh_cond'");
+    assume_no_error(pthread_cond_broadcast(&refresh_cond),
+            "broadcast a condition");
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    unlock_mutex(&refresh_mutex);
 }
 
-static void *ifaddr_run(void *__data);
-
-/**
- * Decodes netlink messages.
- * @param __nlmsg pointer to the first netlink message
- * @param __size total size of the netlink messages
+/*
+ * Definitions for out-of-line functions.
  */
-static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
-
-/**
- * Handles a rtnetlink message of type 'struct ifaddrmsg'.
- * @param __nlmsg pointer to the netlink message
- */
-static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
-
 
 int ifaddr_initialize(int sig) {
     if (ifaddr_initialized()) {
@@ -284,13 +393,17 @@ int ifaddr_initialize(int sig) {
                     initialized = true;
                     return 0;
                 }
-                pthread_cond_destroy(&refresh_cond);
+                assume_no_error(pthread_cond_destroy(&refresh_cond),
+                        "destroy a conditon");
             }
-            pthread_mutex_destroy(&refresh_mutex);
+            destroy_mutex(&refresh_mutex);
         }
-        pthread_mutex_destroy(&if_mutex);
+        destroy_mutex(&if_mutex);
 
-        close(rtnetlink_fd);
+        if (close(rtnetlink_fd) != 0) {
+            syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
+                    strerror(errno));
+        }
     }
     return err;
 }
@@ -308,16 +421,14 @@ void ifaddr_finalize(void) {
             pthread_join(worker_thread, NULL); // TODO: Check for an error.
         }
 
-        abort_if_error(pthread_cond_destroy(&refresh_cond),
-                "ifaddr: Could not destroy 'refresh_cond'");
-        abort_if_error(pthread_mutex_destroy(&refresh_mutex),
-                "ifaddr: Could not destroy 'refresh_mutex'");
-        abort_if_error(pthread_mutex_destroy(&if_mutex),
-                "ifaddr: Could not destroy 'if_mutex'");
+        assume_no_error(pthread_cond_destroy(&refresh_cond),
+                "destroy a condition");
+        destroy_mutex(&refresh_mutex);
+        destroy_mutex(&if_mutex);
+
         if (close(rtnetlink_fd) != 0) {
-            syslog(LOG_CRIT, "ifaddr: Could not close 'rtnetlink_fd': %s",
+            syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
-            abort();
         }
     }
 }
@@ -328,19 +439,100 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
         return ENXIO;
     }
 
-    // This lock might be unnecessary, but it looks safer.
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    lock_mutex(&if_mutex);
 
     if (old_handler_out) {
         *old_handler_out = if_change_handler;
     }
     if_change_handler = handler;
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not lock 'if_mutex'");
+    unlock_mutex(&if_mutex);
 
     return 0;
+}
+
+void ifaddr_add_addr_v4(unsigned int index,
+        const struct in_addr *restrict addr) {
+    lock_mutex(&if_mutex);
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i == if_table + if_table_size) {
+        if (if_table_size == if_table_capacity) {
+            abort(); // TODO: Think later.
+        }
+        *i = (struct ifaddr_if){
+            .ifindex = index,
+            .addr_v4_size = 0,
+        };
+        ++if_table_size;
+    }
+
+    struct in_addr *j = i->addr_v4;
+    while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
+        ++j;
+    }
+    // Appends an address if no matching one is found
+    if (j == i->addr_v4 + i->addr_v4_size) {
+        struct in_addr *addr_v4 = NULL;
+        // Avoids potential overflow in size calculation.
+        if (i->addr_v4_size + 1 <= SIZE_MAX / sizeof (struct in_addr)) {
+            addr_v4 = (struct in_addr *) realloc(i->addr_v4,
+                    (i->addr_v4_size + 1) * sizeof (struct in_addr));
+        }
+        if (addr_v4) {
+            addr_v4[i->addr_v4_size] = *addr;
+            i->addr_v4 = addr_v4;
+            i->addr_v4_size += 1;
+
+            char ifname[IF_NAMESIZE];
+            if_indextoname(index, ifname);
+            syslog(LOG_DEBUG, "ifaddr: Added an IPv4 address on %s [%zu]",
+                    ifname, i->addr_v4_size);
+        } else {
+            syslog(LOG_ERR, "ifaddr: Failed to reallocate an array");
+        }
+    }
+
+    unlock_mutex(&if_mutex);
+}
+
+void ifaddr_remove_addr_v4(unsigned int index,
+        const struct in_addr *restrict addr) {
+    lock_mutex(&if_mutex);
+
+    struct ifaddr_if *i = if_table;
+    while (i != if_table + if_table_size && i->ifindex != index) {
+        ++i;
+    }
+    if (i != if_table + if_table_size) {
+        struct in_addr *j = i->addr_v4;
+        while (j != i->addr_v4 + i->addr_v4_size &&
+                j->s_addr != addr->s_addr) {
+            ++j;
+        }
+        // Erases a matching address if one is found.
+        if (j != i->addr_v4 + i->addr_v4_size) {
+            struct in_addr *k = j++;
+            while (j != i->addr_v4 + i->addr_v4_size) {
+                *k++ = *j++;
+            }
+            --(i->addr_v4_size);
+
+            char ifname[IF_NAMESIZE];
+            if_indextoname(index, ifname);
+            syslog(LOG_DEBUG, "ifaddr: Removed an IPv4 address on %s [%zu]",
+                    ifname, i->addr_v4_size);
+
+            if (ifaddr_interface_is_free(i)) {
+                ifaddr_erase_interface(i);
+            }
+        }
+    }
+
+    unlock_mutex(&if_mutex);
 }
 
 int ifaddr_start(void) {
@@ -362,8 +554,8 @@ int ifaddr_start(void) {
         if (err == 0) {
             err = pthread_create(&worker_thread, 0, &ifaddr_run, 0);
             // Restores the signal mask before proceeding.
-            abort_if_error(pthread_sigmask(SIG_SETMASK, &oset, 0),
-                    "ifaddr: Could not restore the signal mask");
+            assume_no_error(pthread_sigmask(SIG_SETMASK, &oset, 0),
+                    "restore the signal mask");
 
             if (err == 0) {
                 started = true;
@@ -452,45 +644,81 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     if (nlmsg->nlmsg_len >= rta_offset) {
         const struct ifaddrmsg *ifa = (const struct ifaddrmsg *)
                 NLMSG_DATA(nlmsg);
-        // Handles link-local or wider scoped interfaces only.
+        // Handles link-local or wider interfaces only.
         if (ifa->ifa_scope <= RT_SCOPE_LINK) {
             const struct rtattr *rta = (const struct rtattr *)
                     ((const char *) nlmsg + rta_offset);
             size_t rta_len = nlmsg->nlmsg_len - rta_offset;
 
-            while (RTA_OK(rta, rta_len)) {
-                switch (ifa->ifa_family) {
-                case AF_INET6:
-                    if (rta->rta_len >=
-                            RTA_LENGTH(sizeof (struct in6_addr)) &&
-                            rta->rta_type == IFA_ADDRESS) {
-                        const struct in6_addr *addr =
-                                (const struct in6_addr *) RTA_DATA(rta);
-                        // TODO: Add support for global addresses.
-                        if (IN6_IS_ADDR_LINKLOCAL(addr)) {
-                            switch (nlmsg->nlmsg_type) {
-                            case RTM_NEWADDR:
-                                ifaddr_add_interface(ifa->ifa_index, addr);
-                                break;
+            switch (ifa->ifa_family) {
+                char ifname[IF_NAMESIZE];
 
-                            case RTM_DELADDR:
-                                ifaddr_remove_interface(ifa->ifa_index, addr);
-                                break;
-                            }
-                        }
-                    }
-                    break;
+            case AF_INET:
+                ifaddr_v4_handle_rtattrs(nlmsg->nlmsg_type, ifa->ifa_index,
+                        rta, rta_len);
+                break;
 
-                case AF_INET:
-                    if (rta->rta_len >= RTA_LENGTH(sizeof (struct in_addr)) &&
-                            rta->rta_type == IFA_ADDRESS) {
-                        // TODO: Implement IPv4 handler.
-                    }
-                    break;
-                }
-                rta = RTA_NEXT(rta, rta_len);
+            case AF_INET6:
+                ifaddr_v6_handle_rtattrs(nlmsg->nlmsg_type, ifa->ifa_index,
+                        rta, rta_len);
+                break;
+
+            default:
+                if_indextoname(ifa->ifa_index, ifname);
+                syslog(LOG_INFO, "Ignored unknown address family %u on %s",
+                        (unsigned int) ifa->ifa_family, ifname);
+                break;
             }
         }
+    }
+}
+
+void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
+        const struct rtattr *restrict rta, size_t rta_size) {
+    assert(nlmsg_type == RTM_NEWADDR || nlmsg_type == RTM_DELADDR);
+
+    while (RTA_OK(rta, rta_size)) {
+        if (rta->rta_type == IFA_ADDRESS &&
+                rta->rta_len >= RTA_LENGTH(sizeof (struct in_addr))) {
+            const struct in_addr *addr = (const struct in_addr *)
+                    RTA_DATA(rta);
+            switch (nlmsg_type) {
+            case RTM_NEWADDR:
+                ifaddr_add_addr_v4(index, addr);
+                break;
+
+            case RTM_DELADDR:
+                ifaddr_remove_addr_v4(index, addr);
+                break;
+            }
+        }
+
+        rta = RTA_NEXT(rta, rta_size);
+    }
+}
+
+void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
+        const struct rtattr *restrict rta, size_t rta_size) {
+    while (RTA_OK(rta, rta_size)) {
+        if (rta->rta_type == IFA_ADDRESS &&
+                rta->rta_len >= RTA_LENGTH(sizeof (struct in6_addr))) {
+            const struct in6_addr *addr =
+                    (const struct in6_addr *) RTA_DATA(rta);
+            // TODO: Add support for global addresses.
+            if (IN6_IS_ADDR_LINKLOCAL(addr)) {
+                switch (nlmsg_type) {
+                case RTM_NEWADDR:
+                    ifaddr_add_addr_v6(index, addr);
+                    break;
+
+                case RTM_DELADDR:
+                    ifaddr_remove_addr_v6(index, addr);
+                    break;
+                }
+            }
+        }
+
+        rta = RTA_NEXT(rta, rta_size);
     }
 }
 
@@ -499,27 +727,26 @@ int ifaddr_refresh(void) {
         return ENXIO;
     }
 
-    abort_if_error(pthread_mutex_lock(&refresh_mutex),
-            "ifaddr: Could not lock 'refresh_mutex'");
+    lock_mutex(&refresh_mutex);
 
     int err = 0;
     if (refresh_not_in_progress) {
-        abort_if_error(pthread_mutex_lock(&if_mutex),
-                "ifaddr: Could not lock 'if_mutex'");
+        lock_mutex(&if_mutex);
+        // TODO: Call the change handler for each interface.
         if_table_size = 0;
-        abort_if_error(pthread_mutex_unlock(&if_mutex),
-                "ifaddr: Could not unlock 'if_mutex'");
+        unlock_mutex(&if_mutex);
 
-        unsigned char buf[128];
+        unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
-        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
         *nlmsg = (struct nlmsghdr) {
             .nlmsg_len = NLMSG_LENGTH(sizeof (struct ifaddrmsg)),
             .nlmsg_type = RTM_GETADDR,
             .nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT,
         };
+
+        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
         *ifa = (struct ifaddrmsg) {
-            .ifa_family = AF_INET6,
+            .ifa_family = AF_UNSPEC,
         };
 
         ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);
@@ -535,8 +762,7 @@ int ifaddr_refresh(void) {
         refresh_not_in_progress = false;
     }
 
-    abort_if_error(pthread_mutex_unlock(&refresh_mutex),
-            "ifaddr: Could not unlock 'refresh_mutex'");
+    unlock_mutex(&refresh_mutex);
 
     return err;
 }
@@ -548,8 +774,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     ifaddr_wait_for_refresh_completion();
 
-    abort_if_error(pthread_mutex_lock(&if_mutex),
-            "ifaddr: Could not lock 'ifable_mutex'");
+    lock_mutex(&if_mutex);
 
     unsigned int i = 0;
     while (i != if_table_size && if_table[i].ifindex != ifindex) {
@@ -565,8 +790,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
         err = ENODEV;
     }
 
-    abort_if_error(pthread_mutex_unlock(&if_mutex),
-            "ifaddr: Could not unlock 'ifable_mutex'");
+    unlock_mutex(&if_mutex);
 
     return err;
 }

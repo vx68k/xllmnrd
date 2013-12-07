@@ -43,17 +43,29 @@
 #define LLMNR_HEADER_RCODE  0x000f
 
 /*
- * TYPE and QTYPE values.
+ * TYPE constants.
  */
 #define LLMNR_TYPE_A       1
 #define LLMNR_TYPE_PTR    12
 #define LLMNR_TYPE_AAAA   28
+
+/*
+ * QTYPE constants.
+ */
+#define LLMNR_QTYPE_A    LLMNR_TYPE_A
+#define LLMNR_QTYPE_PTR  LLMNR_TYPE_PTR
+#define LLMNR_QTYPE_AAAA LLMNR_TYPE_AAAA
 #define LLMNR_QTYPE_ANY  255
 
 /*
- * CLASS and QCLASS value.
+ * CLASS constant.
  */
 #define LLMNR_CLASS_IN   1
+
+/*
+ * QCLASS constant.
+ */
+#define LLMNR_QCLASS_IN LLMNR_CLASS_IN
 
 /*
  * LLMNR header structure.
@@ -91,6 +103,37 @@ static inline int llmnr_query_is_valid(
  */
 static inline const uint8_t *llmnr_data(const struct llmnr_header *header) {
     return (const uint8_t *) header + LLMNR_HEADER_SIZE;
+}
+
+/**
+ * Reads a 16-bit value in a LLMNR packet.
+ * @param i [in] two octets to be read.
+ * @return read value.
+ */
+static inline uint16_t llmnr_get_uint16(const uint8_t *restrict i) {
+    return (i[0] << 8) | i[1];
+}
+
+/**
+ * Writes a 16-bit value in a LLMNR packet.
+ * @param x value to be written.
+ * @param i [out] two octets where the value is written.
+ */
+static inline void llmnr_put_uint16(uint16_t x, uint8_t *restrict i) {
+    i[0] = x >> 8;
+    i[1] = x;
+}
+
+/**
+ * Writes a 32-bit value in a LLMNR packet.
+ * @param x value to be written.
+ * @param i [out] four octets where the value is written.
+ */
+static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i) {
+    i[0] = x >> 24;
+    i[1] = x >> 16;
+    i[2] = x >>  8;
+    i[3] = x;
 }
 
 /**

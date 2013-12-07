@@ -17,7 +17,7 @@
  */
 
 #ifndef ASCII_H
-#define	ASCII_H 1
+#define ASCII_H 1
 
 #include <stdint.h>
 #include <stdbool.h>

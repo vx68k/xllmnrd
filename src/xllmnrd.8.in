@@ -6,24 +6,59 @@
 .\" this notice are preserved.  This file is offered as-is, without any
 .\" warranty.
 .
-.TH XLLMNRD 8 2013-03-03 "@PACKAGE_STRING@"
+.TH XLLMNRD 8 2013-11-28 "@PACKAGE_STRING@"
 .SH NAME
-xllmnrd \- experimental LLMNR responder
+xllmnrd \- IPv6 LLMNR responder
 .SH SYNOPSIS
-.B xllmnrd
-.RB [ -f ]
-.RB [ --foreground ]
-.br
-.B xllmnrd --help
-.br
-.B xllmnrd --version
+.SY xllmnrd
+.OP \-f
+.OP \-n name
+.OP \-\-foreground
+.RB [ \-\-name=\fIname\fB ]
+.SY xllmnrd
+.B \-\-help
+.SY xllmnrd
+.B \-\-version
+.YS
 .SH DESCRIPTION
+The
 .B xllmnrd
-responds to Link-Local Multicast Name Resolution (LLMNR) queries for the host.
+program responds to Link-Local Multicast Name Resolution (LLMNR) queries
+for the host.
+It normally runs in the background as a system daemon unless either
+.B \-f
+or
+.B \-\-foreground
+option is used.
+.SH OPTIONS
+.TP
+.BR \-f ", " \-\-foreground
+Make
+.B xllmnrd
+run in the foreground.
+.TP
+.BR \-n ", " \-\-name=\fIname\fB
+Set the host name of the responder to
+.IR name .
+If this option is not present, the name returned from
+.BR gethostname (3)
+is used by default.
+If the host name consists of multiple labels, only the first label is used
+by the responder.
+.TP
+.B \-\-help
+Display a short help and exit.
+Any following options are silently discarded.
+.TP
+.B \-\-version
+Output version information and exit.
+Any following options are silently discarded.
 .SH BUGS
+The
 .B xllmnrd
-does not implement all the requirements specified in RFC 4795 yet.
+program currently responds always with no answer sections
+and does not implement all the requirements specified in RFC 4795 yet.
 .SH "SEE ALSO"
-.BR hostname (1),
-.BR named (8),
-RFC 4795
+.BR gethostname (2),
+.BR syslog (3),
+RFC 4795.

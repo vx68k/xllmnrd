@@ -1,14 +1,138 @@
+2013-12-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/responder.c:
+	Replaced a check for the destination address with one for the sender
+	address. Also renamed a function.
+	[f5bf2e60e542] [tip] <release>
+
+	* NEWS:
+	Updated the news (see issue #29).
+	[3d152484e0f7] <release>
+
+	* README:
+	Updated the package description.
+	[5a9700d7190a]
+
+	* src/responder.c:
+	Renamed symbols.
+	[ea8e5731e94b]
+
+	* src/ifaddr.c:
+	Modified a comment slightly.
+	[4ab418ca7814]
+
+	* configure.ac:
+	Changed the version number to 1.0.0, canceling milestone 1.0y3. See
+	issue #29.
+	[35267c8b17ab]
+
+	* src/llmnr_packet.h, src/responder.c:
+	Added new inline function to read or write data in a LLMNR packet.
+	[39d587d89418] <feature/responder>
+
+2013-12-06  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/responder.c:
+	Added an answer section.
+	[5b25ad2cc855] <feature/responder>
+
+	* build.makefile:
+	Revised the last change.
+	[ffa6a2eaddc5]
+
+	* build.makefile:
+	Modified the 'all' target.
+	[fe1ef7e13318]
+
+2013-12-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Removed unnecessary checks for C90 headers and symbols.
+	[be76953aa933] <feature/responder>
+
+	* configure.ac:
+	Backed out changeset: 8ce2f90aeb50
+	[f0d2cef24cc5] <feature/responder>
+
+	* configure.ac:
+	Added a configure check for stddef.h.
+	[8ce2f90aeb50] <feature/responder>
+
+	* src/llmnr_packet.h, src/responder.c:
+	Reorganized the responding functions.
+	[d5e6a7512e37] <feature/responder>
+
+2013-12-04  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Removed a volatile qualifier from 'refresh_not_in_progress'.
+	[b91dec8e85dd]
+
+	* src/ifaddr.c:
+	Added new inline functions.
+	[e67a972e7da5]
+
+	* src/ifaddr.c:
+	Replaced 'abort_if_error'.
+	[e83af104a1fd]
+
+	* src/ifaddr.c:
+	Made IPv4 address arrays dynamically allocated to fix issue #25.
+	Also see issue #23.
+	[c4030a147959] <feature/ifaddr-v4>
+
+2013-12-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Modified interface record handling for IPv4 addresses.
+	[c7260af82bc4] <feature/ifaddr-v4>
+
+	* README:
+	Updated the file contents.
+	[e037e73b0db0]
+
+2013-12-01  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ascii.h:
+	Removed tabs in header files.
+	[d74929f566de]
+
+	* src/responder.h:
+	Renamed the macro for include-once.
+	[c6178d861bfc]
+
+	* src/Makefile.am, src/llmnr.c, src/llmnr.h, src/responder.c,
+	src/responder.h:
+	Moved common declarations for LLMNR to a new unit.
+	[b0ab6c765f73]
+
 2013-11-29  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* NEWS:
+	Corrected gramatical number in the news.
+	[66d57134aeef]
+
+	* .hgtags:
+	Added tag release-1.0y2 for changeset ecf618ed0e61
+	[e5d9c48e320d] <release>
+
+	* ChangeLog:
+	Refreshed the change log from the revision history.
+	[ecf618ed0e61] [release-1.0y2] <release>
+
+	* NEWS:
 	Updated the news.
-	[3a3abc8ccb20] [tip] <release>
+	[3a3abc8ccb20] <release>
 
 2013-11-28  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/xllmnrd.8.in:
 	Updated the manual page, closing issue #14.
 	[4a5a8d2e43c9] <release>
+
+	* configure.ac:
+	Changed the version number for the next milestone.
+	[d2bfd112dea5]
 
 	* po/LINGUAS:
 	Added an initial set of languages.
@@ -64,6 +188,19 @@
 2013-11-26  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c:
+	Renamed functions and added comments (see issue #22).
+	[f1a2eac717ca] <feature/ifaddr-v4>
+
+	* src/ifaddr.c:
+	Implemented 'ifaddr_add_if_addr_v4' and 'ifaddr_remove_if_addr_v4'.
+	[fa262e3d7466] <feature/ifaddr-v4>
+
+	* src/ifaddr.c:
+	Added code to enumerate network interfaces with IPv4 in addition to
+	IPv6.
+	[61b630eec212] <feature/ifaddr-v4>
+
+	* src/ifaddr.c:
 	Restructed an if statement.
 	[d135b884a261]
 
@@ -85,13 +222,13 @@
 	Added mostlyclean.
 	[985668c8703d]
 
-	* configure.ac:
-	Added 'strchrnul' to the configure checks.
-	[c7525458789e] <feature/responder>
-
 	* src/ifaddr.c:
 	Removed unnecessary assertions.
 	[29c661a0c922]
+
+	* configure.ac:
+	Added 'strchrnul' to the configure checks.
+	[c7525458789e] <feature/responder>
 
 	* configure.ac:
 	Added 'basename' to the configure checks.
@@ -197,18 +334,6 @@
 	Removed the Emacs mode line.
 	[d6d823ab4fcd] <release>
 
-2013-11-17  Kaz Nishimura  <kazssym@vx68k.org>
-
-	* src/main.c:
-	Modified a comment.
-	[256a9956db95] <release>
-
-	* src/ifaddr.c:
-	Renamed a variable.
-	[4e45de9a2ae6] <release>
-
-2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
-
 	* NEWS:
 	Edited the file contents.
 	[19358ba185cd] <release>
@@ -222,6 +347,14 @@
 	[049017406837] <release>
 
 2013-11-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Modified a comment.
+	[256a9956db95] <release>
+
+	* src/ifaddr.c:
+	Renamed a variable.
+	[4e45de9a2ae6] <release>
 
 	* configure.ac:
 	Changed the version number.
@@ -420,12 +553,6 @@
 	Changed 'ifaddr_refresh' to return an error number on failure.
 	[090bb2d6ef8e] <feature/ifaddr>
 
-2013-11-05  Kaz Nishimura  <kazssym@vx68k.org>
-
-	* src/ifaddr.c:
-	Made <linux/rtnetlink.h> be included conditionally.
-	[3a5f6c76238c]
-
 2013-11-07  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
@@ -452,6 +579,10 @@
 	Excluded <limits.h>.
 	[674df1e4eb6e] <feature/ifaddr>
 
+	* src/ifaddr.c:
+	Made <linux/rtnetlink.h> be included conditionally.
+	[3a5f6c76238c]
+
 	* src/ifaddr.c, src/ifaddr.h, src/main.c, test/testifaddr.cpp:
 	Added code to make the worker thread terminated properly to fix
 	issue #12.
@@ -470,12 +601,6 @@
 	Changed ifaddr back to single-initialization.
 	[9c21afe7386a] <feature/ifaddr>
 
-2013-11-03  Kaz Nishimura  <kazssym@vx68k.org>
-
-	* test/testmain.cpp:
-	Removed extra blank lines.
-	[603ba2e04280]
-
 2013-11-04  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* build.makefile:
@@ -484,15 +609,13 @@
 
 2013-11-03  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* test/testmain.cpp:
+	Removed extra blank lines.
+	[603ba2e04280]
+
 	* test/Makefile.am, test/testmain.cpp:
 	Added a unit test driver.
 	[feb10d25656b] <feature/unittest>
-
-2013-10-22  Kaz Nishimura  <kazssym@vx68k.org>
-
-	* configure.ac:
-	Added configure checks for CppUnit.
-	[6306a401bb56] <feature/unittest>
 
 2013-11-01  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -514,6 +637,10 @@
 	* build.makefile:
 	Set CC explicitly.
 	[db7b24508292]
+
+	* configure.ac:
+	Added configure checks for CppUnit.
+	[6306a401bb56] <feature/unittest>
 
 	* configure.ac:
 	Changed the URL.
@@ -777,23 +904,11 @@
 	Created a NEWS file.
 	[560487c6d569]
 
-2013-03-10  Kaz Sasa  <kazssym@vx68k.org>
-
-	* src/llmnr_responder.c:
-	Added initialization/finalization for the ifaddr unit.
-	[208f26b6668a] <unfinished>
-
 2013-03-22  Kaz Sasa  <kazssym@vx68k.org>
 
 	* src/ifaddr.c:
 	Added code for the ifaddr unit (see issue #1).
 	[587ad14b27cb] <unfinished>
-
-2013-03-14  Kaz Sasa  <kazssym@vx68k.org>
-
-	* configure.ac:
-	Added a check for a POSIX thread library.
-	[18eb684398ad]
 
 2013-03-15  Kaz Sasa  <kazssym@vx68k.org>
 
@@ -807,6 +922,10 @@
 	[b4233b4db491]
 
 2013-03-14  Kaz Sasa  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added a check for a POSIX thread library.
+	[18eb684398ad]
 
 	* src/main.c:
 	Added signal handlers (see issue #4).
@@ -854,15 +973,21 @@
 	Created the .hgeol file for edit on Windows.
 	[dc21195b9e0f]
 
-2013-03-09  Kaz Sasa  <kazssym@vx68k.org>
+2013-03-10  Kaz Sasa  <kazssym@vx68k.org>
 
-	* src/llmnr.c, src/llmnr.h:
-	Modified llmnr_open_udp_socket().
-	[4bbbc4cd9cb0]
+	* src/llmnr_responder.c:
+	Added initialization/finalization for the ifaddr unit.
+	[208f26b6668a] <unfinished>
+
+2013-03-09  Kaz Sasa  <kazssym@vx68k.org>
 
 	* INSTALL:
 	Added an INSTALL file.
 	[e4627bac8c5e]
+
+	* src/llmnr.c, src/llmnr.h:
+	Modified llmnr_open_udp_socket().
+	[4bbbc4cd9cb0]
 
 2013-03-08  Kaz Sasa  <kazssym@vx68k.org>
 
@@ -1005,13 +1130,13 @@
 
 2013-02-17  Kaz Sasa  <kazssym@vx68k.org>
 
-	* src/llmnr.c, src/llmnr.h, src/main.c:
-	Renamed llmnr_new_udp_socket.
-	[52fa3e5f24e6]
-
 	* src/llmnr.c, src/llmnr.h:
 	Added functions for responder objects.
 	[b747d11789e8]
+
+	* src/llmnr.c, src/llmnr.h, src/main.c:
+	Renamed llmnr_new_udp_socket.
+	[52fa3e5f24e6]
 
 	* .hgignore:
 	Added stamp-h1 to .hgignore.

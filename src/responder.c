@@ -153,7 +153,7 @@ static volatile sig_atomic_t responder_terminated;
 static void responder_handle_ifaddr_change(
         const struct ifaddr_change *__change);
 
-static ssize_t receive_udp6(int, void *, size_t,
+static ssize_t responder_receive_udp(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
 static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
 
@@ -264,27 +264,31 @@ void responder_set_host_name(const char *restrict name) {
 
 int responder_run(void) {
     while (!responder_terminated) {
-        unsigned char data[1500];
+        unsigned char packet[1500]; // TODO: Handle jumbo packet.
         struct sockaddr_in6 sender;
         struct in6_pktinfo pktinfo = {
             .ipi6_addr = IN6ADDR_ANY_INIT,
+            .ipi6_ifindex = 0,
         };
-        ssize_t packet_size = receive_udp6(udp_fd, data, sizeof data, &sender,
-                &pktinfo);
+        ssize_t packet_size = responder_receive_udp(udp_fd, packet, sizeof packet,
+                &sender, &pktinfo);
         if (packet_size >= 0) {
-            // The destination MUST be the LLMNR multicast address.
-            if (IN6_ARE_ADDR_EQUAL(&pktinfo.ipi6_addr, &in6addr_mc_llmnr) &&
-                    (size_t) packet_size >= sizeof (struct llmnr_header)) {
-                const struct llmnr_header *header =
-                        (const struct llmnr_header *) data;
-                if (llmnr_query_is_valid(header)) {
-                    responder_handle_query(pktinfo.ipi6_ifindex, header,
-                            packet_size, &sender);
+            // The sender address must not be multicast.
+            if (!IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
+                if ((size_t) packet_size >= sizeof (struct llmnr_header)) {
+                    const struct llmnr_header *header =
+                            (const struct llmnr_header *) packet;
+                    if (llmnr_query_is_valid(header)) {
+                        responder_handle_query(pktinfo.ipi6_ifindex, header,
+                                packet_size, &sender);
+                    } else {
+                        log_discarded("Non-query packet", &sender);
+                    }
                 } else {
-                    log_discarded("Invalid packet", &sender);
+                    log_discarded("Short packet", &sender);
                 }
             } else {
-                log_discarded("Non-multicast packet", &sender);
+                log_discarded("Packet from multicast address", &sender);
             }
         }
     }
@@ -338,7 +342,7 @@ void responder_handle_ifaddr_change(
     }
 }
 
-ssize_t receive_udp6(int sock, void *restrict buf, size_t bufsize,
+ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,
         struct sockaddr_in6 *restrict sender,
         struct in6_pktinfo *restrict pktinfo) {
     struct iovec iov[1] = {

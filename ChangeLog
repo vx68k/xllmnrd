@@ -1,9 +1,31 @@
+2013-12-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Added a news item for an update release.
+	[7e690979c939] [tip] <release>
+
+	* src/main.c:
+	Corrected the error check for 'responder_init' to fix issue #30.
+	[3754f5221ba7] <release>
+
+	* configure.ac:
+	Changed the version number for an update release.
+	[9005eb10f8e9] <release>
+
 2013-12-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* .hgtags:
+	Added tag release-1.0.0 for changeset fab9f6db574c
+	[94dd58f75330] <release>
+
+	* ChangeLog:
+	Updated the change log from the revision history.
+	[fab9f6db574c] [release-1.0.0] <release>
 
 	* src/responder.c:
 	Replaced a check for the destination address with one for the sender
 	address. Also renamed a function.
-	[f5bf2e60e542] [tip] <release>
+	[f5bf2e60e542] <release>
 
 	* NEWS:
 	Updated the news (see issue #29).

@@ -164,9 +164,9 @@ int main(int argc, char *argv[argc + 1]) {
     }
     atexit(&ifaddr_finalize);
 
-    if (responder_initialize(0) < 0) {
-        syslog(LOG_ERR, "Could not create a responder object: %m");
-        syslog(LOG_INFO, "Exiting");
+    err = responder_initialize(0);
+    if (err != 0) {
+        syslog(LOG_ERR, "Failed to initialize responder: %s", strerror(err));
         exit(EXIT_FAILURE);
     }
 

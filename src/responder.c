@@ -252,16 +252,15 @@ void responder_finalize(void) {
 }
 
 void responder_set_host_name(const char *restrict name) {
-    const char *label_end = strchrnul(name, '.');
-    size_t length = label_end - name;
-
-    if (length > LLMNR_LABEL_MAX) {
-        syslog(LOG_WARNING, "Host name truncated");
-        length = LLMNR_LABEL_MAX;
+    size_t label_length = strcspn(name, ".");
+    if (label_length > LLMNR_LABEL_MAX) {
+        syslog(LOG_WARNING, "Host name truncated to %u octets",
+                LLMNR_LABEL_MAX);
+        label_length = LLMNR_LABEL_MAX;
     }
-    memcpy(host_name + 1, name, length);
-    host_name[length + 1] = '\0';
-    host_name[0] = length;
+    memcpy(host_name + 1, name, label_length);
+    host_name[label_length + 1] = '\0';
+    host_name[0] = label_length;
 }
 
 int responder_run(void) {

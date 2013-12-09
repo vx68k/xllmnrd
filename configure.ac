@@ -39,7 +39,7 @@ AC_TYPE_UINT16_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([basename gethostname socket strchrnul])
+AC_CHECK_FUNCS([basename gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])
 AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])

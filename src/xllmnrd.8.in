@@ -6,7 +6,7 @@
 .\" this notice are preserved.  This file is offered as-is, without any
 .\" warranty.
 .
-.TH XLLMNRD 8 2013-11-28 "@PACKAGE_STRING@"
+.TH XLLMNRD 8 2013-12-10 "@PACKAGE_STRING@"
 .SH NAME
 xllmnrd \- IPv6 LLMNR responder
 .SH SYNOPSIS
@@ -41,7 +41,7 @@ run in the foreground.
 Set the host name of the responder to
 .IR name .
 If this option is not present, the name returned from
-.BR gethostname (3)
+.BR gethostname (2)
 is used by default.
 If the host name consists of multiple labels, only the first label is used
 by the responder.

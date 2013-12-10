@@ -67,6 +67,7 @@
 
 struct program_options {
     bool foreground;
+    const char *pid_file;
     const char *host_name;
 };
 
@@ -240,6 +241,7 @@ void parse_arguments(int argc, char *argv[argc + 1],
     };
     static const struct option long_options[] = {
         {"foreground", no_argument, 0, 'f'},
+        {"pid-file", required_argument, 0, 'p'},
         {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
@@ -248,10 +250,13 @@ void parse_arguments(int argc, char *argv[argc + 1],
 
     int opt;
     do {
-        opt = getopt_long(argc, argv, "fn:", long_options, 0);
+        opt = getopt_long(argc, argv, "fp:n:", long_options, 0);
         switch (opt) {
         case 'f':
             options->foreground = true;
+            break;
+        case 'p':
+            options->pid_file = optarg;
             break;
         case 'n':
             options->host_name = optarg;

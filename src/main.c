@@ -29,6 +29,9 @@
 #endif
 #include <getopt.h>
 #include <syslog.h>
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>

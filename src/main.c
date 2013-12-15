@@ -27,8 +27,13 @@
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
 #endif
+#if HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 #include <syslog.h>
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>

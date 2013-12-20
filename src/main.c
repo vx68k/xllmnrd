@@ -85,6 +85,13 @@ static volatile sig_atomic_t caught_signal;
 static int set_default_host_name(void);
 
 /**
+ * Creates a pid file.
+ * @param __name name of the pid file.
+ * @return 0 if no error is detected, or non-zero error number.
+ */
+static int make_pid_file(const char *__name);
+
+/**
  * Parses command-line arguments for options.
  * If an option that causes an immediate exit is used, this function does not
  * return but terminates this program with a zero exit status.
@@ -197,8 +204,16 @@ int main(int argc, char *argv[argc + 1]) {
         set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
+        if (options.pid_file) {
+            make_pid_file(options.pid_file);
+        }
+
         ifaddr_start();
         responder_run();
+
+        if (options.pid_file) {
+            unlink(options.pid_file);
+        }
     }
 
     responder_finalize();
@@ -236,6 +251,25 @@ int set_default_host_name(void) {
     }
 
     return errno;
+}
+
+int make_pid_file(const char *restrict name) {
+    FILE *f = fopen(name, "w");
+    if (!f) {
+        return errno;
+    }
+
+    int written = fprintf(f, "%lu\n", (long) getpid());
+    if (written >= 0) {
+        fclose(f);
+        return 0;
+    }
+
+    int err = errno; // Any of the following functions MAY fail.
+    fclose(f);
+    unlink(name);
+
+    return err;
 }
 
 void parse_arguments(int argc, char *argv[argc + 1],

@@ -59,6 +59,9 @@
 #ifndef EX_OSERR
 #define EX_OSERR 71
 #endif
+#ifndef EX_CANTCREAT
+#define EX_CANTCREAT 73
+#endif
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
@@ -85,8 +88,8 @@ static volatile sig_atomic_t caught_signal;
 static int set_default_host_name(void);
 
 /**
- * Creates a pid file.
- * @param __name name of the pid file.
+ * Makes a pid file.
+ * @param __name name of the pid file, or NULL if no pid file is required
  * @return 0 if no error is detected, or non-zero error number.
  */
 static int make_pid_file(const char *__name);
@@ -195,6 +198,7 @@ int main(int argc, char *argv[argc + 1]) {
         }
     }
 
+    int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;
         sigemptyset(&mask);
@@ -205,14 +209,24 @@ int main(int argc, char *argv[argc + 1]) {
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
         if (options.pid_file) {
-            make_pid_file(options.pid_file);
+            int err = make_pid_file(options.pid_file);
+            if (err != 0) {
+                syslog(LOG_ERR, "Failed to make pid file '%s': %s",
+                        options.pid_file, strerror(err));
+                exit_status = EX_CANTCREAT;
+            }
         }
 
-        ifaddr_start();
-        responder_run();
+        if (exit_status == EXIT_SUCCESS) {
+            ifaddr_start();
+            responder_run();
 
-        if (options.pid_file) {
-            unlink(options.pid_file);
+            if (options.pid_file) {
+                if (unlink(options.pid_file) != 0) {
+                    syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
+                            options.pid_file, strerror(errno));
+                }
+            }
         }
     }
 
@@ -231,7 +245,7 @@ int main(int argc, char *argv[argc + 1]) {
         }
     }
 
-    return EXIT_SUCCESS;
+    return exit_status;
 }
 
 int set_default_host_name(void) {
@@ -254,6 +268,11 @@ int set_default_host_name(void) {
 }
 
 int make_pid_file(const char *restrict name) {
+    if (!name) {
+        // Makes no pid file.
+        return 0;
+    }
+
     FILE *f = fopen(name, "w");
     if (!f) {
         return errno;

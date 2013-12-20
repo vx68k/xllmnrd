@@ -89,7 +89,7 @@ static int set_default_host_name(void);
 
 /**
  * Makes a pid file.
- * @param __name name of the pid file, or NULL if no pid file is required
+ * @param __name name of the pid file.
  * @return 0 if no error is detected, or non-zero error number.
  */
 static int make_pid_file(const char *__name);
@@ -268,11 +268,6 @@ int set_default_host_name(void) {
 }
 
 int make_pid_file(const char *restrict name) {
-    if (!name) {
-        // Makes no pid file.
-        return 0;
-    }
-
     FILE *f = fopen(name, "w");
     if (!f) {
         return errno;

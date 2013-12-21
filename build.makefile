@@ -9,6 +9,7 @@
 # This file SHOULD NOT be contained in the source package.
 
 builddir = build
+prefix = /tmp/xllmnrd
 
 AUTORECONF = autoreconf
 CC = gcc -std=gnu99
@@ -26,7 +27,7 @@ all: $(builddir)/Makefile
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
-	cd $(builddir) && $$srcdir/configure
+	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
 
 configure: stamp-configure
 stamp-configure: configure.ac

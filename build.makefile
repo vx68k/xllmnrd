@@ -26,7 +26,7 @@ all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) distcheck
 	@rm -rf $(builddir)$(prefix)
 	cd $(builddir) && \
-	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=. install
+	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd) install
 	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
 	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
 

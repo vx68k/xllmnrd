@@ -334,6 +334,8 @@ void show_help(const char *restrict name) {
     printf(_("\
   -f, --foreground      run in foreground\n"));
     printf(_("\
+  -p, --pid-file=FILE   make the pid file as FILE\n"));
+    printf(_("\
   -n, --name=NAME       set the host name of the responder to NAME\n"));
     printf(_("\
       --help            display this help and exit\n"));

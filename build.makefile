@@ -14,6 +14,7 @@ prefix = /tmp/xllmnrd
 AUTORECONF = autoreconf
 CC = gcc -std=gnu99
 CXX = g++ -std=gnu++11
+TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
@@ -23,6 +24,11 @@ all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
 	@rm -f $(builddir)/xllmnrd-*.tar.*
 	cd $(builddir) && $(MAKE) distcheck
+	@rm -rf $(builddir)$(prefix)
+	cd $(builddir) && \
+	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$(builddir) install
+	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
+	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
 
 $(builddir)/Makefile: configure
 	test -d $(builddir) || mkdir $(builddir)

@@ -9,6 +9,9 @@ xllmnrd is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License.  You should have received a copy of
 it as the 'COPYING' file.
 
+For more information about xllmnrd, visit the xllmnrd project at
+<http://www.vx68k.org/xllmnrd>.
+
 # Installation
 
 For generic installation instructions, read the 'INSTALL' file.  If you are
@@ -17,4 +20,4 @@ the environment variable 'CXX' to 'g++ -std=gnu++11' (or to 'g++ -std=gnu++0x'
 depending on the compiler version) before you run 'configure'.
 
 If you find any other problem while installation, please report it to our
-[issue tracker](https://bitbucket.org/kazssym/xllmnrd/issues).
+issue tracker at <https://bitbucket.org/kazssym/xllmnrd/issues>.

@@ -136,9 +136,10 @@ static bool initialized;
 static int udp_fd;
 
 /**
- * First label of the host name in the DNS label format.
+ * Host name in the DNS name format.
+ * It MUST be composed of a single label.
  */
-static uint8_t host_label[1 + LLMNR_LABEL_MAX];
+static uint8_t host_name[LLMNR_LABEL_MAX + 2];
 
 static volatile sig_atomic_t responder_terminated;
 
@@ -197,9 +198,9 @@ static inline int responder_initialized(void) {
  * @return
  */
 static inline int responder_name_matches(const uint8_t *restrict question) {
-    size_t n = host_label[0];
+    size_t n = host_name[0];
     if (*question++ == n) {
-        const uint8_t *restrict p = host_label + 1;
+        const uint8_t *restrict p = host_name + 1;
         while (n--) {
             if (ascii_to_upper(*question++) != ascii_to_upper(*p++)) {
                 return false;
@@ -251,15 +252,15 @@ void responder_finalize(void) {
 }
 
 void responder_set_host_name(const char *restrict name) {
-    const char *label_end = strchrnul(name, '.');
-    size_t length = label_end - name;
-
-    if (length > LLMNR_LABEL_MAX) {
-        syslog(LOG_WARNING, "Host name truncated");
-        length = LLMNR_LABEL_MAX;
+    size_t label_length = strcspn(name, ".");
+    if (label_length > LLMNR_LABEL_MAX) {
+        syslog(LOG_WARNING, "Host name truncated to %u octets",
+                LLMNR_LABEL_MAX);
+        label_length = LLMNR_LABEL_MAX;
     }
-    memcpy(host_label + 1, name, length);
-    host_label[0] = length;
+    memcpy(host_name + 1, name, label_length);
+    host_name[label_length + 1] = '\0';
+    host_name[0] = label_length;
 }
 
 int responder_run(void) {
@@ -439,8 +440,8 @@ int responder_respond_for_name(unsigned int index,
                 syslog(LOG_DEBUG, "Found interface address %s", addrstr);
 
                 // TODO: Clean up the following code.
-                memcpy(packet + packet_size, host_label, 1 + host_label[0]);
-                packet_size += 1 + host_label[0];
+                memcpy(packet + packet_size, host_name, 1 + host_name[0]);
+                packet_size += 1 + host_name[0];
                 packet[packet_size++] = '\0';
                 // TYPE
                 llmnr_put_uint16(LLMNR_TYPE_AAAA, packet + packet_size);

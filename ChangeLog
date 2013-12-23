@@ -1,3 +1,31 @@
+2013-12-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Updated the NEWS file for version 1.1.0 and close issue #35.
+	[74111a98a80c] [tip] <release>
+
+	* configure.ac:
+	Changed the version number to 1.1.0 (see issue #36).
+	[3e2e9b9958a2] <release>
+
+	* README:
+	Updated the README text with the project location (see issue #34).
+	[571f5284bafd]
+
+	* README:
+	Updated the README text (see issue #34).
+	[ec2677d4e0bf]
+
+	* src/xllmnrd.8.in:
+	Updated the manual page and close issue #32.
+	[ac86d73263e2]
+
+2013-12-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* ChangeLog:
+	Updated the change log from the revision history.
+	[10436f8116e3]
+
 2013-12-21  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/main.c:

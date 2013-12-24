@@ -30,7 +30,7 @@ all: $(builddir)/Makefile
 	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
 	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
 
-$(builddir)/Makefile: configure
+$(builddir)/Makefile: configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)

@@ -1,10 +1,25 @@
 This file describes major changes and important notes for each release.
 
+# Version 1.1.0
+
+This release adds a new command-line option.
+
+## New feature
+
+* It can now make the pid file specified by the `-p FILE` or `--pid-file=FILE`
+  option, though it does not make one by default.
+
+# Version 1.0.1
+
+This release fixes an error check bug ([issue #30][]).
+
+[Issue #30]: https://bitbucket.org/kazssym/xllmnrd/issue/30
+
 # Version 1.0.0
 
 This release is the first version of xllmnrd.
 
-## New features
+## New feature
 
 * It now responds to an AAAA query with the link-local address of the
   interface on which the query has been received.

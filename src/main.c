@@ -27,8 +27,13 @@
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
 #endif
+#if HAVE_GETOPT_H
 #include <getopt.h>
+#endif
 #include <syslog.h>
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
@@ -54,6 +59,9 @@
 #ifndef EX_OSERR
 #define EX_OSERR 71
 #endif
+#ifndef EX_CANTCREAT
+#define EX_CANTCREAT 73
+#endif
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
@@ -67,6 +75,7 @@
 
 struct program_options {
     bool foreground;
+    const char *pid_file;
     const char *host_name;
 };
 
@@ -77,6 +86,13 @@ static volatile sig_atomic_t caught_signal;
  * @return 0 if succeeded, or non-zero error number.
  */
 static int set_default_host_name(void);
+
+/**
+ * Makes a pid file.
+ * @param __name name of the pid file.
+ * @return 0 if no error is detected, or non-zero error number.
+ */
+static int make_pid_file(const char *__name);
 
 /**
  * Parses command-line arguments for options.
@@ -164,9 +180,9 @@ int main(int argc, char *argv[argc + 1]) {
     }
     atexit(&ifaddr_finalize);
 
-    if (responder_initialize(0) < 0) {
-        syslog(LOG_ERR, "Could not create a responder object: %m");
-        syslog(LOG_INFO, "Exiting");
+    err = responder_initialize(0);
+    if (err != 0) {
+        syslog(LOG_ERR, "Failed to initialize responder: %s", strerror(err));
         exit(EXIT_FAILURE);
     }
 
@@ -182,6 +198,7 @@ int main(int argc, char *argv[argc + 1]) {
         }
     }
 
+    int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;
         sigemptyset(&mask);
@@ -191,8 +208,26 @@ int main(int argc, char *argv[argc + 1]) {
         set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
-        ifaddr_start();
-        responder_run();
+        if (options.pid_file) {
+            int err = make_pid_file(options.pid_file);
+            if (err != 0) {
+                syslog(LOG_ERR, "Failed to make pid file '%s': %s",
+                        options.pid_file, strerror(err));
+                exit_status = EX_CANTCREAT;
+            }
+        }
+
+        if (exit_status == EXIT_SUCCESS) {
+            ifaddr_start();
+            responder_run();
+
+            if (options.pid_file) {
+                if (unlink(options.pid_file) != 0) {
+                    syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
+                            options.pid_file, strerror(errno));
+                }
+            }
+        }
     }
 
     responder_finalize();
@@ -210,7 +245,7 @@ int main(int argc, char *argv[argc + 1]) {
         }
     }
 
-    return EXIT_SUCCESS;
+    return exit_status;
 }
 
 int set_default_host_name(void) {
@@ -232,6 +267,25 @@ int set_default_host_name(void) {
     return errno;
 }
 
+int make_pid_file(const char *restrict name) {
+    FILE *f = fopen(name, "w");
+    if (!f) {
+        return errno;
+    }
+
+    int written = fprintf(f, "%lu\n", (long) getpid());
+    if (written >= 0) {
+        fclose(f);
+        return 0;
+    }
+
+    int err = errno; // Any of the following functions MAY fail.
+    fclose(f);
+    unlink(name);
+
+    return err;
+}
+
 void parse_arguments(int argc, char *argv[argc + 1],
         struct program_options *restrict options) {
     enum opt_char {
@@ -240,6 +294,7 @@ void parse_arguments(int argc, char *argv[argc + 1],
     };
     static const struct option long_options[] = {
         {"foreground", no_argument, 0, 'f'},
+        {"pid-file", required_argument, 0, 'p'},
         {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
@@ -248,10 +303,13 @@ void parse_arguments(int argc, char *argv[argc + 1],
 
     int opt;
     do {
-        opt = getopt_long(argc, argv, "fn:", long_options, 0);
+        opt = getopt_long(argc, argv, "fp:n:", long_options, 0);
         switch (opt) {
         case 'f':
             options->foreground = true;
+            break;
+        case 'p':
+            options->pid_file = optarg;
             break;
         case 'n':
             options->host_name = optarg;
@@ -275,6 +333,8 @@ void show_help(const char *restrict name) {
     putchar('\n');
     printf(_("\
   -f, --foreground      run in foreground\n"));
+    printf(_("\
+  -p, --pid-file=FILE   make the pid file as FILE\n"));
     printf(_("\
   -n, --name=NAME       set the host name of the responder to NAME\n"));
     printf(_("\

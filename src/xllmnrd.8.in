@@ -1,19 +1,21 @@
 .\" Manual page for xllmnrd
-.\" Copyright (C) 2013  Kaz Nishimura
+.\" Copyright (C) 2013 Kaz Nishimura
 .\"
 .\" Copying and distribution of this file, with or without modification, are
 .\" permitted in any medium without royalty provided the copyright notice and
 .\" this notice are preserved.  This file is offered as-is, without any
 .\" warranty.
 .
-.TH XLLMNRD 8 2013-11-28 "@PACKAGE_STRING@"
+.TH XLLMNRD 8 2013-12-23 "@PACKAGE_STRING@"
 .SH NAME
 xllmnrd \- IPv6 LLMNR responder
 .SH SYNOPSIS
 .SY xllmnrd
 .OP \-f
+.OP \-p file
 .OP \-n name
 .OP \-\-foreground
+.RB [ \-\-pid\-file=\fIfile\fB ]
 .RB [ \-\-name=\fIname\fB ]
 .SY xllmnrd
 .B \-\-help
@@ -33,15 +35,22 @@ option is used.
 .SH OPTIONS
 .TP
 .BR \-f ", " \-\-foreground
-Make
+Run
 .B xllmnrd
-run in the foreground.
+in the foreground.
+.TP
+.BR \-p ", " \-\-pid\-file=\fIfile\fB
+Make the pid file of
+.B xllmnrd
+as
+.IR file .
+If this option is not present, no pid file is made.
 .TP
 .BR \-n ", " \-\-name=\fIname\fB
 Set the host name of the responder to
 .IR name .
 If this option is not present, the name returned from
-.BR gethostname (3)
+.BR gethostname (2)
 is used by default.
 If the host name consists of multiple labels, only the first label is used
 by the responder.
@@ -56,8 +65,8 @@ Any following options are silently discarded.
 .SH BUGS
 The
 .B xllmnrd
-program currently responds always with no answer sections
-and does not implement all the requirements specified in RFC 4795 yet.
+program does not implement all the requirements specified in RFC 4795,
+especially, conflict resolution at all.
 .SH "SEE ALSO"
 .BR gethostname (2),
 .BR syslog (3),

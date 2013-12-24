@@ -9,10 +9,12 @@
 # This file SHOULD NOT be contained in the source package.
 
 builddir = build
+prefix = /tmp/xllmnrd
 
 AUTORECONF = autoreconf
 CC = gcc -std=gnu99
 CXX = g++ -std=gnu++11
+TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
@@ -22,11 +24,16 @@ all: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
 	@rm -f $(builddir)/xllmnrd-*.tar.*
 	cd $(builddir) && $(MAKE) distcheck
+	@rm -rf $(builddir)$(prefix)
+	cd $(builddir) && \
+	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd) install
+	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
+	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
 
-$(builddir)/Makefile: configure
+$(builddir)/Makefile: configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
-	cd $(builddir) && $$srcdir/configure
+	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
 
 configure: stamp-configure
 stamp-configure: configure.ac

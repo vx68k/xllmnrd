@@ -36,7 +36,7 @@ $(builddir)/Makefile: configure
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
 
 configure: stamp-configure
-stamp-configure: configure.ac
+stamp-configure: configure.ac build.makefile
 	@rm -f $@
 	$(AUTORECONF) --install
 	touch $@

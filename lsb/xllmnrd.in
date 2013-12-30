@@ -1,5 +1,5 @@
 #!/bin/sh
-# Init script for xllmnrd
+# Init script for the xllmnrd package
 # Copyright (C) 2013 Kaz Nishimura
 #
 # Copying and distribution of this file, with or without modification, are
@@ -16,6 +16,7 @@
 # Short-Description: Start or stop the IPv6 LLMNR responder
 ### END INIT INFO
 
+NAME='@PACKAGE_NAME@'
 DAEMON=@sbindir@/xllmnrd
 USER=xllmnrd
 PIDDIR=/var/run/xllmnrd
@@ -37,19 +38,19 @@ start)
     # already running.  See issue #31.
     if start_daemon -p $PIDDIR/xllmnrd.pid /bin/su - $USER \
         -s /bin/sh -c "$DAEMON -p $PIDDIR/xllmnrd.pid"; then
-        log_success_msg "Started $DAEMON"
+        log_success_msg "Started $NAME"
     else
         status=$?
-        log_failure_msg "Failed to start $DAEMON"
+        log_failure_msg "Failed to start $NAME"
         exit $status
     fi
     ;;
 stop)
     if killproc -p $PIDDIR/xllmnrd.pid $DAEMON; then
-        log_success_msg "Stopped $DAEMON"
+        log_success_msg "Stopped $NAME"
     else
         status=$?
-        log_failuer_msg "Failed to stop $DAEMON"
+        log_failuer_msg "Failed to stop $NAME"
         exit $status
     fi
     ;;
@@ -61,11 +62,11 @@ status)
     pid=$(pidofproc -p $PIDDIR/xllmnrd.pid $DAEMON)
     status=$?
     if [ $status -eq 0 ]; then
-        echo "$DAEMON is running"
+        echo "$NAME is running"
     elif [ $status -eq 3 ]; then
-        echo "$DAEMON is not running"
+        echo "$NAME is not running"
     else
-        log_failure_msg "Failed to get status of $DAEMON"
+        log_failure_msg "Failed to get the status of $NAME"
     fi
     exit $status
     ;;

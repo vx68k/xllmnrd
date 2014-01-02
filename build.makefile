@@ -20,17 +20,23 @@ CFLAGS = -g -O2 -Wall -Wextra
 
 export CC CXX
 
-all: $(builddir)/Makefile
-	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
-	@rm -f $(builddir)/xllmnrd-*.tar.*
-	cd $(builddir) && $(MAKE) distcheck
-	@rm -rf $(builddir)$(prefix)
+ALL: check image dist
+
+all check dist: $(builddir)/Makefile
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+
+install: $(builddir)/Makefile
 	cd $(builddir) && \
-	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd) install
-	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
-	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
+	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd)/root $@
+
+image: install
+	@rm -f $(builddir)/xllmnrd-image.tar.gz
+	(cd $(builddir)/root && $(TAR) -c -f - .) | \
+	  gzip -9c > $(builddir)/xllmnrd-image.tar.gz
+	rm -rf $(builddir)/root
 
 $(builddir)/Makefile: configure build.makefile
+	@rm -f $(builddir)/xllmnrd-*.tar.*
 	test -d $(builddir) || mkdir $(builddir)
 	srcdir=$$(pwd); \
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)

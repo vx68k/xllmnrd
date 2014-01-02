@@ -20,9 +20,9 @@ CFLAGS = -g -O2 -Wall -Wextra
 
 export CC CXX
 
-ALL: check image dist
+build: check image mostlyclean dist
 
-all check dist: $(builddir)/Makefile
+all check clean mostlyclean dist distcheck: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 install: $(builddir)/Makefile
@@ -36,8 +36,8 @@ image: install
 	rm -rf $(builddir)/root
 
 $(builddir)/Makefile: configure build.makefile
-	@rm -f $(builddir)/xllmnrd-*.tar.*
 	test -d $(builddir) || mkdir $(builddir)
+	rm -f $(builddir)/xllmnrd-*.tar.*
 	srcdir=$$(pwd); \
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
 
@@ -46,3 +46,5 @@ stamp-configure: configure.ac
 	@rm -f $@
 	$(AUTORECONF) --install
 	touch $@
+
+.PHONY: build all check clean mostlyclean dist distcheck install image

@@ -20,9 +20,9 @@ CFLAGS = -g -O2 -Wall -Wextra
 
 export CC CXX
 
-build: check image mostlyclean dist
+build: clean check image dist
 
-all check clean mostlyclean dist distcheck: $(builddir)/Makefile
+all check clean dist distcheck: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 install: $(builddir)/Makefile
@@ -47,4 +47,4 @@ stamp-configure: configure.ac
 	$(AUTORECONF) --install
 	touch $@
 
-.PHONY: build all check clean mostlyclean dist distcheck install image
+.PHONY: build all check clean dist distcheck install image

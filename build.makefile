@@ -20,18 +20,24 @@ CFLAGS = -g -O2 -Wall -Wextra
 
 export CC CXX
 
-all: $(builddir)/Makefile
-	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' check
-	@rm -f $(builddir)/xllmnrd-*.tar.*
-	cd $(builddir) && $(MAKE) distcheck
-	@rm -rf $(builddir)$(prefix)
+build: clean check image dist
+
+all check clean dist distcheck: $(builddir)/Makefile
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+
+install: $(builddir)/Makefile
 	cd $(builddir) && \
-	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd) install
-	(cd $(builddir)$(prefix) && $(TAR) -c -f - .) | \
-	  gzip -9 > $(builddir)/xllmnrd-image.tar.gz
+	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd)/root $@
+
+image: install
+	@rm -f $(builddir)/xllmnrd-image.tar.gz
+	(cd $(builddir)/root && $(TAR) -c -f - .) | \
+	  gzip -9c > $(builddir)/xllmnrd-image.tar.gz
+	rm -rf $(builddir)/root
 
 $(builddir)/Makefile: configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
+	rm -f $(builddir)/xllmnrd-*.tar.*
 	srcdir=$$(pwd); \
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
 
@@ -40,3 +46,5 @@ stamp-configure: configure.ac
 	@rm -f $@
 	$(AUTORECONF) --install
 	touch $@
+
+.PHONY: build all check clean dist distcheck install image

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 1.2x\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues>\n"
-"POT-Creation-Date: 2013-12-30 15:04+0900\n"
+"POT-Creation-Date: 2014-01-03 00:15+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,66 +17,66 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/main.c:323
+#: src/main.c:324
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: src/main.c:330
+#: src/main.c:331
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: src/main.c:331
+#: src/main.c:332
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: src/main.c:333
+#: src/main.c:334
 #, c-format
 msgid "  -f, --foreground      run in foreground\n"
 msgstr ""
 
-#: src/main.c:335
+#: src/main.c:336
 #, c-format
 msgid "  -p, --pid-file=FILE   make the pid file as FILE\n"
 msgstr ""
 
-#: src/main.c:337
+#: src/main.c:338
 #, c-format
 msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 msgstr ""
 
-#: src/main.c:339
+#: src/main.c:340
 #, c-format
 msgid "      --help            display this help and exit\n"
 msgstr ""
 
-#: src/main.c:341
+#: src/main.c:342
 #, c-format
 msgid "      --version         output version information and exit\n"
 msgstr ""
 
-#: src/main.c:344
+#: src/main.c:345
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: src/main.c:348
+#: src/main.c:349
 #, c-format
 msgid "%s %s\n"
 msgstr ""
 
-#: src/main.c:350
+#: src/main.c:351
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr ""
 
-#: src/main.c:352
+#: src/main.c:353
 msgid "(C)"
 msgstr ""
 
-#: src/main.c:353
+#: src/main.c:354
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

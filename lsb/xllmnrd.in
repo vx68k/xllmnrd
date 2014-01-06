@@ -16,10 +16,10 @@
 # Short-Description: Start or stop the IPv6 LLMNR responder
 ### END INIT INFO
 
-NAME='@PACKAGE_NAME@'
-DAEMON=@sbindir@/xllmnrd
+NAME=xllmnrd
+DAEMON=@sbindir@/$NAME
+PIDDIR=/var/run/$NAME
 USER=xllmnrd
-PIDDIR=/var/run/xllmnrd
 
 if [ ! -x $DAEMON ]; then
     exit 0
@@ -36,21 +36,21 @@ start)
     fi
     # A start failure is expected on Debian-based systems if another daemon is
     # already running.  See issue #31.
-    if start_daemon -p $PIDDIR/xllmnrd.pid /bin/su - $USER \
-        -s /bin/sh -c "$DAEMON -p $PIDDIR/xllmnrd.pid"; then
-        log_success_msg "Started $NAME"
+    if start_daemon -p $PIDDIR/$NAME.pid /bin/su - $USER \
+        -s /bin/sh -c "$DAEMON -p $PIDDIR/$NAME.pid"; then
+        log_success_msg "Starting IPv6 LLMNR responder: $NAME"
     else
         status=$?
-        log_failure_msg "Failed to start $NAME"
+        log_failure_msg "Starting IPv6 LLMNR responder: $NAME"
         exit $status
     fi
     ;;
 stop)
-    if killproc -p $PIDDIR/xllmnrd.pid $DAEMON; then
-        log_success_msg "Stopped $NAME"
+    if killproc -p $PIDDIR/$NAME.pid $DAEMON; then
+        log_success_msg "Stopping IPv6 LLMNR responder: $NAME"
     else
         status=$?
-        log_failuer_msg "Failed to stop $NAME"
+        log_failuer_msg "Stopping IPv6 LLMNR responder: $NAME"
         exit $status
     fi
     ;;
@@ -59,10 +59,10 @@ restart|force-reload)
     $0 start
     ;;
 status)
-    pid=$(pidofproc -p $PIDDIR/xllmnrd.pid $DAEMON)
+    pid=$(pidofproc -p $PIDDIR/$NAME.pid $DAEMON)
     status=$?
     if [ $status -eq 0 ]; then
-        echo "$NAME is running"
+        echo "$NAME is running (pid $pid)"
     elif [ $status -eq 3 ]; then
         echo "$NAME is not running"
     else

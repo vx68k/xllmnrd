@@ -1,9 +1,9 @@
 # Japanese translations for the xllmnrd package
-# Copyright (C) 2013 Kaz Nishimura
+# Copyright (C) 2013-2014 Kaz Nishimura
 # This file is distributed under the same license as the xllmnrd package.
 #
 # Translators:
-# Kaz Nishimura, 2013
+# Kaz Nishimura, 2013-2014
 msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd\n"

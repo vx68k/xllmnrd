@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: xllmnrd\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues>\n"
 "POT-Creation-Date: 2014-01-03 00:15+0900\n"
-"PO-Revision-Date: 2013-12-22 08:13+0000\n"
+"PO-Revision-Date: 2014-01-07 12:05+0000\n"
 "Last-Translator: Kaz Nishimura\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/xllmnrd/"
 "language/ja/)\n"
@@ -42,7 +42,7 @@ msgstr "  -f, --foreground      フォアグラウンドで実行\n"
 #: src/main.c:336
 #, c-format
 msgid "  -p, --pid-file=FILE   make the pid file as FILE\n"
-msgstr ""
+msgstr "  -p, --pid-file=FILE   pid ファイルを FILE に作成\n"
 
 #: src/main.c:338
 #, c-format

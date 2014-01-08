@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 1.2x\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues>\n"
-"POT-Creation-Date: 2014-01-03 00:15+0900\n"
+"POT-Creation-Date: 2014-01-08 20:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgstr ""
 
 #: src/main.c:336
 #, c-format
-msgid "  -p, --pid-file=FILE   make the pid file as FILE\n"
+msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
 msgstr ""
 
 #: src/main.c:338

@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013 Kaz Nishimura
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -65,7 +65,7 @@
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013"
+#define COPYRIGHT_YEARS "2013-2014"
 #endif
 
 // Marks localization strings.

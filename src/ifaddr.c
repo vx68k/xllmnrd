@@ -290,7 +290,8 @@ static inline int ifaddr_interface_is_free(
  * This function MUST be called while 'if_mutex' is locked.
  * @param i [in] interface record to be erased.
  */
-static inline void ifaddr_erase_interface(struct ifaddr_interface *restrict i) {
+static inline void ifaddr_erase_interface(
+        struct ifaddr_interface *restrict i) {
     free(i->addr_v4);
 
     struct ifaddr_interface *j = i++;
@@ -375,7 +376,8 @@ void ifaddr_finalize(void) {
             terminated = true;
 
             if (interrupt_signo != 0) {
-                pthread_kill(worker_thread, interrupt_signo); // TODO: Check for an error.
+                pthread_kill(worker_thread, interrupt_signo);
+                // TODO: Check for an error.
             }
             pthread_join(worker_thread, NULL); // TODO: Check for an error.
         }

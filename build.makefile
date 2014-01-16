@@ -21,6 +21,7 @@ CFLAGS = -g -O2 -Wall -Wextra
 export CC CXX
 
 build: clean check image dist
+	hg status || true
 
 all check clean dist distcheck: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@

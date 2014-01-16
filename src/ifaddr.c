@@ -137,9 +137,12 @@ static pthread_mutex_t if_mutex;
  */
 static ifaddr_change_handler if_change_handler;
 
-static const size_t if_table_capacity = 32;
-static size_t if_table_size;
-static struct ifaddr_interface if_table[32]; // TODO: Allocate dynamically.
+/**
+ * Table of interfaces.
+ */
+static const size_t interfaces_capacity = 32;
+static size_t interfaces_size;
+static struct ifaddr_interface interfaces[32]; // TODO: Allocate dynamically.
 
 /**
  * Mutex for refresh_not_in_progress.
@@ -267,8 +270,8 @@ static inline int ifaddr_started(void) {
  */
 static inline struct ifaddr_interface *ifaddr_find_interface(
         unsigned int index) {
-    struct ifaddr_interface *i = if_table;
-    while (i != if_table + if_table_size && i->index != index) {
+    struct ifaddr_interface *i = interfaces;
+    while (i != interfaces + interfaces_size && i->index != index) {
         ++i;
     }
     return i;
@@ -295,13 +298,13 @@ static inline void ifaddr_erase_interface(
     free(i->addr_v4);
 
     struct ifaddr_interface *j = i++;
-    while (i != if_table + if_table_size) {
+    while (i != interfaces + interfaces_size) {
         *j++ = *i++;
     }
-    --if_table_size;
+    --interfaces_size;
 
     // Clears the pointer that is no longer used though it is unnecessary.
-    if_table[if_table_size].addr_v4 = NULL;
+    interfaces[interfaces_size].addr_v4 = NULL;
 }
 
 /**
@@ -338,7 +341,7 @@ int ifaddr_initialize(int sig) {
     }
     interrupt_signo = sig;
     if_change_handler = NULL;
-    if_table_size = 0;
+    interfaces_size = 0;
     started = false;
     refresh_not_in_progress = true;
 
@@ -417,14 +420,14 @@ void ifaddr_add_addr_v4(unsigned int index,
     lock_mutex(&if_mutex);
 
     struct ifaddr_interface *i = ifaddr_find_interface(index);
-    if (i == if_table + if_table_size) {
-        if (if_table_size == if_table_capacity) {
+    if (i == interfaces + interfaces_size) {
+        if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
         *i = (struct ifaddr_interface) {
             .index = index,
         };
-        ++if_table_size;
+        ++interfaces_size;
     }
 
     struct in_addr *j = i->addr_v4;
@@ -461,7 +464,7 @@ void ifaddr_remove_addr_v4(unsigned int index,
     lock_mutex(&if_mutex);
 
     struct ifaddr_interface *i = ifaddr_find_interface(index);
-    if (i != if_table + if_table_size) {
+    if (i != interfaces + interfaces_size) {
         struct in_addr *j = i->addr_v4;
         while (j != i->addr_v4 + i->addr_v4_size &&
                 j->s_addr != addr->s_addr) {
@@ -494,14 +497,14 @@ void ifaddr_add_addr_v6(unsigned int index,
     lock_mutex(&if_mutex);
 
     struct ifaddr_interface *i = ifaddr_find_interface(index);
-    if (i == if_table + if_table_size) {
-        if (if_table_size == if_table_capacity) {
+    if (i == interfaces + interfaces_size) {
+        if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
         *i = (struct ifaddr_interface) {
             .index = index,
         };
-        ++if_table_size;
+        ++interfaces_size;
     }
 
     if (i->addr_v6_size == 0) {
@@ -525,7 +528,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
     lock_mutex(&if_mutex);
 
     struct ifaddr_interface *i = ifaddr_find_interface(index);
-    if (i != if_table + if_table_size) {
+    if (i != interfaces + interfaces_size) {
         if (i->addr_v6_size == 1 && IN6_ARE_ADDR_EQUAL(&(i->addr), addr)) {
             i->addr_v6_size -= 1;
 
@@ -744,7 +747,7 @@ int ifaddr_refresh(void) {
     if (refresh_not_in_progress) {
         lock_mutex(&if_mutex);
         // TODO: Call the change handler for each interface.
-        if_table_size = 0;
+        interfaces_size = 0;
         unlock_mutex(&if_mutex);
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
@@ -789,7 +792,7 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     int err = 0;
     const struct ifaddr_interface *i = ifaddr_find_interface(ifindex);
-    if (i != if_table + if_table_size && i->addr_v6_size == 1) {
+    if (i != interfaces + interfaces_size && i->addr_v6_size == 1) {
         if (addr_out) {
             *addr_out = i->addr;
         }

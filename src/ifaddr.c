@@ -283,8 +283,7 @@ static inline struct ifaddr_interface *ifaddr_find_interface(
  * @param i [in] interface record to be tested.
  * @return true if the interface has no address.
  */
-static inline int ifaddr_interface_is_free(
-        const struct ifaddr_interface *restrict i) {
+static inline int ifaddr_interface_is_free(const struct ifaddr_interface *i) {
     return i->addr_v6_size == 0 && i->addr_v4_size == 0;
 }
 
@@ -293,8 +292,7 @@ static inline int ifaddr_interface_is_free(
  * This function MUST be called while 'if_mutex' is locked.
  * @param i [in] interface record to be erased.
  */
-static inline void ifaddr_erase_interface(
-        struct ifaddr_interface *restrict i) {
+static inline void ifaddr_erase_interface(struct ifaddr_interface *i) {
     free(i->addr_v4);
 
     struct ifaddr_interface *j = i++;

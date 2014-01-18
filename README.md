@@ -14,8 +14,8 @@ provided by [Samba][].
 xllmnrd is [free software][]: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].
 
-For more information about xllmnrd, visit the xllmnrd project at
-<http://www.vx68k.org/xllmnrd>.
+For more information about xllmnrd, visit the xllmnrd project
+at <http://www.vx68k.org/xllmnrd>.
 
 [Samba]: <http://www.samba.org/>
 [Free software]: <http://www.gnu.org/philosophy/free-sw.html>

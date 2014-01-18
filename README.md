@@ -18,7 +18,7 @@ For more information about xllmnrd, visit the xllmnrd project at
 
 For generic installation instructions, read the 'INSTALL' file.  If you are
 also planning to run the included test suite with GCC, you might have to set
-the environment variable 'CXX' to 'g++ -std=gnu++11' (or to 'g++ -std=gnu++0x'
+the environment variable 'CXX' to `g++ -std=gnu++11` (or to `g++ -std=gnu++0x`
 depending on the compiler version) before you run 'configure'.
 
 If you find any other problem while installation, please report it to our

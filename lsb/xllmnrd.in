@@ -1,6 +1,6 @@
 #!/bin/sh
-# Init script for the xllmnrd package
-# Copyright (C) 2013 Kaz Nishimura
+# Sample init script for the xllmnrd package
+# Copyright (C) 2013-2014 Kaz Nishimura
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
@@ -13,7 +13,7 @@
 # Required-Stop: $local_fs $network $syslog
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: Start or stop the IPv6 LLMNR responder
+# Short-Description: IPv6 LLMNR responder daemon
 ### END INIT INFO
 
 NAME=xllmnrd

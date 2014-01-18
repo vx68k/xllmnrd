@@ -1,6 +1,6 @@
-# Repository description
-
 **Note**: This file SHOULD NOT be distributed with the xllmnrd package.
+
+# Repository description
 
 This repository contains the source code for xllmnrd.
 

@@ -1,4 +1,6 @@
-<!-- This file SHOULD NOT be contained in the xllmnrd package. -->
+# Repository description
+
+**Note**: This file SHOULD NOT be distributed with the xllmnrd package.
 
 This repository contains the source code for xllmnrd.
 

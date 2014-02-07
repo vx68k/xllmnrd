@@ -1,3 +1,139 @@
+2014-02-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Updated the NEWS items.
+	[983be9a6c7b4] [tip] <release>
+
+	* configure.ac:
+	Changed the prerequisite GNU autoconf version.
+	[fdbe4f1f4f85] <release>
+
+2014-02-07  xgettext  <xgettext>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translations files.
+	[03bcf7641868] <release>
+
+2014-02-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Updated the version number for a new release.
+	[34263571a36a] <release>
+
+2014-01-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* README:
+	Changed quotation marks.
+	[82c5c076cd93]
+
+	* README:
+	Updated the README content.
+	[cf6f312ebf13]
+
+2014-01-16  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* lsb/xllmnrd.in:
+	Modified the LSB short description.
+	[6ea8b7f6329d]
+
+	* po/ja.po:
+	Updated the Japanese translations.
+	[1b8b21d5457d]
+
+2014-01-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Added a workaround for undefined s6_addr32.
+	[abbc4ddc2071]
+
+2014-01-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/Makefile.am:
+	Modified the rule to generate xllmnrd.8.
+	[d3e1c815b66a]
+
+	* Makefile.am:
+	Changed the name of the temporary file.
+	[27ba10df16f4]
+
+	* lsb/Makefile.am:
+	Added a sed substitution for the init script.
+	[ff729be8698f]
+
+2014-01-08  xgettext  <xgettext>
+
+	* po/xllmnrd.pot:
+	Updated the pot file.
+	[737c19c851d6]
+
+2014-01-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Updated the copyright years.
+	[daf23717262c]
+
+	* src/main.c:
+	Modified the help text.
+	[b3d0bb457270]
+
+2014-01-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* po/ja.po:
+	Updated translation years.
+	[a6527abebe5c]
+
+	* po/ja.po:
+	Imported new translations.
+	[85ca13228747] <feature/l10n-ja>
+
+2014-01-06  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* lsb/xllmnrd.in:
+	Modified the script behavior slightly.
+	[a18cca93a827]
+
+2014-01-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* po/ja.po:
+	Updated the po file.
+	[ca018990b057] <feature/l10n-ja>
+
+	* po/xllmnrd.pot:
+	Updated the pot file.
+	[80e6cf03fedb]
+
+2013-12-31  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/main.c:
+	Redefine _GNU_SOURCE.
+	[bf4601193d65]
+
+2013-12-30  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* lsb/README:
+	Revised the README text.
+	[8aeb1670bdd3]
+
+	* lsb/xllmnrd.in:
+	Modified the init script.
+	[a3aec686f405]
+
+	* po/LINGUAS, po/ja.po:
+	Added Japanese translations.
+	[df85cbf64409] <feature/l10n-ja>
+
+	* po/xllmnrd.pot:
+	Included the pot file in version control.
+	[ec30238dc5b2]
+
+	* lsb/README:
+	Added a README file for the init script.
+	[d10aea208db8]
+
+	* ChangeLog:
+	Updated the change log from the revision history.
+	[0a5a0d75b77d]
+
 2013-12-28  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* lsb/xllmnrd.in:

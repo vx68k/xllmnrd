@@ -19,7 +19,11 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+// Workaround for undefined s6_addr32 in IN6_IS_ADDR_UNSPECIFIED.
+// TODO: Remove this workaround when we no longer need it.
+#if __GNUC__
 #define _GNU_SOURCE 1
+#endif
 
 #include "ifaddr.h"
 

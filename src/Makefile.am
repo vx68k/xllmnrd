@@ -12,10 +12,10 @@ EXTRA_DIST = xllmnrd.8.in
 
 CLEANFILES = xllmnrd.8
 
-xllmnrd.8: xllmnrd.8.in Makefile
+xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	@rm -f $@-t $@
 	sed -e 's,[@]PACKAGE_NAME[@],$(PACKAGE_NAME),g' \
 	  -e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g' \
 	  -e 's,[@]PACKAGE_STRING[@],$(PACKAGE_STRING),g' \
 	  < $(srcdir)/xllmnrd.8.in > $@-t
-	mv $@-t $@
+	mv -f $@-t $@

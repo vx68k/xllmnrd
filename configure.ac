@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.67])
-AC_INIT([xllmnrd], [1.1.0], [https://bitbucket.org/kazssym/xllmnrd/issues],,
+AC_INIT([xllmnrd], [1.2x], [https://bitbucket.org/kazssym/xllmnrd/issues],,
 [http://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -26,6 +26,9 @@ AC_PROG_CXX
 AC_SEARCH_LIBS([pthread_create], [pthread])
 
 # Checks for header files.
+AC_DEFINE([_POSIX_C_SOURCE], [200809L],
+[Define to 200809L to make symbols required by IEEE Std 1003.1-2008 \
+visible.])dnl
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h getopt.h libgen.h linux/rtnetlink.h \
 netinet/in.h net/if.h sysexits.h syslog.h sys/socket.h])
@@ -40,8 +43,10 @@ AC_TYPE_UINT32_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([basename gethostname socket])
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile lsb/Makefile \
+po/Makefile.in])
 AC_OUTPUT

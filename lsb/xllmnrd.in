@@ -1,0 +1,79 @@
+#!/bin/sh
+# Sample init script for the xllmnrd package
+# Copyright (C) 2013-2014 Kaz Nishimura
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any
+# warranty.
+
+### BEGIN INIT INFO
+# Provides: xllmnrd llmnrd
+# Required-Start: $local_fs $network $syslog
+# Required-Stop: $local_fs $network $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: IPv6 LLMNR responder daemon
+### END INIT INFO
+
+NAME=xllmnrd
+DAEMON=@sbindir@/$NAME
+PIDDIR=/var/run/$NAME
+USER=xllmnrd
+
+if [ ! -x $DAEMON ]; then
+    exit 0
+fi
+
+. /lib/lsb/init-functions
+
+case "$1" in
+start)
+    if [ ! -d $PIDDIR ]; then
+        rm -f $PIDDIR
+        mkdir $PIDDIR
+        chown $USER $PIDDIR
+    fi
+    # A start failure is expected on Debian-based systems if another daemon is
+    # already running.  See issue #31.
+    if start_daemon -p $PIDDIR/$NAME.pid /bin/su - $USER \
+        -s /bin/sh -c "$DAEMON -p $PIDDIR/$NAME.pid"; then
+        log_success_msg "Starting IPv6 LLMNR responder: $NAME"
+    else
+        status=$?
+        log_failure_msg "Starting IPv6 LLMNR responder: $NAME"
+        exit $status
+    fi
+    ;;
+stop)
+    if killproc -p $PIDDIR/$NAME.pid $DAEMON; then
+        log_success_msg "Stopping IPv6 LLMNR responder: $NAME"
+    else
+        status=$?
+        log_failuer_msg "Stopping IPv6 LLMNR responder: $NAME"
+        exit $status
+    fi
+    ;;
+restart|force-reload)
+    $0 stop
+    $0 start
+    ;;
+status)
+    pid=$(pidofproc -p $PIDDIR/$NAME.pid $DAEMON)
+    status=$?
+    if [ $status -eq 0 ]; then
+        echo "$NAME is running (pid $pid)"
+    elif [ $status -eq 3 ]; then
+        echo "$NAME is not running"
+    else
+        log_failure_msg "Failed to get the status of $NAME"
+    fi
+    exit $status
+    ;;
+*)
+    echo "Usage: $@ {start|stop|restart|force-reload|status}" >&2
+    exit 3
+    ;;
+esac
+
+exit 0

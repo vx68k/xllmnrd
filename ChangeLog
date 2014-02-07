@@ -1,8 +1,45 @@
+2013-12-28  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* lsb/xllmnrd.in:
+	Removed the empty Description.
+	[7517bd16b782] <feature/init-script>
+
+	* lsb/xllmnrd.in:
+	Implemented the init script actions.
+	[3bcc288cc3b8] <feature/init-script>
+
+	* lsb/Makefile.am:
+	Changed to make a temporary file for the init script.
+	[814daf7dc846] <feature/init-script>
+
+	* configure.ac, src/ifaddr.c, src/llmnr.c, src/main.c:
+	Changed to use IEEE Std 1003.1-2008 by default.
+	[fd05aa788d83]
+
+	* configure.ac:
+	Added configure tests.
+	[8eb1e44f5bb1]
+
+2013-12-24  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Makefile.am, configure.ac:
+	Changed the directory order.
+	[e3b1ac9ab8ed] <feature/init-script>
+
+	* configure.ac:
+	Changed the version number for snapshots.
+	[7917af6a1805]
+
 2013-12-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* ChangeLog:
+	Updated the change log from the revision history for version 1.1.0
+	(see issue #36).
+	[72c6f47d68d7] [release-1.1.0] <release>
 
 	* NEWS:
 	Updated the NEWS file for version 1.1.0 and close issue #35.
-	[74111a98a80c] [tip] <release>
+	[74111a98a80c] <release>
 
 	* configure.ac:
 	Changed the version number to 1.1.0 (see issue #36).
@@ -85,10 +122,6 @@
 	Changed to keep the host name as a DNS name instead of a DNS label.
 	[03100e1aab8e]
 
-	* .hgtags:
-	Added tag release-1.0.1 for changeset 28d5c85bbac4
-	[57729762a34a] <release>
-
 2013-12-08  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* ChangeLog:
@@ -109,9 +142,13 @@
 
 2013-12-07  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .hgtags:
-	Added tag release-1.0.0 for changeset fab9f6db574c
-	[94dd58f75330] <release>
+	* lsb/xllmnrd.in:
+	Added actions.
+	[7ad1e776378f] <feature/init-script>
+
+	* lsb/xllmnrd.in:
+	Added the copyright and permission notices.
+	[111bc2ef2f2b] <feature/init-script>
 
 	* configure.ac:
 	Changed the version number for next minor versions.
@@ -225,10 +262,6 @@
 	Corrected gramatical number in the news.
 	[66d57134aeef]
 
-	* .hgtags:
-	Added tag release-1.0y2 for changeset ecf618ed0e61
-	[e5d9c48e320d] <release>
-
 	* ChangeLog:
 	Refreshed the change log from the revision history.
 	[ecf618ed0e61] [release-1.0y2] <release>
@@ -242,6 +275,22 @@
 	* src/xllmnrd.8.in:
 	Updated the manual page, closing issue #14.
 	[4a5a8d2e43c9] <release>
+
+	* lsb/Makefile.am:
+	Added rules for the new init script.
+	[254618ee439b] <feature/init-script>
+
+	* lsb/xllmnrd.in:
+	Created an init script template.
+	[9e5b34720452] <feature/init-script>
+
+	* Makefile.am, configure.ac:
+	Added the new subdirectory in the make process.
+	[627534738f33] <feature/init-script>
+
+	* lsb/Makefile.am:
+	Added a new subdirectory.
+	[e91a8bf98ef5] <feature/init-script>
 
 	* configure.ac:
 	Changed the version number for the next milestone.
@@ -426,10 +475,6 @@
 
 2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .hgtags:
-	Added tag release-1.0y1 for changeset efcb7238dabf
-	[857418a3e7db] <release>
-
 	* ChangeLog:
 	Updated the change log from the revision history and closed issue
 	#13.
@@ -600,10 +645,6 @@
 
 2013-11-11  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .hgignore:
-	Modified the Mercurial ignore patterns.
-	[24161f0df942]
-
 	* test/testifaddr.cpp:
 	Reorganized tests.
 	[43a858c62433] <feature/ifaddr>
@@ -681,7 +722,7 @@
 	[33e30aaae9e3]
 
 	* src/ifaddr.c:
-	Moved `open_rtnetlink` to make it inline.
+	Moved 'open_rtnetlink' to make it inline.
 	[584180bff739] <feature/ifaddr>
 
 	* src/ifaddr.c:
@@ -906,12 +947,6 @@
 	Added a missing backslash in the NAME section.
 	[11ea089f23f2]
 
-2013-05-16  Kaz Sasa  <kazssym@vx68k.org>
-
-	* .hgignore:
-	Added final output files to .hgignore
-	[5f0dc3bf173d]
-
 2013-05-11  Kaz Sasa  <kazssym@vx68k.org>
 
 	* src/main.c:
@@ -1035,10 +1070,6 @@
 	* src/ifaddr.c:
 	Recommits ifaddr.c with the new EOL conversion.
 	[2262b4eb8ecd]
-
-	* .hgeol:
-	Created the .hgeol file for edit on Windows.
-	[dc21195b9e0f]
 
 2013-03-10  Kaz Sasa  <kazssym@vx68k.org>
 
@@ -1205,10 +1236,6 @@
 	Renamed llmnr_new_udp_socket.
 	[52fa3e5f24e6]
 
-	* .hgignore:
-	Added stamp-h1 to .hgignore.
-	[ab1e7ff9c0a2]
-
 2013-02-14  Kaz Sasa  <kazssym@vx68k.org>
 
 	* configure.ac:
@@ -1285,8 +1312,4 @@
 	* src/main.c:
 	Added a source file.
 	[e280d8bd295e]
-
-	* .hgignore:
-	Added .hgignore.
-	[fca01d2bf68c]
 

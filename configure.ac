@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_PREREQ([2.67])
+AC_PREREQ([2.69])
 AC_INIT([xllmnrd], [1.2.0], [https://bitbucket.org/kazssym/xllmnrd/issues],,
 [http://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/main.c])

@@ -1,5 +1,12 @@
 This file describes major changes and important notes for each release.
 
+# Version 1.2.0
+
+This release adds no new fundamental features but it contains a sample init
+script for LSB-conforming GNU/Linux operating systems and a minor workaround
+for the recent versions of the GNU C Library.  In addition, the Japanese
+translations of the command line messages are now included.
+
 # Version 1.1.0
 
 This release adds a new command-line option.

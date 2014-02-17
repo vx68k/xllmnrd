@@ -30,8 +30,14 @@ AC_DEFINE([_POSIX_C_SOURCE], [200809L],
 [Define to 200809L to make symbols required by IEEE Std 1003.1-2008 \
 visible.])dnl
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([arpa/inet.h getopt.h libgen.h linux/rtnetlink.h \
-netinet/in.h net/if.h sysexits.h syslog.h sys/socket.h])
+AC_CHECK_HEADERS([arpa/inet.h getopt.h libgen.h netinet/in.h net/if.h \
+sysexits.h syslog.h sys/socket.h])
+AC_CHECK_HEADERS([linux/rtnetlink.h],,,
+[AC_INCLUDES_DEFAULT
+/* Some version of <linux/netlink.h> requires 'sa_family_t'. */
+#if HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE

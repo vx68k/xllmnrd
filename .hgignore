@@ -18,10 +18,9 @@ Makefile.in
 aclocal.m4
 build-aux/
 #
-m4/
-autom4te.cache/
-
 syntax: regexp
+^m4/
+^autom4te\.cache/
 
 # Libtool binary files
 \.libs/

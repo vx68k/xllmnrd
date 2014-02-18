@@ -26,8 +26,8 @@ AC_SEARCH_LIBS([pthread_create], [pthread])
 
 # Checks for header files.
 AC_DEFINE([_POSIX_C_SOURCE], [200809L],
-[Define to 200809L to make symbols required by IEEE Std 1003.1-2008 \
-visible.])dnl
+[Define to 200809L to make the symbols required by IEEE Std 1003.1-2008 \
+visible if available.])dnl
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
 net/if.h sysexits.h syslog.h sys/socket.h])

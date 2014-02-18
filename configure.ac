@@ -6,8 +6,6 @@ AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
 
 # Define the unique package revision if 'config.revision' exists.
 if test -f $srcdir/config.revision; then
@@ -21,6 +19,7 @@ fi
 AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CXX
+gl_EARLY
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread])
@@ -32,6 +31,9 @@ visible.])dnl
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h getopt.h libgen.h linux/rtnetlink.h \
 netinet/in.h net/if.h sysexits.h syslog.h sys/socket.h])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.18.1])
+gl_INIT
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
@@ -47,6 +49,6 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile src/Makefile test/Makefile lsb/Makefile \
-po/Makefile.in])
+AC_CONFIG_FILES([Makefile libgnu/Makefile src/Makefile test/Makefile \
+lsb/Makefile po/Makefile.in])
 AC_OUTPUT

@@ -44,8 +44,8 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
+# We have omitted [AC_FUNC_MALLOC] and [AC_FUNC_REALLOC] as we rely only on
+# the standard behavior.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce a Makefile.in.
 
-ACLOCAL_AMFLAGS = -Im4
+ACLOCAL_AMFLAGS = -Ilibgnu/m4 -Im4
 
 SUBDIRS = libgnu src test lsb po
 

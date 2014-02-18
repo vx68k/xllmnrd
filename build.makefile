@@ -36,7 +36,7 @@ image: install
 	  gzip -9c > $(builddir)/xllmnrd-image.tar.gz
 	rm -rf $(builddir)/root
 
-$(builddir)/Makefile: configure build.makefile
+$(builddir)/Makefile: stamp-configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
 	rm -f $(builddir)/xllmnrd-*.tar.*
 	srcdir=$$(pwd); \

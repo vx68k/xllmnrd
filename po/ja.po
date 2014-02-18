@@ -6,9 +6,9 @@
 # Kaz Nishimura, 2013-2014
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd\n"
+"Project-Id-Version: xllmnrd 1.3x1\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues>\n"
-"POT-Creation-Date: 2014-02-07 20:42+0900\n"
+"POT-Creation-Date: 2014-02-18 14:15+0900\n"
 "PO-Revision-Date: 2014-01-09 08:48+0000\n"
 "Last-Translator: Kaz Nishimura\n"
 "Language-Team: Japanese (http://www.transifex.com/projects/p/xllmnrd/"
@@ -19,66 +19,66 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/main.c:324
+#: src/main.c:322
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr "詳しくは ‘%s --help’ をお試しください。\n"
 
-#: src/main.c:331
+#: src/main.c:329
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr "使用法: %s [OPTION]...\n"
 
-#: src/main.c:332
+#: src/main.c:330
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr "IPv6 LLMNR クエリに応答します。\n"
 
-#: src/main.c:334
+#: src/main.c:332
 #, c-format
 msgid "  -f, --foreground      run in foreground\n"
 msgstr "  -f, --foreground      フォアグラウンドで実行\n"
 
-#: src/main.c:336
+#: src/main.c:334
 #, c-format
 msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
 msgstr "  -p, --pid-file=FILE   プロセス ID を FILE に記録\n"
 
-#: src/main.c:338
+#: src/main.c:336
 #, c-format
 msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 msgstr "  -n, --name=NAME       レスポンダーのホスト名を NAME に設定\n"
 
-#: src/main.c:340
+#: src/main.c:338
 #, c-format
 msgid "      --help            display this help and exit\n"
 msgstr "      --help            このヘルプを表示して終了\n"
 
-#: src/main.c:342
+#: src/main.c:340
 #, c-format
 msgid "      --version         output version information and exit\n"
 msgstr "      --version         バージョン情報を出力して終了\n"
 
-#: src/main.c:345
+#: src/main.c:343
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "バグ レポートは <%s> まで。\n"
 
-#: src/main.c:349
+#: src/main.c:347
 #, c-format
 msgid "%s %s\n"
 msgstr "%s %s\n"
 
-#: src/main.c:351
+#: src/main.c:349
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr "リビジョン %s からのパッケージ化\n"
 
-#: src/main.c:353
+#: src/main.c:351
 msgid "(C)"
 msgstr "©"
 
-#: src/main.c:354
+#: src/main.c:352
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

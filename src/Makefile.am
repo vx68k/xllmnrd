@@ -1,6 +1,9 @@
 ## Process this file with automake to produce a Makefile.in.
 
-AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
+AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu \
+-DLOCALEDIR=\"$(localedir)\"
+
+LDADD = ../libgnu/libgnu.a
 
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8

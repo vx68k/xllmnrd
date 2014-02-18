@@ -1,5 +1,11 @@
 This file describes major changes and important notes for each release.
 
+# Version 1.2.1
+
+This release fixes a configure check that failed on CentOS ([issue #41][]).
+
+[Issue #41]: https://bitbucket.org/kazssym/xllmnrd/issue/41
+
 # Version 1.2.0
 
 This release adds no new fundamental features but it contains a sample init

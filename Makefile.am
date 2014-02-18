@@ -1,8 +1,8 @@
 ## Process this file with automake to produce a Makefile.in.
 
-ACLOCAL_AMFLAGS = -Im4
+ACLOCAL_AMFLAGS = -Ilibgnu/m4 -Im4
 
-SUBDIRS = src test lsb po
+SUBDIRS = libgnu src test lsb po
 
 dist-hook:
 	revision=`cd $(srcdir) && hg identify -i 2> /dev/null`; \

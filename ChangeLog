@@ -1,8 +1,36 @@
+2014-02-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Updated the NEWS for version 1.2.1.
+	[b66472460eea] [tip] <release>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translation files.
+	[77eea1f021d5] <release>
+
+	* configure.ac:
+	Changed the version number.
+	[5c419e3057fe] <release>
+
+2014-02-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translations files.
+	[2bdc6c3e7708] <hotfix/issue-41>
+
+	* configure.ac:
+	Modified a configure check to fix issue #41.
+	[983cf1c69fda] <hotfix/issue-41>
+
 2014-02-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* ChangeLog:
+	Updated the change log from the revision history.
+	[e479c8a6598e] [release-1.2.0] <release>
 
 	* NEWS:
 	Updated the NEWS items.
-	[983be9a6c7b4] [tip] <release>
+	[983be9a6c7b4] <release>
 
 	* configure.ac:
 	Changed the prerequisite GNU autoconf version.

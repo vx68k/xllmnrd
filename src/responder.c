@@ -27,6 +27,11 @@
 #define _DARWIN_C_SOURCE 1
 #endif
 
+#if __APPLE__
+// We MUST define this to enable the Advanced Sockets API based on RFC 3542.
+#define __APPLE_USE_RFC_3542 1
+#endif
+
 #include "responder.h"
 
 #include "ifaddr.h"

@@ -19,7 +19,9 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
+#endif
 // We MUST define this for OS X to enable IPv6 if _POSIX_C_SOURCE is defined.
 #define _DARWIN_C_SOURCE 1
 

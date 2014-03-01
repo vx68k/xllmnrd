@@ -14,6 +14,10 @@
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Short-Description: IPv6 LLMNR responder daemon
+# Description: xllmnrd is an IPv6 LLMNR responder daemon.  It allows Microsoft
+#  Windows clients to get the IPv6 address of a server on the same local
+#  network without any DNS configuration and effectively complements IPv4-only
+#  NetBIOS name resolution provided by Samba.
 ### END INIT INFO
 
 NAME=xllmnrd

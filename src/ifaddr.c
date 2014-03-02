@@ -479,7 +479,7 @@ void ifaddr_add_addr_v4(unsigned int index,
     while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
         ++j;
     }
-    // Appends an address if no matching one is found
+    // Appends the address if not found
     if (j == i->addr_v4 + i->addr_v4_size) {
         struct in_addr *addr_v4 = NULL;
         // Avoids potential overflow in size calculation.
@@ -518,7 +518,7 @@ void ifaddr_remove_addr_v4(unsigned int index,
                 j->s_addr != addr->s_addr) {
             ++j;
         }
-        // Erases a matching address if one is found.
+        // Erases the address if found.
         if (j != i->addr_v4 + i->addr_v4_size) {
             struct in_addr *k = j++;
             while (j != i->addr_v4 + i->addr_v4_size) {

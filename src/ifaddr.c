@@ -826,7 +826,8 @@ int ifaddr_refresh(void) {
     return err;
 }
 
-int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
+int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
+        struct in6_addr addr[restrict], size_t *number_of_addresses) {
     if (!ifaddr_initialized() || !ifaddr_started()) {
         return ENXIO;
     }
@@ -836,11 +837,17 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
     lock_mutex(&if_mutex);
 
     int err = 0;
-    const struct ifaddr_interface *i = ifaddr_find_interface(ifindex);
-    if (i != interfaces + interfaces_size && i->addr_v6_size == 1) {
-        if (addr_out) {
-            *addr_out = i->addr_v6[0];
+    const struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i != interfaces + interfaces_size) {
+        const struct in6_addr *restrict j = i->addr_v6;
+        if (addr_size > i->addr_v6_size) {
+            addr_size = i->addr_v6_size;
         }
+        while (addr_size--) {
+            *addr++ = *j++;
+        }
+
+        *number_of_addresses = i->addr_v6_size;
     } else {
         err = ENODEV;
     }

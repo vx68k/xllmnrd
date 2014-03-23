@@ -19,6 +19,7 @@ fi
 AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CXX
+XX_PROG_CXX11
 gl_EARLY
 
 # Checks for libraries.

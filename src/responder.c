@@ -432,11 +432,12 @@ int responder_respond_for_name(unsigned int index,
         switch (qtype) {
             struct in6_addr addr_v6;
             int err;
+            size_t number_of_addresses;
 
         case LLMNR_QTYPE_AAAA:
         case LLMNR_QTYPE_ANY:
-            err = ifaddr_lookup(index, &addr_v6);
-            if (err == 0) {
+            err = ifaddr_lookup_v6(index, 1, &addr_v6, &number_of_addresses);
+            if (err == 0 && number_of_addresses != 0) {
                 char addrstr[INET6_ADDRSTRLEN];
                 inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
                 syslog(LOG_DEBUG, "Found interface address %s", addrstr);

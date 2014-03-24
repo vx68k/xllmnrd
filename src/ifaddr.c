@@ -764,17 +764,14 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
                 rta->rta_len >= RTA_LENGTH(sizeof (struct in6_addr))) {
             const struct in6_addr *addr =
                     (const struct in6_addr *) RTA_DATA(rta);
-            // TODO: Add support for global addresses.
-            if (IN6_IS_ADDR_LINKLOCAL(addr)) {
-                switch (nlmsg_type) {
-                case RTM_NEWADDR:
-                    ifaddr_add_addr_v6(index, addr);
-                    break;
+            switch (nlmsg_type) {
+            case RTM_NEWADDR:
+                ifaddr_add_addr_v6(index, addr);
+                break;
 
-                case RTM_DELADDR:
-                    ifaddr_remove_addr_v6(index, addr);
-                    break;
-                }
+            case RTM_DELADDR:
+                ifaddr_remove_addr_v6(index, addr);
+                break;
             }
         }
 

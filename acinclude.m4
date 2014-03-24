@@ -2,7 +2,7 @@
 AC_DEFUN([_XX_PROG_CXX_STD11],
 [AC_REQUIRE([AC_PROG_CXXCPP])dnl
 AC_LANG_PUSH([C++])dnl
-AC_EGREP_CPP([yes]
+AC_EGREP_CPP([yes],
 [#if __cplusplus >= 201103L
   yes
 #endif

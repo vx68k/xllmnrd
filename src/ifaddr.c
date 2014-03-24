@@ -703,8 +703,9 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     if (nlmsg->nlmsg_len >= rta_offset) {
         const struct ifaddrmsg *ifa = (const struct ifaddrmsg *)
                 NLMSG_DATA(nlmsg);
-        // Handles link-local or wider interfaces only.
-        if (ifa->ifa_scope <= RT_SCOPE_LINK) {
+        // Only handles addresses both non-temporary and at least link-local.
+        if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0 &&
+                ifa->ifa_scope <= RT_SCOPE_LINK) {
             const struct rtattr *rta = (const struct rtattr *)
                     ((const char *) nlmsg + rta_offset);
             size_t rta_len = nlmsg->nlmsg_len - rta_offset;

@@ -15,7 +15,7 @@ AC_LANG_POP([C++])dnl
 # Check whether the C++ compiler supports ISO/IEC 14882:2011 and if not,
 # try to add options to enable it.
 AC_DEFUN([XX_PROG_CXX_STD11],
-[AC_MSG_CHECKING([whether $CXXCPP supports C++11])
+[AC_MSG_CHECKING([whether $CXX supports C++11])
 _XX_PROG_CXX_STD11([xx_cv_cxx_std11=yes], [xx_cv_cxx_std11=no])
 AC_MSG_RESULT([$xx_cv_cxx_std11])
 if test "$xx_cv_cxx_std11" = no; then
@@ -23,7 +23,7 @@ if test "$xx_cv_cxx_std11" = no; then
   xx_save_CXXCPP=$CXXCPP
   CXX="$CXX -std=gnu++11"
   CXXCPP="$CXXCPP -std=gnu++11"
-  AC_MSG_CHECKING([whether $CXXCPP supports C++11])
+  AC_MSG_CHECKING([whether $CXX supports C++11])
   _XX_PROG_CXX_STD11([xx_cv_cxx_std11=yes],
     [CXX=$xx_save_CXX
     CXXCPP=$xx_save_CXXCPP])

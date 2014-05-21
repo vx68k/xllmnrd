@@ -81,27 +81,6 @@ static inline void unlock_mutex(pthread_mutex_t *mutex) {
 }
 
 /**
- * Opens a RTNETLINK socket and binds to necessary groups.
- */
-static inline int open_rtnetlink(int *restrict fd_out) {
-    int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    int err = errno;
-    if (fd >= 0) {
-        struct sockaddr_nl addr = {
-            .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
-        };
-        if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
-            *fd_out = fd;
-            return 0;
-        }
-        err = errno;
-        close(fd);
-    }
-    return err;
-}
-
-/**
  * Interface record.
  */
 struct ifaddr_if {
@@ -121,6 +100,19 @@ static bool initialized;
  * If this value is zero, no signal will be used.
  */
 static int interrupt_signo;
+
+/**
+ * Default dependencies.
+ */
+static const struct ifaddr_deps default_deps = {
+    .close = &close,
+    .socket = &socket,
+};
+
+/**
+ * Dependencies that are currently in active.
+ */
+static struct ifaddr_deps module_deps;
 
 /**
  * File descriptor for the rtnetlink socket.
@@ -188,6 +180,17 @@ static void ifaddr_remove_addr_v4(unsigned int __index,
 /*
  * Declarations for static functions.
  */
+
+/**
+ * Initializes the module dependencies.
+ * @param __deps dependencies that are passed to ifaddr_initialize.
+ */
+static void ifaddr_initialize_deps(const struct ifaddr_deps *__deps);
+
+/**
+ * Opens a RTNETLINK socket and binds to the necessary groups.
+ */
+static int ifaddr_open_rtnetlink(int *fd_out);
 
 static void *ifaddr_run(void *__data);
 
@@ -377,7 +380,7 @@ static inline void ifaddr_complete_refresh(void) {
  * Definitions for out-of-line functions.
  */
 
-int ifaddr_initialize(int sig) {
+int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
     if (ifaddr_initialized()) {
         return EBUSY;
     }
@@ -387,7 +390,7 @@ int ifaddr_initialize(int sig) {
     started = false;
     refresh_not_in_progress = true;
 
-    int err = open_rtnetlink(&rtnetlink_fd);
+    int err = ifaddr_open_rtnetlink(&rtnetlink_fd);
     if (err == 0) {
         err = pthread_mutex_init(&if_mutex, NULL);
         if (err == 0) {
@@ -405,10 +408,28 @@ int ifaddr_initialize(int sig) {
         }
         destroy_mutex(&if_mutex);
 
-        if (close(rtnetlink_fd) != 0) {
+        if ((*module_deps->close)(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }
+    }
+    return err;
+}
+
+int ifaddr_open_rtnetlink(int *restrict fd_out) {
+    int fd = (*module_deps->socket)(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int err = errno;
+    if (fd >= 0) {
+        struct sockaddr_nl addr = {
+            .nl_family = AF_NETLINK,
+            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
+        };
+        if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
+            *fd_out = fd;
+            return 0;
+        }
+        err = errno;
+        (*module_deps->close)(fd);
     }
     return err;
 }
@@ -431,7 +452,7 @@ void ifaddr_finalize(void) {
         destroy_mutex(&refresh_mutex);
         destroy_mutex(&if_mutex);
 
-        if (close(rtnetlink_fd) != 0) {
+        if ((*module_deps->close)(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }

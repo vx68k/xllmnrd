@@ -59,11 +59,11 @@ public:
     }
 
     void testInitialize() {
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
-        CPPUNIT_ASSERT_EQUAL(EBUSY, ifaddr_initialize(SIGUSR2));
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2, NULL));
+        CPPUNIT_ASSERT_EQUAL(EBUSY, ifaddr_initialize(SIGUSR2, NULL));
         ifaddr_finalize();
         // This MUST succeed again.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2, NULL));
         ifaddr_finalize();
     }
 
@@ -72,7 +72,7 @@ public:
         // Before initialization, an error MUST be detected.
         CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
                 &handler));
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
         // After initialization, the handler function MUST be null.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
                 &handler));
@@ -89,7 +89,7 @@ public:
         // After finalization, an error MUST be detected.
         CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
                 &handler));
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
         // After initialization, the handler function MUST be null again.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
         CPPUNIT_ASSERT(handler == NULL);
@@ -107,7 +107,7 @@ public:
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_start()));
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
         // This MUST succeed.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
@@ -121,7 +121,7 @@ public:
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This still MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
@@ -138,7 +138,7 @@ public:
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This still MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));

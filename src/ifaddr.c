@@ -408,7 +408,7 @@ int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
         }
         destroy_mutex(&if_mutex);
 
-        if ((*module_deps->close)(rtnetlink_fd) != 0) {
+        if ((*module_deps.close)(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }
@@ -417,7 +417,7 @@ int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
 }
 
 int ifaddr_open_rtnetlink(int *restrict fd_out) {
-    int fd = (*module_deps->socket)(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int fd = (*module_deps.socket)(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     int err = errno;
     if (fd >= 0) {
         struct sockaddr_nl addr = {
@@ -429,7 +429,7 @@ int ifaddr_open_rtnetlink(int *restrict fd_out) {
             return 0;
         }
         err = errno;
-        (*module_deps->close)(fd);
+        (*module_deps.close)(fd);
     }
     return err;
 }
@@ -452,7 +452,7 @@ void ifaddr_finalize(void) {
         destroy_mutex(&refresh_mutex);
         destroy_mutex(&if_mutex);
 
-        if ((*module_deps->close)(rtnetlink_fd) != 0) {
+        if ((*module_deps.close)(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }

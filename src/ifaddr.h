@@ -36,7 +36,7 @@ struct ifaddr_change {
  */
 struct ifaddr_deps {
     int (*close)(int __fd);
-    int (*socket)(int __domain, int __type, __protocol);
+    int (*socket)(int __domain, int __type, int __protocol);
 };
 
 typedef void (*ifaddr_change_handler)(const struct ifaddr_change *);

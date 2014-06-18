@@ -1,5 +1,5 @@
 /*
- * Interface address lookups (implementation)
+ * ifaddr - interface addresses (implementation)
  * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -264,6 +264,7 @@ static inline int ifaddr_initialized(void) {
 static inline int ifaddr_started(void) {
     return started;
 }
+
 /**
  * Finds an interface.
  * @param index interface index.

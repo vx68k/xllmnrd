@@ -1,4 +1,4 @@
-[**Note**: this file _should not_ be distributed with the xllmnrd package.]
+**Note**: this file _should not_ be distributed with the xllmnrd package.
 
 This repository contains the source code for xllmnrd.
 
@@ -6,18 +6,18 @@ xllmnrd is an IPv6 LLMNR responder daemon (primarily for GNU/Linux operating
 systems).
 It allows Microsoft Windows clients to get the IPv6 address of a server
 on the same local network _without any DNS configuration_ and
-effectively complements IPv4-only NetBIOS name resolution
+effectively complements IPv4-only NetBIOS name resolution traditionally
 provided by [Samba][].
 
 xllmnrd is [free software][]: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].
 
 For more information about xllmnrd, visit the xllmnrd project
-at <http://www.vx68k.org/xllmnrd>.
+at <http://xllmnrd.vx68k.org/>.
 
 [Samba]: <http://www.samba.org/>
 [Free software]: <http://www.gnu.org/philosophy/free-sw.html>
-    "What is free software?"
+                 "What is free software?"
 [GNU General Public License]: <http://www.gnu.org/licenses/gpl.html>
 
 # Installation

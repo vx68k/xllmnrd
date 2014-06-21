@@ -28,6 +28,7 @@ extern "C" {
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
 #include <netinet/in.h>
+#include <vector>
 #include <csignal>
 #include <cerrno>
 
@@ -134,20 +135,28 @@ public:
     }
 
     void testLookup() {
-        struct in6_addr addr;
+        size_t size;
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(0, 0, NULL, &size)));
+
         ifaddr_initialize(SIGUSR2);
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This still MUST fail.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(0, 0, NULL, &size)));
+
         ifaddr_start();
-        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup(0, &addr));
+        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(0, 0, NULL, &size));
+        CPPUNIT_ASSERT(size >= 0);
+
+        std::vector<struct in6_addr> addr(size);
+        CPPUNIT_ASSERT_EQUAL(ENODEV,
+                ifaddr_lookup_v6(0, size, &addr[0], &size));
+
         ifaddr_finalize();
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail again.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(0, 0, NULL, &size)));
     }
 
 protected:

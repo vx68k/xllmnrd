@@ -1,6 +1,6 @@
 /*
- * Test fixture for the ifaddr module
- * Copyright (C) 2013  Kaz Nishimura
+ * testifaddr - test fixture for ifaddr
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free

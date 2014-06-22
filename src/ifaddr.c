@@ -826,7 +826,8 @@ int ifaddr_refresh(void) {
 }
 
 int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
-        struct in6_addr addr[restrict], size_t *number_of_addresses) {
+        // Using 'struct in6_addr addr[restrict]' caused an error on CLang.
+        struct in6_addr *restrict addr, size_t *number_of_addresses) {
     if (!ifaddr_initialized() || !ifaddr_started()) {
         return ENXIO;
     }

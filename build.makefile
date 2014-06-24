@@ -20,7 +20,7 @@ CFLAGS = -g -O2 -Wall -Wextra
 
 export CC CXX
 
-build: clean distcheck
+build: clean check dist
 	hg status || true
 
 all check clean dist distcheck: $(builddir)/Makefile

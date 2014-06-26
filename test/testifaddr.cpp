@@ -1,5 +1,5 @@
 /*
- * testifaddr - test fixture for ifaddr
+ * testifaddr - test fixtures for ifaddr
  * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it

@@ -20,6 +20,7 @@
 #include <config.h>
 #endif
 #ifndef _GNU_SOURCE
+// This definition might be required to enable RFC 3542 API.
 #define _GNU_SOURCE 1
 #endif
 
@@ -42,6 +43,13 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <assert.h>
+
+#ifndef IPV6_DONTFRAG
+// Workaround for undefined 'IPV6_DONTFRAG' on Linux-based systems.
+#if __linux__
+#define IPV6_DONTFRAG 62
+#endif
+#endif /* !defined IPV6_DONTFRAG */
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.
@@ -70,6 +78,18 @@ static inline int set_udp_options(int fd) {
                 "Could not set IPV6_UNICAST_HOPS to %d: %s",
                 unicast_hops, strerror(errno));
     }
+
+#ifdef IPV6_DONTFRAG
+    int dontfrag = 1;
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_DONTFRAG, &dontfrag, sizeof (int))
+            != 0) {
+        syslog(LOG_WARNING, "Could not set IPV6_DONTFRAG to %d: %s",
+                dontfrag, strerror(errno));
+    }
+#else
+    syslog(LOG_WARNING,
+            "No socket option to disable IPv6 packet fragmentation");
+#endif
 
     return 0;
 }

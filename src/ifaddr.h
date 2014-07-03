@@ -1,6 +1,6 @@
 /*
- * Interface address lookups (interface)
- * Copyright (C) 2013  Kaz Nishimura
+ * ifaddr - interface addresses (interface)
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -84,14 +84,18 @@ extern int ifaddr_start(void);
 extern int ifaddr_refresh(void);
 
 /**
- * Looks up the address of an interface.
+ * Looks up the IPv6 addresses of an interface.
  * This module MUST be initialized and started.
- * @param __ifindex interface index.
- * @param __addr [out] interface address; if its value is null, no output will
- * be retrieved.
- * @return 0 if any address is found, 'ENODEV' if no address is found, 'ENXIO'
- * if this module is not started, or any non-zero error number.
+ * @param __index interface index.
+ * @param __addr_size maximum size of the output array.
+ * @param __addr array pointer to the interface addresses.  If the actual
+ * number of interface addresses is greater than the array size, ones that do
+ * not fit this array will be discarded.
+ * @param __number_of_addresses [out] number of the interface addresses.
+ * @return 0 if the interface index is valid, 'ENODEV' if not, 'ENXIO' if this
+ * module is not started, or any non-zero error number.
  */
-extern int ifaddr_lookup(unsigned int __ifindex, struct in6_addr *__addr);
+extern int ifaddr_lookup_v6(unsigned int __index, size_t __addr_size,
+        struct in6_addr __addr[], size_t *__number_of_addresses);
 
 #endif

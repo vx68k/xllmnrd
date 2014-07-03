@@ -19,8 +19,8 @@ fi
 AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_CXX
-XX_PROG_CXX_STD11
 gl_EARLY
+XX_PROG_CXX_STD11
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread])

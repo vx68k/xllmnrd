@@ -12,15 +12,11 @@ builddir = build
 prefix = /tmp/xllmnrd
 
 AUTORECONF = autoreconf
-CC = gcc -std=gnu99
-CXX = g++ -std=gnu++11
 TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
-export CC CXX
-
-build: clean check image dist
+build: clean check dist
 	hg status || true
 
 all check clean dist distcheck: $(builddir)/Makefile

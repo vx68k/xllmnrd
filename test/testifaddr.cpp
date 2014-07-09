@@ -1,6 +1,6 @@
 /*
- * Test fixture for the ifaddr module
- * Copyright (C) 2013  Kaz Nishimura
+ * testifaddr - test fixtures for ifaddr
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -28,19 +28,21 @@ extern "C" {
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
 #include <netinet/in.h>
+#include <net/if.h>
+#include <vector>
 #include <csignal>
 #include <cerrno>
 
 using namespace std;
 using CppUnit::TestFixture;
 
-class IfaddrTest : public TestFixture {
-    CPPUNIT_TEST_SUITE(IfaddrTest);
+/*
+ * Uninitialized tests for ifaddr.
+ */
+class IfaddrPreTests : public TestFixture {
+    CPPUNIT_TEST_SUITE(IfaddrPreTests);
     CPPUNIT_TEST(testInitialize);
-    CPPUNIT_TEST(testSetHandler);
-    CPPUNIT_TEST(testStart);
-    CPPUNIT_TEST(testRefresh);
-    CPPUNIT_TEST(testLookup);
+    CPPUNIT_TEST(testFailures);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -64,90 +66,25 @@ public:
         ifaddr_finalize();
         // This MUST succeed again.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
-        ifaddr_finalize();
     }
 
-    void testSetHandler() {
+    void testFailures() {
         ifaddr_change_handler handler = &handle_change;
-        // Before initialization, an error MUST be detected.
+        // Without initialization, an error MUST be detected.
         CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
                 &handler));
-        ifaddr_initialize(SIGUSR2);
-        // After initialization, the handler function MUST be null.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
-                &handler));
-        CPPUNIT_ASSERT(handler == NULL);
-        // The function MUST be retrieved.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
-        CPPUNIT_ASSERT(handler == &handle_change);
-        // And null MUST be retrieved again.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
-                &handler));
-        CPPUNIT_ASSERT(handler == NULL);
-        // The handler function remains set.
-        ifaddr_finalize();
-        // After finalization, an error MUST be detected.
-        CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
-                &handler));
-        ifaddr_initialize(SIGUSR2);
-        // After initialization, the handler function MUST be null again.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
-        CPPUNIT_ASSERT(handler == NULL);
-        // Setting the function without retrieving the old one.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
-                NULL));
-        // And the function MUST be retrieved.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
-        CPPUNIT_ASSERT(handler == &handle_change);
 
-        // TODO: The handler function MUST be called on each interface change.
-    }
-
-    void testStart() {
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_start()));
-        ifaddr_initialize(SIGUSR2);
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
-        // This MUST succeed.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
-        ifaddr_finalize();
-        CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This MUST fail again.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_start()));
-    }
-
-    void testRefresh() {
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
-        ifaddr_initialize(SIGUSR2);
-        CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This still MUST fail.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
-        ifaddr_start();
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
-        ifaddr_finalize();
-        CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This MUST fail again.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
-    }
-
-    void testLookup() {
-        struct in6_addr addr;
+ 
+        size_t size;
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
-        ifaddr_initialize(SIGUSR2);
-        CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This still MUST fail.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
-        ifaddr_start();
-        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup(0, &addr));
-        ifaddr_finalize();
-        CPPUNIT_ASSERT_ASSERTION_FAIL(
-                // This MUST fail again.
-                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup(0, &addr)));
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(0, 0, NULL, &size)));
     }
 
 protected:
@@ -157,4 +94,101 @@ protected:
     static void handle_change(const struct ifaddr_change *change) {
     }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrPreTests);
+
+/*
+ * Initialized tests for ifaddr.
+ */
+class IfaddrTests : public TestFixture {
+    CPPUNIT_TEST_SUITE(IfaddrTests);
+    CPPUNIT_TEST(testSetHandler);
+    CPPUNIT_TEST(testStart);
+    CPPUNIT_TEST(testRefresh);
+    CPPUNIT_TEST(testLookup);
+    CPPUNIT_TEST_SUITE_END();
+
+public:
+    virtual void setUp() override {
+        struct sigaction sa = {};
+        sa.sa_handler = &handle_signal;
+        sigaction(SIGUSR2, &sa, NULL);
+
+        ifaddr_initialize(SIGUSR2);
+    }
+
+    virtual void tearDown() override {
+        ifaddr_finalize();
+
+        struct sigaction sa = {};
+        sa.sa_handler = SIG_DFL;
+        sigaction(SIGUSR2, &sa, NULL);
+    }
+
+    void testSetHandler() {
+        ifaddr_change_handler handler = &handle_change;
+        // The initial handler function MUST be null.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        CPPUNIT_ASSERT(handler == NULL);
+        // The set function MUST be retrieved.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(NULL, &handler));
+        CPPUNIT_ASSERT(handler == &handle_change);
+        // And null MUST be retrieved again.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
+                &handler));
+        CPPUNIT_ASSERT(handler == NULL);
+
+        // TODO: The handler function MUST be called on each interface change.
+    }
+
+    void testStart() {
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
+        // This MUST also succeed.
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_start());
+    }
+
+    void testRefresh() {
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This still MUST fail.
+                CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
+
+        ifaddr_start();
+
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
+    }
+
+    void testLookup() {
+        // TODO: These values may be missing.
+        auto lo = if_nametoindex("lo");
+        auto eth0 = if_nametoindex("eth0");
+        if (eth0 == 0) {
+            CPPUNIT_FAIL("eth0 not found");
+        }
+
+        size_t size;
+        CPPUNIT_ASSERT_ASSERTION_FAIL(
+                // This still MUST fail.
+                CPPUNIT_ASSERT_EQUAL(0,
+                ifaddr_lookup_v6(eth0, 0, NULL, &size)));
+
+        ifaddr_start();
+
+        // The loopback interface SHALL be ignored.
+        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(lo, 0, NULL, &size));
+
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(eth0, 0, NULL, &size));
+        CPPUNIT_ASSERT(size >= 0);
+
+        std::vector<struct in6_addr> addr(size);
+        CPPUNIT_ASSERT_EQUAL(0,
+                ifaddr_lookup_v6(eth0, size, &addr[0], &size));
+    }
+
+protected:
+    static void handle_signal(int sig) {
+    }
+
+    static void handle_change(const struct ifaddr_change *change) {
+    }
+};
+CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTests);

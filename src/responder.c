@@ -1,6 +1,6 @@
 /*
- * LLMNR responder (implementation)
- * Copyright (C) 2013 Kaz Nishimura
+ * responder - LLMNR responder (implementation)
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,6 +20,7 @@
 #include <config.h>
 #endif
 #ifndef _GNU_SOURCE
+// This definition might be required to enable RFC 3542 API.
 #define _GNU_SOURCE 1
 #endif
 #ifndef _DARWIN_C_SOURCE
@@ -52,6 +53,13 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#ifndef IPV6_DONTFRAG
+// Workaround for undefined 'IPV6_DONTFRAG' on Linux-based systems.
+#if __linux__
+#define IPV6_DONTFRAG 62
+#endif
+#endif /* !defined IPV6_DONTFRAG */
+
 /**
  * Sets socket options for an IPv6 UDP responder socket.
  * @param fd file descriptor of a socket.
@@ -79,6 +87,18 @@ static inline int set_udp_options(int fd) {
                 "Could not set IPV6_UNICAST_HOPS to %d: %s",
                 unicast_hops, strerror(errno));
     }
+
+#ifdef IPV6_DONTFRAG
+    int dontfrag = 1;
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_DONTFRAG, &dontfrag, sizeof (int))
+            != 0) {
+        syslog(LOG_WARNING, "Could not set IPV6_DONTFRAG to %d: %s",
+                dontfrag, strerror(errno));
+    }
+#else
+    syslog(LOG_WARNING,
+            "No socket option to disable IPv6 packet fragmentation");
+#endif
 
     return 0;
 }
@@ -424,10 +444,36 @@ int responder_handle_query(unsigned int index,
 int responder_respond_for_name(unsigned int index,
         const struct llmnr_header *query, const uint8_t *query_qname_end,
         const struct sockaddr_in6 *restrict sender) {
-    size_t packet_size = query_qname_end + 4 - (const uint8_t *) query;
+    size_t query_size = query_qname_end + 4 - (const uint8_t *) query;
+    size_t packet_size = query_size;
+    size_t number_of_addr_v6 = 0;
 
-    uint8_t packet[packet_size + 512]; // TODO: Check the array size.
-    memcpy(packet, query, packet_size);
+    uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
+    uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
+    if (qclass == LLMNR_QCLASS_IN) {
+        switch (qtype) {
+            int err;
+
+        case LLMNR_QTYPE_AAAA:
+        case LLMNR_QTYPE_ANY:
+            err = ifaddr_lookup_v6(index, 0, NULL, &number_of_addr_v6);
+            if (err == 0 && number_of_addr_v6 != 0) {
+                packet_size += 1 + host_name[0];
+                packet_size -= 2;
+                packet_size += number_of_addr_v6 * (2 + 10
+                        + sizeof (struct in6_addr));
+            } else {
+                char ifname[IF_NAMESIZE];
+                if_indextoname(index, ifname);
+                syslog(LOG_NOTICE, "No interface addresses found for %s",
+                        ifname);
+            }
+            break;
+        }
+    }
+
+    uint8_t packet[packet_size];
+    memcpy(packet, query, query_size);
 
     struct llmnr_header *response = (struct llmnr_header *) packet;
     response->flags = htons(LLMNR_HEADER_QR);
@@ -435,66 +481,61 @@ int responder_respond_for_name(unsigned int index,
     response->nscount = htons(0);
     response->arcount = htons(0);
 
-    uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
-    uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
-    if (qclass == LLMNR_QCLASS_IN) {
-        switch (qtype) {
-            struct in6_addr addr_v6;
-            int err;
-
-        case LLMNR_QTYPE_AAAA:
-        case LLMNR_QTYPE_ANY:
-            err = ifaddr_lookup(index, &addr_v6);
-            if (err == 0) {
-                char addrstr[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &addr_v6, addrstr, INET6_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "Found interface address %s", addrstr);
-
-                // TODO: Clean up the following code.
-                memcpy(packet + packet_size, host_name, 1 + host_name[0]);
-                packet_size += 1 + host_name[0];
-                packet[packet_size++] = '\0';
-                // TYPE
-                llmnr_put_uint16(LLMNR_TYPE_AAAA, packet + packet_size);
-                packet_size += 2;
-                // CLASS
-                llmnr_put_uint16(LLMNR_CLASS_IN, packet + packet_size);
-                packet_size += 2;
-                // TTL
-                llmnr_put_uint32(30, packet + packet_size);
-                packet_size += 4;
-                // RDLENGTH
-                llmnr_put_uint16(sizeof addr_v6, packet + packet_size);
-                packet_size += 2;
-                // RDATA
-                memcpy(packet + packet_size, &addr_v6, sizeof addr_v6);
-                packet_size += sizeof (struct in6_addr);
-
-                response->ancount = htons(ntohs(response->ancount) + 1);
-            } else {
-                char ifname[IF_NAMESIZE];
-                if_indextoname(index, ifname);
-                syslog(LOG_NOTICE, "Interface address not found for %s",
-                        ifname);
-            }
-            break;
-
-        default:
-            // Leaves the answer section empty.
-            break;
+    uint8_t *packet_end = packet + query_size;
+    if (number_of_addr_v6 != 0) {
+        struct in6_addr addr_v6[number_of_addr_v6];
+        size_t n = 0;
+        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6, &n);
+        if (e == 0 && n < number_of_addr_v6) {
+            // The number of interface addresses changed.
+            // TODO: We should log it.
+            number_of_addr_v6 = n;
         }
+
+        for (size_t i = 0; i != number_of_addr_v6; ++i) {
+            // TODO: Clean up the following code.
+            if (packet_end == packet + query_size) {
+                // The first must be a name.
+                memcpy(packet_end, host_name, 1 + host_name[0]);
+                packet_end += 1 + host_name[0];
+                *packet_end++ = '\0';
+            } else {
+                llmnr_put_uint16(0xc000 + query_size, packet_end);
+                packet_end += 2;
+            }
+            // TYPE
+            llmnr_put_uint16(LLMNR_TYPE_AAAA, packet_end);
+            packet_end += 2;
+            // CLASS
+            llmnr_put_uint16(LLMNR_CLASS_IN, packet_end);
+            packet_end += 2;
+            // TTL
+            // TODO: We should make the TTL value configurable?
+            llmnr_put_uint32(30, packet_end);
+            packet_end += 4;
+            // RDLENGTH
+            llmnr_put_uint16(sizeof (struct in6_addr), packet_end);
+            packet_end += 2;
+            // RDATA
+            memcpy(packet_end, &addr_v6[i], sizeof (struct in6_addr));
+            packet_end += sizeof (struct in6_addr);
+        }
+
+        response->ancount = htons(ntohs(response->ancount)
+                + number_of_addr_v6);
     }
 
     // Sends the response.
-    if (sendto(udp_fd, packet, packet_size, 0, sender,
+    if (sendto(udp_fd, packet, packet_end - packet, 0, sender,
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;
     }
 
+    // TODO
     if (packet_size > 512 && errno == EMSGSIZE) {
         // Resends with truncation.
         response->flags |= htons(LLMNR_HEADER_TC);
-        if (sendto(udp_fd, packet, 512, 0, sender,
+        if (sendto(udp_fd, response, 512, 0, sender,
                 sizeof (struct sockaddr_in6)) >= 0) {
             return 0;
         }

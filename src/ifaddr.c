@@ -1,6 +1,6 @@
 /*
- * Interface address lookups (implementation)
- * Copyright (C) 2013 Kaz Nishimura
+ * ifaddr - interface addresses (implementation)
+ * Copyright (C) 2013-2014 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,7 +20,7 @@
 #include <config.h>
 #endif
 #undef _GNU_SOURCE
-// Workaround for undefined s6_addr32 in IN6_IS_ADDR_UNSPECIFIED.
+// Workaround for undefined s6_addr32 in IN6_ARE_ADDR_EQUAL.
 // TODO: Remove this workaround when we no longer need it.
 #if __GNUC__
 #define _GNU_SOURCE 1
@@ -32,6 +32,7 @@
 #include <linux/rtnetlink.h>
 #endif
 #include <net/if.h> /* if_indextoname */
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <pthread.h>
@@ -104,11 +105,12 @@ static inline int open_rtnetlink(int *restrict fd_out) {
 /**
  * Interface record.
  */
-struct ifaddr_if {
-    unsigned int ifindex;
+struct ifaddr_interface {
+    unsigned int index;
     size_t addr_v4_size;
     struct in_addr *addr_v4;
-    struct in6_addr addr;
+    size_t addr_v6_size;
+    struct in6_addr *addr_v6;
 };
 
 /**
@@ -137,9 +139,12 @@ static pthread_mutex_t if_mutex;
  */
 static ifaddr_change_handler if_change_handler;
 
-static const size_t if_table_capacity = 32;
-static size_t if_table_size;
-static struct ifaddr_if if_table[32]; // TODO: Allocate dynamically.
+/**
+ * Table of interfaces.
+ */
+static const size_t interfaces_capacity = 32;
+static size_t interfaces_size;
+static struct ifaddr_interface interfaces[32]; // TODO: Allocate dynamically.
 
 /**
  * Mutex for refresh_not_in_progress.
@@ -184,6 +189,22 @@ static void ifaddr_add_addr_v4(unsigned int __index,
  */
 static void ifaddr_remove_addr_v4(unsigned int __index,
         const struct in_addr *__addr);
+
+/**
+ * Adds an IPv6 address to an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv6 address to be added.
+ */
+static void ifaddr_add_addr_v6(unsigned int __index,
+        const struct in6_addr *__addr);
+
+/**
+ * Removes an IPv6 address from an interface.
+ * @param __index interface index.
+ * @param __addr [in] IPv6 address to be removed.
+ */
+static void ifaddr_remove_addr_v6(unsigned int __index,
+        const struct in6_addr *__addr);
 
 /*
  * Declarations for static functions.
@@ -245,14 +266,28 @@ static inline int ifaddr_started(void) {
 }
 
 /**
+ * Finds an interface.
+ * @param index interface index.
+ * @return pointer to the matching interface record, or the end of the
+ * interfaces if nothing found.
+ */
+static inline struct ifaddr_interface *ifaddr_find_interface(
+        unsigned int index) {
+    struct ifaddr_interface *i = interfaces;
+    while (i != interfaces + interfaces_size && i->index != index) {
+        ++i;
+    }
+    return i;
+}
+
+/**
  * Tests if an interface has no address.
  * This function MUST be called while 'if_mutex' is locked.
  * @param i [in] interface record to be tested.
  * @return true if the interface has no address.
  */
-static inline int ifaddr_interface_is_free(
-        const struct ifaddr_if * restrict i) {
-    return i->addr_v4_size == 0 && IN6_IS_ADDR_UNSPECIFIED(&i->addr);
+static inline int ifaddr_interface_is_free(const struct ifaddr_interface *i) {
+    return i->addr_v4_size == 0 && i->addr_v6_size == 0;
 }
 
 /**
@@ -260,93 +295,21 @@ static inline int ifaddr_interface_is_free(
  * This function MUST be called while 'if_mutex' is locked.
  * @param i [in] interface record to be erased.
  */
-static inline void ifaddr_erase_interface(struct ifaddr_if *restrict i) {
+static inline void ifaddr_erase_interface(struct ifaddr_interface *i) {
+    free(i->addr_v6);
     free(i->addr_v4);
 
-    struct ifaddr_if *j = i++;
-    while (i != if_table + if_table_size) {
+    struct ifaddr_interface *j = i++;
+    while (i != interfaces + interfaces_size) {
         *j++ = *i++;
     }
-    --if_table_size;
+    --interfaces_size;
 
-    // Clears the pointer that is no longer used though it is unnecessary.
-    if_table[if_table_size].addr_v4 = NULL;
-}
-
-/**
- * Adds an IPv6 address to an interface.
- * @param index interface index.
- * @param addr IPv6 address.
- */
-static inline void ifaddr_add_addr_v6(unsigned int index,
-        const struct in6_addr *restrict addr) {
-    lock_mutex(&if_mutex);
-
-    unsigned int i = 0;
-    while (i != if_table_size && if_table[i].ifindex != index) {
-        ++i;
-    }
-    if (i == if_table_size) {
-        if (if_table_size == if_table_capacity) {
-            abort(); // TODO: Think later.
-        }
-        ++if_table_size;
-
-        if_table[i] = (struct ifaddr_if){
-            .ifindex = index,
-            .addr = *addr,
-        };
-        if (if_change_handler) {
-            struct ifaddr_change change = {
-                .type = IFADDR_ADDED,
-                .ifindex = index,
-            };
-            (*if_change_handler)(&change);
-        }
-    } else if (!IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
-        // Handles an address-only change.
-        if_table[i].addr = *addr;
-        if (if_change_handler) {
-            struct ifaddr_change change = {
-                .type = IFADDR_ADDED,
-                .ifindex = index,
-            };
-            (*if_change_handler)(&change);
-        }
-    }
-
-    unlock_mutex(&if_mutex);
-}
-
-/**
- * Removes an IPv6 address from an interface.
- * @param index interface index.
- * @param addr IPv6 address.
- */
-static inline void ifaddr_remove_addr_v6(unsigned int index,
-        const struct in6_addr *restrict addr) {
-    lock_mutex(&if_mutex);
-
-    unsigned int i = 0;
-    while (i != if_table_size && if_table[i].ifindex != index) {
-        ++i;
-    }
-    if (i != if_table_size && IN6_ARE_ADDR_EQUAL(&if_table[i].addr, addr)) {
-        if_table[i].addr = in6addr_any;
-        if (ifaddr_interface_is_free(&if_table[i])) {
-            ifaddr_erase_interface(&if_table[i]);
-        }
-
-        if (if_change_handler) {
-            struct ifaddr_change change = {
-                .type = IFADDR_REMOVED,
-                .ifindex = index,
-            };
-            (*if_change_handler)(&change);
-        }
-    }
-
-    unlock_mutex(&if_mutex);
+#if EXTRA_DEBUG
+    // Clears the pointer that is no longer used.
+    interfaces[interfaces_size].addr_v6 = NULL;
+    interfaces[interfaces_size].addr_v4 = NULL;
+#endif
 }
 
 /**
@@ -383,7 +346,7 @@ int ifaddr_initialize(int sig) {
     }
     interrupt_signo = sig;
     if_change_handler = NULL;
-    if_table_size = 0;
+    interfaces_size = 0;
     started = false;
     refresh_not_in_progress = true;
 
@@ -421,7 +384,8 @@ void ifaddr_finalize(void) {
             terminated = true;
 
             if (interrupt_signo != 0) {
-                pthread_kill(worker_thread, interrupt_signo); // TODO: Check for an error.
+                pthread_kill(worker_thread, interrupt_signo);
+                // TODO: Check for an error.
             }
             pthread_join(worker_thread, NULL); // TODO: Check for an error.
         }
@@ -460,26 +424,22 @@ void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     lock_mutex(&if_mutex);
 
-    struct ifaddr_if *i = if_table;
-    while (i != if_table + if_table_size && i->ifindex != index) {
-        ++i;
-    }
-    if (i == if_table + if_table_size) {
-        if (if_table_size == if_table_capacity) {
+    struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i == interfaces + interfaces_size) {
+        if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
-        *i = (struct ifaddr_if){
-            .ifindex = index,
-            .addr_v4_size = 0,
+        *i = (struct ifaddr_interface) {
+            .index = index,
         };
-        ++if_table_size;
+        ++interfaces_size;
     }
 
     struct in_addr *j = i->addr_v4;
     while (j != i->addr_v4 + i->addr_v4_size && j->s_addr != addr->s_addr) {
         ++j;
     }
-    // Appends an address if no matching one is found
+    // Appends the address if not found
     if (j == i->addr_v4 + i->addr_v4_size) {
         struct in_addr *addr_v4 = NULL;
         // Avoids potential overflow in size calculation.
@@ -508,28 +468,123 @@ void ifaddr_remove_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     lock_mutex(&if_mutex);
 
-    struct ifaddr_if *i = if_table;
-    while (i != if_table + if_table_size && i->ifindex != index) {
-        ++i;
-    }
-    if (i != if_table + if_table_size) {
+    struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i != interfaces + interfaces_size) {
         struct in_addr *j = i->addr_v4;
         while (j != i->addr_v4 + i->addr_v4_size &&
                 j->s_addr != addr->s_addr) {
             ++j;
         }
-        // Erases a matching address if one is found.
+        // Erases the address if found.
         if (j != i->addr_v4 + i->addr_v4_size) {
             struct in_addr *k = j++;
             while (j != i->addr_v4 + i->addr_v4_size) {
                 *k++ = *j++;
             }
-            --(i->addr_v4_size);
+            i->addr_v4_size -= 1;
 
             char ifname[IF_NAMESIZE];
             if_indextoname(index, ifname);
             syslog(LOG_DEBUG, "ifaddr: Removed an IPv4 address on %s [%zu]",
                     ifname, i->addr_v4_size);
+
+            if (ifaddr_interface_is_free(i)) {
+                ifaddr_erase_interface(i);
+            }
+        }
+    }
+
+    unlock_mutex(&if_mutex);
+}
+
+void ifaddr_add_addr_v6(unsigned int index,
+        const struct in6_addr *restrict addr) {
+    lock_mutex(&if_mutex);
+
+    struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i == interfaces + interfaces_size) {
+        if (interfaces_size == interfaces_capacity) {
+            abort(); // TODO: Think later.
+        }
+        *i = (struct ifaddr_interface) {
+            .index = index,
+        };
+        ++interfaces_size;
+    }
+
+    struct in6_addr *j = i->addr_v6;
+    while (j != i->addr_v6 + i->addr_v6_size &&
+            !IN6_ARE_ADDR_EQUAL(j, addr)) {
+        ++j;
+    }
+    // Appends the address if not found
+    if (j == i->addr_v6 + i->addr_v6_size) {
+        struct in6_addr *addr_v6 = NULL;
+        // Avoids potential overflow in size calculation.
+        if (i->addr_v6_size + 1 <= SIZE_MAX / sizeof (struct in6_addr)) {
+            addr_v6 = (struct in6_addr *) realloc(i->addr_v6,
+                    (i->addr_v6_size + 1) * sizeof (struct in6_addr));
+        }
+        if (addr_v6) {
+            if (i->addr_v6_size == 0 && if_change_handler) {
+                struct ifaddr_change change = {
+                    .type = IFADDR_ADDED,
+                    .ifindex = index,
+                };
+                (*if_change_handler)(&change);
+            }
+
+            addr_v6[i->addr_v6_size] = *addr;
+            i->addr_v6 = addr_v6;
+            i->addr_v6_size += 1;
+
+            char addrstr[INET6_ADDRSTRLEN];
+            char name[IF_NAMESIZE];
+            inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
+            if_indextoname(index, name);
+            syslog(LOG_DEBUG, "ifaddr: Added IPv6 address %s on %s [%zu]",
+                    addrstr, name, i->addr_v6_size);
+        } else {
+            syslog(LOG_ERR, "ifaddr: Failed to reallocate an array");
+        }
+    }
+
+    unlock_mutex(&if_mutex);
+}
+
+void ifaddr_remove_addr_v6(unsigned int index,
+        const struct in6_addr *restrict addr) {
+    lock_mutex(&if_mutex);
+
+    struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i != interfaces + interfaces_size) {
+        struct in6_addr *j = i->addr_v6;
+        while (j != i->addr_v6 + i->addr_v6_size &&
+                !IN6_ARE_ADDR_EQUAL(j, addr)) {
+            ++j;
+        }
+        // Erases the address if found.
+        if (j != i->addr_v6 + i->addr_v6_size) {
+            struct in6_addr *k = j++;
+            while (j != i->addr_v6 + i->addr_v6_size) {
+                *k++ = *j++;
+            }
+            i->addr_v6_size -= 1;
+
+            if (i->addr_v6_size == 0 && if_change_handler) {
+                struct ifaddr_change change = {
+                    .type = IFADDR_REMOVED,
+                    .ifindex = index,
+                };
+                (*if_change_handler)(&change);
+            }
+
+            char addrstr[INET6_ADDRSTRLEN];
+            char name[IF_NAMESIZE];
+            inet_ntop(AF_INET6, addr, addrstr, INET6_ADDRSTRLEN);
+            if_indextoname(index, name);
+            syslog(LOG_DEBUG, "ifaddr: Removed IPv6 address %s on %s [%zu]",
+                    addrstr, name, i->addr_v4_size);
 
             if (ifaddr_interface_is_free(i)) {
                 ifaddr_erase_interface(i);
@@ -649,8 +704,9 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     if (nlmsg->nlmsg_len >= rta_offset) {
         const struct ifaddrmsg *ifa = (const struct ifaddrmsg *)
                 NLMSG_DATA(nlmsg);
-        // Handles link-local or wider interfaces only.
-        if (ifa->ifa_scope <= RT_SCOPE_LINK) {
+        // Only handles addresses both non-temporary and at least link-local.
+        if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0 &&
+                ifa->ifa_scope <= RT_SCOPE_LINK) {
             const struct rtattr *rta = (const struct rtattr *)
                     ((const char *) nlmsg + rta_offset);
             size_t rta_len = nlmsg->nlmsg_len - rta_offset;
@@ -709,17 +765,14 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
                 rta->rta_len >= RTA_LENGTH(sizeof (struct in6_addr))) {
             const struct in6_addr *addr =
                     (const struct in6_addr *) RTA_DATA(rta);
-            // TODO: Add support for global addresses.
-            if (IN6_IS_ADDR_LINKLOCAL(addr)) {
-                switch (nlmsg_type) {
-                case RTM_NEWADDR:
-                    ifaddr_add_addr_v6(index, addr);
-                    break;
+            switch (nlmsg_type) {
+            case RTM_NEWADDR:
+                ifaddr_add_addr_v6(index, addr);
+                break;
 
-                case RTM_DELADDR:
-                    ifaddr_remove_addr_v6(index, addr);
-                    break;
-                }
+            case RTM_DELADDR:
+                ifaddr_remove_addr_v6(index, addr);
+                break;
             }
         }
 
@@ -738,7 +791,7 @@ int ifaddr_refresh(void) {
     if (refresh_not_in_progress) {
         lock_mutex(&if_mutex);
         // TODO: Call the change handler for each interface.
-        if_table_size = 0;
+        interfaces_size = 0;
         unlock_mutex(&if_mutex);
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
@@ -772,7 +825,9 @@ int ifaddr_refresh(void) {
     return err;
 }
 
-int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
+int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
+        // Using 'struct in6_addr addr[restrict]' caused an error on CLang.
+        struct in6_addr *restrict addr, size_t *number_of_addresses) {
     if (!ifaddr_initialized() || !ifaddr_started()) {
         return ENXIO;
     }
@@ -781,16 +836,18 @@ int ifaddr_lookup(unsigned int ifindex, struct in6_addr *restrict addr_out) {
 
     lock_mutex(&if_mutex);
 
-    unsigned int i = 0;
-    while (i != if_table_size && if_table[i].ifindex != ifindex) {
-        ++i;
-    }
-
     int err = 0;
-    if (i != if_table_size) {
-        if (addr_out) {
-            *addr_out = if_table[i].addr;
+    const struct ifaddr_interface *i = ifaddr_find_interface(index);
+    if (i != interfaces + interfaces_size) {
+        const struct in6_addr *restrict j = i->addr_v6;
+        if (addr_size > i->addr_v6_size) {
+            addr_size = i->addr_v6_size;
         }
+        while (addr_size--) {
+            *addr++ = *j++;
+        }
+
+        *number_of_addresses = i->addr_v6_size;
     } else {
         err = ENODEV;
     }

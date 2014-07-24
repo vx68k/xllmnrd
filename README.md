@@ -1,31 +1,32 @@
-**Note**: this file _should not_ be distributed with the xllmnrd package.
+**Note**: this file is provided as the repository 'README' file and *should
+not* be distributed with the xllmnrd package.
 
 This repository contains the source code for xllmnrd.
 
-xllmnrd is an IPv6 LLMNR responder daemon (primarily for GNU/Linux operating
-systems).
-It allows Microsoft Windows clients to get the IPv6 address of a server
-on the same local network _without any DNS configuration_ and
-effectively complements IPv4-only NetBIOS name resolution traditionally
-provided by [Samba][].
+xllmnrd is an IPv6 [LLMNR][] responder daemon (primarily for GNU/Linux operating
+systems).  It allows Microsoft Windows clients to get the IPv6 address of a
+server on the same local network _without any DNS configuration_ and
+effectively complements IPv4-only NetBIOS name resolution provided by [Samba][].
 
-xllmnrd is [free software][]: you can redistribute it and/or modify it
-under the terms of the [GNU General Public License][].
+xllmnrd is :[free software][]*: you can redistribute it and/or modify it
+under the terms of the [GNU General Public License][].  You should be able to find a copy of
+it in the 'COPYING' file.
 
-For more information about xllmnrd, visit the xllmnrd project
-at <http://xllmnrd.vx68k.org/>.
+For more information about xllmnrd, visit <http://xllmnrd.vx68k.org/>.
 
+[LLMNR]: <http://tools.ietf.org/html/rfc4795>
+         "Link-Local Multicast Name Resolution (LLMNR) [RFC 4795]"
 [Samba]: <http://www.samba.org/>
 [Free software]: <http://www.gnu.org/philosophy/free-sw.html>
                  "What is free software?"
 [GNU General Public License]: <http://www.gnu.org/licenses/gpl.html>
 
+For more information about xllmnrd, visit <http://xllmnrd.vx68k.org/>.
+
 # Installation
 
-For generic installation instructions, read the 'INSTALL' file.  If you are
-also planning to run the included test suite with GCC, you might have to set
-the environment variable 'CXX' to `g++ -std=gnu++11` (or to `g++ -std=gnu++0x`
-depending on the compiler version) before you run 'configure'.
+See the 'INSTALL' file for installation instructions.  The 'configure' should
+work for most GNU/Linux operating systems (distributions).
 
-If you find any other problem while installation, please report it to our
-issue tracker at <https://bitbucket.org/kazssym/xllmnrd/issues>.
+If you find any problem while installation, please report it to
+<https://bitbucket.org/kazssym/xllmnrd/issues/new>.

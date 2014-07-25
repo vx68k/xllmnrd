@@ -12,35 +12,39 @@ builddir = build
 prefix = /tmp/xllmnrd
 
 AUTORECONF = autoreconf
-CC = gcc -std=gnu99
-CXX = g++ -std=gnu++11
 TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
-export CC CXX
-
-build: clean check image dist
+build: clean check dist
 	hg status || true
 
-all check clean dist distcheck: $(builddir)/Makefile
+all check clean: $(builddir)/Makefile
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+
+dist distcheck: $(builddir)/Makefile update-ChangeLog
+	rm -f $(builddir)/xllmnrd-*.*
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 install: $(builddir)/Makefile
 	cd $(builddir) && \
 	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd)/root $@
 
-image: install
-	@rm -f $(builddir)/xllmnrd-image.tar.gz
-	(cd $(builddir)/root && $(TAR) -c -f - .) | \
-	  gzip -9c > $(builddir)/xllmnrd-image.tar.gz
-	rm -rf $(builddir)/root
-
-$(builddir)/Makefile: configure build.makefile
+$(builddir)/Makefile: stamp-configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
-	rm -f $(builddir)/xllmnrd-*.tar.*
 	srcdir=$$(pwd); \
 	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
+
+update-ChangeLog:
+	@rm -f ChangeLog-t
+	hg log -C --style=changelog -X .hg\* -X README.md -X build.makefile \
+	  -r "sort(::. and not merge(), -date)" | \
+	sed -e 's/`\([^`]*\)`/'\''\1'\''/g' -e 's/NLS-support/NLS/g' > ChangeLog-t
+	if test -s ChangeLog-t && ! cmp -s ChangeLog-t ChangeLog; then \
+	  mv -f ChangeLog-t ChangeLog; \
+	else \
+	  rm -f ChangeLog-t; \
+	fi
 
 configure: stamp-configure
 stamp-configure: configure.ac

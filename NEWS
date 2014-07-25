@@ -1,5 +1,15 @@
 This file describes major changes and important notes for each release.
 
+# Version 2.0
+
+This release adds a new feature and contains the source code of the GNU getopt
+functions for porting to non-GNU systems.  The 'configure' script now attempts
+to enable C++11 on GCC for the test suite if not enabled.
+
+## New feature
+
+* It now answers all the IPv6 addresses of the interface it sends a packet on.
+
 # Version 1.2.1
 
 This release fixes a configure check that failed on CentOS ([issue #41][]).
@@ -10,8 +20,8 @@ This release fixes a configure check that failed on CentOS ([issue #41][]).
 
 This release adds no new fundamental features but it contains a sample init
 script for LSB-conforming GNU/Linux operating systems and a minor workaround
-for the recent versions of the GNU C Library.  In addition, the Japanese
-translations of the command line messages are now included.
+for recent versions of the GNU C Library.  In addition, Japanese translations
+of the command line messages are now included.
 
 # Version 1.1.0
 

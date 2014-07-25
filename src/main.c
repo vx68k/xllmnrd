@@ -19,16 +19,16 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
+#endif
 
 #include "responder.h"
 #include "ifaddr.h"
 #include "gettext.h"
+#include <getopt.h>
 #if HAVE_SYSEXITS_H
 #include <sysexits.h>
-#endif
-#if HAVE_GETOPT_H
-#include <getopt.h>
 #endif
 #include <syslog.h>
 #if HAVE_LIBGEN_H

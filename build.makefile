@@ -37,7 +37,7 @@ $(builddir)/Makefile: stamp-configure build.makefile
 
 update-ChangeLog:
 	@rm -f ChangeLog-t
-	hg log -C --style=changelog \
+	hg log -C --style=changelog -X .hg\* -X README.md -X build.makefile \
 	  -r "sort(::. and not merge(), -date)" > ChangeLog-t
 	if test -s ChangeLog-t && ! cmp -s ChangeLog-t ChangeLog; then \
 	  mv -f ChangeLog-t ChangeLog; \

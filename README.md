@@ -8,7 +8,7 @@ systems).  It allows Microsoft Windows clients to get the IPv6 address of a
 server on the same local network _without any DNS configuration_ and
 effectively complements IPv4-only NetBIOS name resolution provided by [Samba][].
 
-xllmnrd is :[free software][]*: you can redistribute it and/or modify it
+xllmnrd is *[free software][]*: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].  You should be able to find a copy of
 it in the 'COPYING' file.
 

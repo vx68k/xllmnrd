@@ -21,8 +21,6 @@ For more information about xllmnrd, visit <http://xllmnrd.vx68k.org/>.
                  "What is free software?"
 [GNU General Public License]: <http://www.gnu.org/licenses/gpl.html>
 
-For more information about xllmnrd, visit <http://xllmnrd.vx68k.org/>.
-
 # Installation
 
 See the 'INSTALL' file for installation instructions.  The 'configure' should

@@ -38,7 +38,8 @@ $(builddir)/Makefile: stamp-configure build.makefile
 update-ChangeLog:
 	@rm -f ChangeLog-t
 	hg log -C --style=changelog -X .hg\* -X README.md -X build.makefile \
-	  -r "sort(::. and not merge(), -date)" > ChangeLog-t
+	  -r "sort(::. and not merge(), -date)" | \
+	sed -e 's/`\([^`]*\)`/'\''\1'\''/g' -e 's/NLS-support/NLS/g' > ChangeLog-t
 	if test -s ChangeLog-t && ! cmp -s ChangeLog-t ChangeLog; then \
 	  mv -f ChangeLog-t ChangeLog; \
 	else \

@@ -1,8 +1,254 @@
+2014-07-25  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* po/ja.po:
+	Updated the po file for Japanese.
+	[551af7db1892] [tip] <release>
+
+	* po/Makevars, po/xllmnrd.pot:
+	Changed 'MSGID_BUGS_ADDRESS' and regenerated the pot file.
+	[396ef711efc0] <release>
+
+	* po/xllmnrd.pot:
+	Updated the pot file.
+	[e48fda81b724]
+
+	* NEWS:
+	Updated the NEWS file for version 2.0 (see issue #52).
+	[b790dafe1dfb]
+
+	* README:
+	Updated the README text to close issue #48.
+	[0af7c21e5357]
+
+2014-07-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Changed the bug reporting address.
+	[ba74c5110296]
+
+	* configure.ac:
+	Changed the version number to simplify version numbering.
+	[c774b0d4c460]
+
+2014-07-03  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/responder.c:
+	Added code to disable packet fragmentation to fix issue #49.
+	[62ba26aa013d] <feature/responder-ipv6-dontfrag>
+
+2014-07-01  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/testifaddr.cpp:
+	Corrected tests for ifaddr_lookup_v6() to fix issue #50.
+	[8315667d8a51]
+
+2014-06-30  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Moved gl_EARLY before XX_PROG_CXX_STD11 to suppress a false warning.
+	[e732cbef4748]
+
+2014-06-26  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/testifaddr.cpp:
+	Modified comment text.
+	[fb6161431bac] <feature/testifaddr-split>
+
+	* test/testifaddr.cpp:
+	Split tests for ifaddr into two test fixtures.
+	[28ab331d4845] <feature/testifaddr-split>
+
+2014-06-25  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* acinclude.m4:
+	Rewrote configure tests for C++11 without 'AC_EGREP_CPP'.
+	[087717018c48]
+
+2014-06-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Modified a parameter to suppress an error on CLang.
+	[58d616e74573]
+
+	* src/responder.c, src/responder.h, test/testifaddr.cpp:
+	Updated file header comments.
+	[1812244e3f3c]
+
+2014-06-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Modified comments and inserted a missing blank line.
+	[4d79570b604d] <feature/ifaddr-v6>
+
+	* src/responder.c:
+	Modified to return all the IPv6 addresses in a response packet (see
+	issue #22).
+	[44944d92cd90] <feature/ifaddr-v6>
+
+2014-03-24  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* acinclude.m4:
+	Modified configure check messages.
+	[8696450186be]
+
+	* acinclude.m4:
+	Added a missing comma in an autoconf macro.
+	[db6cc72dcf5e]
+
+	* acinclude.m4, configure.ac:
+	Modified the configure macro to enable C++11 on recent GCC versions,
+	closing issue #17.
+	[737e577cab56] <feature/configure-c++11>
+
+	* src/ifaddr.c:
+	Removed a test for link-local addresses (see issue #22).
+	[b2e090f53676] <feature/ifaddr-v6>
+
+	* src/ifaddr.c:
+	Changed a condition to check an interface address.
+	[77699c5384e0] <feature/ifaddr-v6>
+
+2014-03-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* configure.ac:
+	Added a check for C++11.
+	[cbe0cf665142] <feature/configure-c++11>
+
+	* acinclude.m4:
+	Created a configure macro to test C++11.
+	[a6e222483fb0] <feature/configure-c++11>
+
+2014-03-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* test/testifaddr.cpp:
+	Corrected the failed tests.
+	[613a138ce598] <feature/ifaddr-v6>
+
+2014-03-06  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/responder.c:
+	Modified the calling function.
+	[f0af64f167b2] <feature/ifaddr-v6>
+
+	* src/ifaddr.c, src/ifaddr.h:
+	Renamed and changed 'ifaddr_lookup' so that it can return multiple
+	addresses (see issue #22).
+	[c18e5a008380] <feature/ifaddr-v6>
+
+2014-03-02  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Changed the member for IPv6 addresses in 'struct ifaddr_interface'
+	to an array pointer (see issue #22).
+	[39d6a4a0f911] <feature/ifaddr-v6>
+
+2014-03-02  xgettext  <xgettext>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translation files.
+	[0e5f995a641d]
+
+2014-03-02  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* src/ifaddr.c:
+	Modified comments.
+	[414ea3baecdd]
+
 2014-02-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* AUTHORS:
+	Replaced the URL with a real email address.
+	[2957188825d6]
+
+	* src/ifaddr.c:
+	Modified a previous change for the workaround case.
+	[cfab03aff80b]
+
+	* src/ifaddr.c, src/main.c, src/responder.c, test/testifaddr.cpp,
+	test/testmain.cpp:
+	Do not define '_GNU_SOURCE' if not necessary.
+	[ce62b1f51d58]
+
+	* lsb/xllmnrd.in:
+	Added the long Description to the sample init script to close issue
+	#44.
+	[bac6420078f7]
+
+	* configure.ac:
+	Omitted 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' to fix issue #43.
+	They are not actually needed.
+	[ae19876611ad]
+
+	* configure.ac:
+	Modified a macro description.
+	[354e39e02359]
+
+2014-02-18  xgettext  <xgettext>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translation files.
+	[4921146dd2c2]
+
+2014-02-18  gnulib-tool  <gnulib-tool>
+
+	* libgnu/snippet/arg-nonnull.h, libgnu/snippet/c++defs.h,
+	libgnu/snippet/warn-on-use.h:
+	Imported extra files from GNU gnulib.
+	[a35e713ef344] <feature/gnulib-getopt-gnu>
+
+2014-02-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* libgnu/Makefile.am, libgnu/m4/gnulib-cache.m4:
+	Moved the snippet location.
+	[d1f6bb6ce4a2] <feature/gnulib-getopt-gnu>
+
+2014-02-18  gnulib-tool  <gnulib-tool>
+
+	* libgnu/m4/00gnulib.m4, libgnu/m4/extensions.m4, libgnu/m4/getopt.m4,
+	libgnu/m4/gnulib-cache.m4, libgnu/m4/gnulib-common.m4, libgnu/m4
+	/gnulib-comp.m4, libgnu/m4/gnulib-tool.m4,
+	libgnu/m4/include_next.m4, libgnu/m4/nocrash.m4,
+	libgnu/m4/ssize_t.m4, libgnu/m4/stddef_h.m4, libgnu/m4/unistd_h.m4,
+	libgnu/m4/warn-on-use.m4, libgnu/m4/wchar_t.m4:
+	Imported m4 files from GNU gnulib.
+	[5791e15b4cc5] <feature/gnulib-getopt-gnu>
+
+2014-02-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Makefile.am, libgnu/Makefile.am:
+	Moved the location for the m4 files from GNU gnulib.
+	[8acc015f8910] <feature/gnulib-getopt-gnu>
+
+	* configure.ac, src/Makefile.am, src/main.c:
+	Removed the configure check for getopt.h assuming one from GNU
+	gnulib.
+	[ebe44e9ea66d] <feature/gnulib-getopt-gnu>
+
+	* Makefile.am, configure.ac, src/Makefile.am:
+	Added libgnu in the build process.
+	[6d2e3940ae7f] <feature/gnulib-getopt-gnu>
+
+2014-02-18  gnulib-tool  <gnulib-tool>
+
+	* libgnu/Makefile.am, libgnu/dummy.c, libgnu/getopt.c,
+	libgnu/getopt.in.h, libgnu/getopt1.c, libgnu/getopt_int.h,
+	libgnu/gettext.h, libgnu/stddef.in.h, libgnu/unistd.in.h:
+	Imported the getopt-gnu module from GNU gnulib.
+	[27f4cf5b95c0] <feature/gnulib-getopt-gnu>
+
+2014-02-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* po/ja.po, po/xllmnrd.pot:
+	Updated the translation files.
+	[c1c28bbda8c9]
+
+	* ChangeLog:
+	Updated the change log from the revision history.
+	[6ff4c41cdf0d] [release-1.2.1] <release>
 
 	* NEWS:
 	Updated the NEWS for version 1.2.1.
-	[b66472460eea] [tip] <release>
+	[b66472460eea] <release>
 
 	* po/ja.po, po/xllmnrd.pot:
 	Updated the translation files.
@@ -23,6 +269,14 @@
 	[983cf1c69fda] <hotfix/issue-41>
 
 2014-02-07  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* NEWS:
+	Modified the NEWS text slightly.
+	[daf4fb7a8f05]
+
+	* configure.ac:
+	Modified the version number for the next release cycle.
+	[f8962ff94761]
 
 	* ChangeLog:
 	Updated the change log from the revision history.
@@ -50,6 +304,10 @@
 
 2014-01-18  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* src/ifaddr.c:
+	Removed some of the 'restricted' keywords.
+	[8de85aa163b6] <feature/ifaddr-v6>
+
 	* README:
 	Changed quotation marks.
 	[82c5c076cd93]
@@ -63,6 +321,28 @@
 	* lsb/xllmnrd.in:
 	Modified the LSB short description.
 	[6ea8b7f6329d]
+
+	* src/ifaddr.c:
+	Renamed static variables.
+	[69e53e725376] <feature/ifaddr-v6>
+
+	* src/ifaddr.c:
+	Updated comment text.
+	[547cc5e2eade] <feature/ifaddr-v6>
+
+	* src/ifaddr.c:
+	Updated the copyright years.
+	[68f6823bbbc5] <feature/ifaddr-v6>
+
+	* src/ifaddr.c:
+	Wrapped long lines.
+	[2d2ceadeb7e8] <feature/ifaddr-v6>
+
+	* src/ifaddr.c:
+	Renamed 'struct ifaddr_if' and added a new member. Changed
+	'ifaddr_add_addr_v6' and 'ifaddr_remove_addr_v6' to out-of-line.
+	Added 'ifaddr_find_interface'.
+	[5abd222320f7] <feature/ifaddr-v6>
 
 	* po/ja.po:
 	Updated the Japanese translations.

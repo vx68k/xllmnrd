@@ -16,7 +16,7 @@ TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
-build: clean check dist
+build: clean all dist
 	hg status || true
 
 all check clean: $(builddir)/Makefile

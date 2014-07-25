@@ -41,7 +41,7 @@ update-ChangeLog:
 	  -r "sort(::. and not merge(), -date)" > ChangeLog-t
 	if test -s ChangeLog-t && ! cmp -s ChangeLog-t ChangeLog; then \
 	  mv -f ChangeLog-t ChangeLog; \
-	else; \
+	else \
 	  rm -f ChangeLog-t; \
 	fi
 

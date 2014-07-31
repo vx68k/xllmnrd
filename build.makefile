@@ -8,27 +8,24 @@
 
 # This file SHOULD NOT be contained in the source package.
 
-builddir = build
-prefix = /tmp/xllmnrd
+topdir := $(shell pwd)
+builddir = $(topdir)/_build
+prefix = $(topdir)/_usr
 
 AUTORECONF = autoreconf
 TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
 
-build: clean all dist
+build: clean install dist
 	hg status || true
 
-all check clean: $(builddir)/Makefile
+all check install uninstall clean: $(builddir)/Makefile
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 dist distcheck: $(builddir)/Makefile update-ChangeLog
 	rm -f $(builddir)/xllmnrd-*.*
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
-
-install: $(builddir)/Makefile
-	cd $(builddir) && \
-	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd)/root $@
 
 $(builddir)/Makefile: stamp-configure build.makefile
 	test -d $(builddir) || mkdir $(builddir)
@@ -52,4 +49,5 @@ stamp-configure: configure.ac
 	$(AUTORECONF) --install
 	touch $@
 
-.PHONY: build all check clean dist distcheck install image
+.PHONY: build all check install uninstall clean dist distcheck \
+update-ChangeLog

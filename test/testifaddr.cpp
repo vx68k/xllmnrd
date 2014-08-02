@@ -61,11 +61,11 @@ public:
     }
 
     void testInitialize() {
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
-        CPPUNIT_ASSERT_EQUAL(EBUSY, ifaddr_initialize(SIGUSR2));
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2, NULL));
+        CPPUNIT_ASSERT_EQUAL(EBUSY, ifaddr_initialize(SIGUSR2, NULL));
         ifaddr_finalize();
         // This MUST succeed again.
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2));
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_initialize(SIGUSR2, NULL));
     }
 
     void testFailures() {
@@ -113,7 +113,7 @@ public:
         sa.sa_handler = &handle_signal;
         sigaction(SIGUSR2, &sa, NULL);
 
-        ifaddr_initialize(SIGUSR2);
+        ifaddr_initialize(SIGUSR2, NULL);
     }
 
     virtual void tearDown() override {

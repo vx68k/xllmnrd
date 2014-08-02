@@ -172,7 +172,7 @@ int main(int argc, char *argv[argc + 1]) {
     // Sets the handler for SIGUSR2 to interrupt a blocking system call.
     set_signal_handler(SIGUSR2, &discard_signal, NULL);
 
-    int err = ifaddr_initialize(SIGUSR2);
+    int err = ifaddr_initialize(SIGUSR2, NULL);
     if (err != 0) {
         syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
                 strerror(err));

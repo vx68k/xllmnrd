@@ -31,16 +31,26 @@ struct ifaddr_change {
     unsigned int ifindex;
 };
 
+/**
+ * Function dependencies.
+ */
+struct ifaddr_deps {
+    int (*close)(int __fd);
+    int (*socket)(int __domain, int __type, int __protocol);
+};
+
 typedef void (*ifaddr_change_handler)(const struct ifaddr_change *);
 
 /**
  * Initializes this module.
  * @param __sig signal number that will be used to interrupt the worker
  * thread; if its value is 0, no signal will be used.
+ * @param __deps dependencies for this module; if its value is NULL, default
+ * dependencies will be used.
  * @return 0 if no error is detected, 'EBUSY' if this module is already
  * initialized, or any non-zero error number.
  */
-extern int ifaddr_initialize(int __sig);
+extern int ifaddr_initialize(int __sig, const struct ifaddr_deps *__deps);
 
 extern void ifaddr_finalize(void);
 

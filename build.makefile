@@ -8,7 +8,8 @@
 
 # This file SHOULD NOT be contained in the source package.
 
-topdir := $(shell pwd)
+topdir := $(if $(WORKSPACE),$(WORKSPACE),$(shell pwd))
+srcdir = $(topdir)
 builddir = $(topdir)/_build
 prefix = $(topdir)/_usr
 
@@ -20,7 +21,11 @@ CFLAGS = -g -O2 -Wall -Wextra
 build: clean install dist
 	hg status || true
 
-all check install uninstall clean: $(builddir)/Makefile
+all check uninstall clean distclean: $(builddir)/Makefile
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+
+install: $(builddir)/Makefile
+	rm -fr $(prefix)
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 dist distcheck: $(builddir)/Makefile update-ChangeLog
@@ -28,9 +33,14 @@ dist distcheck: $(builddir)/Makefile update-ChangeLog
 	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
 
 $(builddir)/Makefile: stamp-configure build.makefile
-	test -d $(builddir) || mkdir $(builddir)
-	srcdir=$$(pwd); \
-	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
+	mkdir -p $(builddir)
+	cd $(builddir) && $(srcdir)/configure --prefix=$(prefix)
+
+configure: stamp-configure
+stamp-configure: configure.ac
+	@rm -f $@
+	$(AUTORECONF) --install
+	touch $@
 
 update-ChangeLog:
 	@rm -f ChangeLog-t
@@ -43,11 +53,5 @@ update-ChangeLog:
 	  rm -f ChangeLog-t; \
 	fi
 
-configure: stamp-configure
-stamp-configure: configure.ac
-	@rm -f $@
-	$(AUTORECONF) --install
-	touch $@
-
-.PHONY: build all check install uninstall clean dist distcheck \
+.PHONY: build all check install uninstall dist distcheck clean distclean \
 update-ChangeLog

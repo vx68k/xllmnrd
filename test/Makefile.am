@@ -13,8 +13,8 @@ TESTS = unit.test
 TEST_LOG_COMPILER = ./runtest
 AM_TEST_LOG_FLAGS = -x $(@:.log=.xml)
 
-runtest_LDADD = $(LDADD) $(CPPUNIT_LIBS)
-runtest_SOURCES = testmain.cpp testifaddr.cpp $(top_srcdir)/src/ifaddr.c
+runtest_LDADD = $(top_builddir)/src/libxllmnrd.a $(CPPUNIT_LIBS) $(LDADD)
+runtest_SOURCES = testmain.cpp testifaddr.cpp
 
 unit.test:
 	touch $@

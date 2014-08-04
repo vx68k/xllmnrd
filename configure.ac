@@ -39,7 +39,8 @@ AM_GNU_GETTEXT_VERSION([0.18.1])
 gl_INIT
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_INLINE
+dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.
+dnl Note: on the other hand, 'restrict' is not standard in C++ yet.
 AC_C_RESTRICT
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT8_T
@@ -47,8 +48,8 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions.
-# We have omitted [AC_FUNC_MALLOC] and [AC_FUNC_REALLOC] as we rely only on
-# the standard behavior.
+dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
+dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])

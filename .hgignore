@@ -21,10 +21,10 @@ syntax: regexp
 
 (^|/)install-sh$
 (^|/)missing$
+(^|/)depcomp$
 (^|/)config\.guess$
 (^|/)config\.sub$
 (^|/)config\.rpath$
-(^|/)depcomp$
 
 ^m4/
 ^autom4te\.cache/

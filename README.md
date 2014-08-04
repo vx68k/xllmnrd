@@ -1,5 +1,5 @@
-**Note**: this file is provided as the repository 'README' file and *should
-not* be distributed with the xllmnrd package.
+**Note**: this file is provided as a repository 'README' file and *should not*
+be distributed with the xllmnrd package.
 
 This repository contains the source code for xllmnrd.
 

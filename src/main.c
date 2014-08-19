@@ -48,11 +48,6 @@
 #define HOST_NAME_MAX 255
 #endif
 
-// We just ignore 'LOG_PERROR' if it is not defined.
-#ifndef LOG_PERROR
-#define LOG_PERROR 0
-#endif
-
 #ifndef EX_USAGE
 #define EX_USAGE 64
 #endif
@@ -161,13 +156,12 @@ int main(int argc, char *argv[argc + 1]) {
     setlocale(LC_ALL, "POSIX");
 
     const char *program_name = basename(argv[0]);
+    int facility = LOG_DAEMON;
     if (options.foreground) {
-        // In foreground mode, tries to use the standard error stream as well.
-        openlog(program_name, LOG_PERROR, LOG_USER);
-    } else {
-        // In background mode, uses the daemon facility by default.
-        openlog(program_name, 0, LOG_DAEMON);
+        // For foreground operation, the 'LOG_USER' facility is used instead.
+        facility = LOG_USER;
     }
+    openlog(program_name, 0, facility);
 
     // Sets the handler for SIGUSR2 to interrupt a blocking system call.
     set_signal_handler(SIGUSR2, &discard_signal, NULL);

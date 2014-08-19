@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -51,6 +52,10 @@
 #define IPV6_DONTFRAG 62
 #endif
 #endif /* !defined IPV6_DONTFRAG */
+
+// Marks for localizaable strings.
+#define _(s) gettext(s)
+#define N_(s) gettext_noop(s)
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.
@@ -76,20 +81,27 @@ static inline int set_udp_options(int fd) {
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &unicast_hops,
             sizeof (int)) != 0) {
         syslog(LOG_WARNING,
-                "Could not set IPV6_UNICAST_HOPS to %d: %s",
-                unicast_hops, strerror(errno));
+            "Could not set 'IPV6_UNICAST_HOPS' to %d: %s",
+            unicast_hops, strerror(errno));
+        fprintf(stderr, _("warning: could not set 'IPV6_UNICAST_HOPS' to %d:"
+            " %s"), unicast_hops, strerror(errno));
     }
 
 #ifdef IPV6_DONTFRAG
     int dontfrag = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_DONTFRAG, &dontfrag, sizeof (int))
-            != 0) {
-        syslog(LOG_WARNING, "Could not set IPV6_DONTFRAG to %d: %s",
-                dontfrag, strerror(errno));
+        != 0)
+    {
+        syslog(LOG_WARNING, "Could not set 'IPV6_DONTFRAG' to %d: %s",
+            dontfrag, strerror(errno));
+        fprintf(stderr, _("warning: could not set 'IPV6_DONTFRAG' to %d: %s"),
+            dontfrag, strerror(errno));
     }
 #else
     syslog(LOG_WARNING,
-            "No socket option to disable IPv6 packet fragmentation");
+        "No socket option to disable IPv6 packet fragmentation");
+    fprintf(stderr, _("warning: no socket option to disable IPv6 packet"
+        " fragmentation"));
 #endif
 
     return 0;

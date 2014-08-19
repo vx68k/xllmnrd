@@ -30,8 +30,9 @@
 #include "ascii.h"
 #include "llmnr_packet.h"
 #include "llmnr.h"
-#include <net/if.h> /* if_indextoname */
+#include "gettext.h"
 #include <arpa/inet.h> /* inet_ntop */
+#include <net/if.h> /* if_indextoname */
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <syslog.h>

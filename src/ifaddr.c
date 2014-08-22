@@ -384,11 +384,13 @@ int ifaddr_open_rtnetlink(int *restrict fd_out) {
     int fd = static_deps.socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     int err = errno;
     if (fd >= 0) {
-        struct sockaddr_nl addr = {
+        static const struct sockaddr_nl addr = {
             .nl_family = AF_NETLINK,
             .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
         };
-        if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
+        if (static_deps.bind(fd, (const struct sockaddr *) &addr,
+            sizeof (struct sockaddr_nl)) == 0)
+        {
             *fd_out = fd;
             return 0;
         }

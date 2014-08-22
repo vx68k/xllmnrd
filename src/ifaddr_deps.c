@@ -23,16 +23,14 @@
 
 #include "ifaddr_deps.h"
 
-#if HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 void ifaddr_deps_init(struct ifaddr_deps *restrict deps) {
     *deps = (struct ifaddr_deps) {
-        .close = close,
         .socket = socket,
+        .close = close,
+        .bind = bind,
     };
 }

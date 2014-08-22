@@ -19,12 +19,15 @@
 #ifndef IFADDR_DEPS_H
 #define IFADDR_DEPS_H 1
 
+#include <sys/socket.h> /* socklen_t */
+
 /**
  * Function dependencies for the 'ifaddr' unit.
  */
 struct ifaddr_deps {
-    int (*close)(int __fd);
     int (*socket)(int __domain, int __type, int __protocol);
+    int (*close)(int __fd);
+    int (*bind)(int __fd, const struct sockaddr *__addr, socklen_t __len);
 };
 
 /**

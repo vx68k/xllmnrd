@@ -34,3 +34,10 @@ const struct ifaddr_deps ifaddr_deps_default = {
     .close = &close,
     .socket = &socket,
 };
+
+void ifaddr_deps_init(struct ifaddr_deps *restrict deps) {
+    *deps = (struct ifaddr_deps) {
+        .close = close,
+        .socket = socket,
+    };
+}

@@ -26,4 +26,10 @@
  */
 extern const struct ifaddr_deps ifaddr_deps_default;
 
+/**
+ * Initializes dependencies with their default values.
+ * @param __deps pointer to a dependency record.
+ */
+extern void ifaddr_deps_init(struct ifaddr_deps *__deps);
+
 #endif

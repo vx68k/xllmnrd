@@ -114,7 +114,7 @@ static const struct ifaddr_deps default_deps = {
 /**
  * Dependencies that are currently in active.
  */
-static struct ifaddr_deps module_deps;
+static struct ifaddr_deps static_deps;
 
 /**
  * File descriptor for the rtnetlink socket.
@@ -201,12 +201,6 @@ static void ifaddr_remove_addr_v6(unsigned int __index,
 /*
  * Declarations for static functions.
  */
-
-/**
- * Initializes the module dependencies.
- * @param __deps dependencies that are passed to ifaddr_initialize.
- */
-static void ifaddr_initialize_deps(const struct ifaddr_deps *__deps);
 
 /**
  * Opens a RTNETLINK socket and binds to the necessary groups.
@@ -347,7 +341,14 @@ int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
     if (ifaddr_initialized()) {
         return EBUSY;
     }
+
     interrupt_signo = sig;
+    if (deps) {
+        static_deps = *deps;
+    } else {
+        ifaddr_deps_init(&static_deps);
+    }
+
     if_change_handler = NULL;
     interfaces_size = 0;
     started = false;
@@ -371,7 +372,7 @@ int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
         }
         destroy_mutex(&if_mutex);
 
-        if ((*module_deps.close)(rtnetlink_fd) != 0) {
+        if (static_deps.close(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }
@@ -380,7 +381,7 @@ int ifaddr_initialize(int sig, const struct ifaddr_deps *restrict deps) {
 }
 
 int ifaddr_open_rtnetlink(int *restrict fd_out) {
-    int fd = (*module_deps.socket)(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int fd = static_deps.socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     int err = errno;
     if (fd >= 0) {
         struct sockaddr_nl addr = {
@@ -392,7 +393,7 @@ int ifaddr_open_rtnetlink(int *restrict fd_out) {
             return 0;
         }
         err = errno;
-        (*module_deps.close)(fd);
+        static_deps.close(fd);
     }
     return err;
 }
@@ -416,7 +417,7 @@ void ifaddr_finalize(void) {
         destroy_mutex(&refresh_mutex);
         destroy_mutex(&if_mutex);
 
-        if ((*module_deps.close)(rtnetlink_fd) != 0) {
+        if (static_deps.close(rtnetlink_fd) != 0) {
             syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
                     strerror(errno));
         }

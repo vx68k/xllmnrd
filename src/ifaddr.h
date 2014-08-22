@@ -19,6 +19,7 @@
 #ifndef IFADDR_H
 #define IFADDR_H 1
 
+#include "ifaddr_deps.h"
 #include <netinet/in.h>
 
 enum ifaddr_change_type {

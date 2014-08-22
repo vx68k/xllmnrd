@@ -19,12 +19,13 @@
 #ifndef IFADDR_DEPS_H
 #define IFADDR_DEPS_H 1
 
-#include <ifaddr.h>
-
 /**
- * Default dependencies.
+ * Function dependencies for the 'ifaddr' unit.
  */
-extern const struct ifaddr_deps ifaddr_deps_default;
+struct ifaddr_deps {
+    int (*close)(int __fd);
+    int (*socket)(int __domain, int __type, int __protocol);
+};
 
 /**
  * Initializes dependencies with their default values.

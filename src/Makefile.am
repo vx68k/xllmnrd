@@ -14,7 +14,8 @@ xllmnrd_SOURCES = main.c
 
 libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.c ifaddr_deps.c
 
-noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
+noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ifaddr.h ifaddr_deps.h \
+ascii.h
 EXTRA_DIST = xllmnrd.8.in
 
 CLEANFILES = xllmnrd.8

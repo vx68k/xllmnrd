@@ -36,15 +36,15 @@ extern "C" {
 #if HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
-#include <unistd.h>
+// Uses POSIX signals instead of ones from <csignal>.
 #include <signal.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <locale.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdbool.h>
+#include <unistd.h>
+#include <locale>
+#include <limits>
+#include <cstring>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
@@ -74,6 +74,7 @@ extern "C" {
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
+using namespace std;
 
 struct program_options {
     bool foreground;
@@ -149,7 +150,7 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
 }
 
 int main(int argc, char *argv[]) {
-    setlocale(LC_ALL, "");
+    locale::global(locale(""));
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
 
@@ -159,7 +160,7 @@ int main(int argc, char *argv[]) {
     parse_arguments(argc, argv, &options);
 
     // Sets the locale back to the default to keep logs untranslated.
-    setlocale(LC_ALL, "POSIX");
+    locale::global(locale::classic());
 
     const char *program_name = basename(argv[0]);
     if (options.foreground) {
@@ -289,7 +290,7 @@ int make_pid_file(const char *restrict name) {
 void parse_arguments(int argc, char *argv[],
         struct program_options *restrict options) {
     enum opt_char {
-        OPT_VERSION = UCHAR_MAX + 1,
+        OPT_VERSION = numeric_limits<unsigned char>::max() + 1,
         OPT_HELP,
     };
     static const struct option long_options[] = {

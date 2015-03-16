@@ -10,7 +10,7 @@ noinst_LIBRARIES = libxllmnrd.a
 man_MANS = xllmnrd.8
 
 xllmnrd_LDADD = libxllmnrd.a $(LDADD)
-xllmnrd_SOURCES = main.c
+xllmnrd_SOURCES = main.cpp
 
 libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.c
 

@@ -23,8 +23,10 @@
 #define _GNU_SOURCE 1
 #endif
 
+extern "C" {
 #include "responder.h"
 #include "ifaddr.h"
+}
 #include "gettext.h"
 #include <getopt.h>
 #if HAVE_SYSEXITS_H
@@ -104,7 +106,7 @@ static int make_pid_file(const char *__name);
  * @param __argv pointer array of command-line arguments.
  * @param __options [out] parsed options.
  */
-static void parse_arguments(int __argc, char *__argv[__argc + 1],
+static void parse_arguments(int __argc, char *__argv[],
         struct program_options *__options);
 
 /**
@@ -131,9 +133,8 @@ static void handle_signal_to_terminate(int __sig);
  */
 static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         const sigset_t *restrict mask) {
-    struct sigaction action = {
-        .sa_handler = handler,
-    };
+    struct sigaction action = {};
+    action.sa_handler = handler;
     if (mask) {
         action.sa_mask = *mask;
     } else {
@@ -147,7 +148,7 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[argc + 1]) {
+int main(int argc, char *argv[]) {
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
@@ -237,9 +238,8 @@ int main(int argc, char *argv[argc + 1]) {
 
         ifaddr_finalize(); // The exit functions will not be called.
 
-        const struct sigaction default_action = {
-            .sa_handler = SIG_DFL,
-        };
+        struct sigaction default_action = {};
+        default_action.sa_handler = SIG_DFL;
         if (sigaction(caught_signal, &default_action, 0) == 0) {
             raise(caught_signal);
         }
@@ -286,7 +286,7 @@ int make_pid_file(const char *restrict name) {
     return err;
 }
 
-void parse_arguments(int argc, char *argv[argc + 1],
+void parse_arguments(int argc, char *argv[],
         struct program_options *restrict options) {
     enum opt_char {
         OPT_VERSION = UCHAR_MAX + 1,

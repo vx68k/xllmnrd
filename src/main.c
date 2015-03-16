@@ -27,9 +27,7 @@
 #include "ifaddr.h"
 #include "gettext.h"
 #include <getopt.h>
-#if HAVE_SYSEXITS_H
 #include <sysexits.h>
-#endif
 #include <syslog.h>
 #if HAVE_LIBGEN_H
 #include <libgen.h>

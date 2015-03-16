@@ -33,7 +33,7 @@ AC_DEFINE([_POSIX_C_SOURCE], [200809L],
 visible if available.])dnl
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
-net/if.h sysexits.h syslog.h sys/socket.h])
+net/if.h syslog.h sys/socket.h])
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.18.1])
 gl_INIT

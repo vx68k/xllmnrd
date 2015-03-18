@@ -19,13 +19,7 @@
 #ifndef RESPONDER_H
 #define RESPONDER_H 1
 
-#if __cplusplus
-extern "C" {
-#endif
 #include "ifaddr.h" /* struct ifaddr_change */
-#if __cplusplus
-}
-#endif
 #include "llmnr.h"
 #include <netinet/in.h> /* in_port_t */
 

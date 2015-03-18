@@ -21,9 +21,7 @@
 #endif
 #undef _GNU_SOURCE
 
-extern "C" {
-#include <ifaddr.h>
-}
+#include "ifaddr.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>

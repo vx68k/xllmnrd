@@ -29,9 +29,7 @@ extern "C" {
 }
 #include "gettext.h"
 #include <getopt.h>
-#if HAVE_SYSEXITS_H
 #include <sysexits.h>
-#endif
 #include <syslog.h>
 #if HAVE_LIBGEN_H
 #include <libgen.h>
@@ -53,16 +51,6 @@ extern "C" {
 // We just ignore 'LOG_PERROR' if it is not defined.
 #ifndef LOG_PERROR
 #define LOG_PERROR 0
-#endif
-
-#ifndef EX_USAGE
-#define EX_USAGE 64
-#endif
-#ifndef EX_OSERR
-#define EX_OSERR 71
-#endif
-#ifndef EX_CANTCREAT
-#define EX_CANTCREAT 73
 #endif
 
 // Copyright years for printing.

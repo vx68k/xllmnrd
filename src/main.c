@@ -25,7 +25,7 @@
 
 #include "responder.h"
 #include "ifaddr.h"
-#include "gettext.h"
+#include <gettext.h>
 #include <getopt.h>
 #include <sysexits.h>
 #if HAVE_LIBGEN_H

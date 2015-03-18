@@ -23,8 +23,8 @@
 #define _GNU_SOURCE 1
 #endif
 
-extern "C" {
 #include "responder.h"
+extern "C" {
 #include "ifaddr.h"
 }
 #include "gettext.h"

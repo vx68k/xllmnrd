@@ -28,10 +28,10 @@
 #include "gettext.h"
 #include <getopt.h>
 #include <sysexits.h>
-#include <syslog.h>
 #if HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
+#include <syslog.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>

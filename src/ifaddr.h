@@ -21,6 +21,16 @@
 
 #include <netinet/in.h>
 
+#if __cplusplus
+#define BEGIN_C_LINKAGE extern "C" {
+#define END_C_LINKAGE }
+#else
+#define BEGIN_C_LINKAGE
+#define END_C_LINKAGE
+#endif
+
+BEGIN_C_LINKAGE
+
 enum ifaddr_change_type {
     IFADDR_ADDED,
     IFADDR_REMOVED,
@@ -87,5 +97,10 @@ extern int ifaddr_refresh(void);
  */
 extern int ifaddr_lookup_v6(unsigned int __index, size_t __addr_size,
         struct in6_addr __addr[], size_t *__number_of_addresses);
+
+END_C_LINKAGE
+
+#undef END_C_LINKAGE
+#undef BEGIN_C_LINKAGE
 
 #endif

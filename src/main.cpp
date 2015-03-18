@@ -24,9 +24,7 @@
 #endif
 
 #include "responder.h"
-extern "C" {
 #include "ifaddr.h"
-}
 #include "gettext.h"
 #include <getopt.h>
 #include <sysexits.h>

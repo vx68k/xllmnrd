@@ -38,12 +38,14 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h> /* abort */
-#include <errno.h>
-#include <stdbool.h>
-#include <assert.h>
+#include <limits>
+#include <csignal>
+#include <cstring>
+#include <cstdlib> /* abort */
+#include <cerrno>
+#include <cassert>
+
+using namespace std;
 
 /**
  * Terminates the program abnormally if an error is detected.
@@ -88,10 +90,9 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     int err = errno;
     if (fd >= 0) {
-        struct sockaddr_nl addr = {
-            .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
-        };
+        struct sockaddr_nl addr = {};
+        addr.nl_family = AF_NETLINK;
+        addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
         if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
             *fd_out = fd;
             return 0;
@@ -443,7 +444,8 @@ void ifaddr_add_addr_v4(unsigned int index,
     if (j == i->addr_v4 + i->addr_v4_size) {
         struct in_addr *addr_v4 = NULL;
         // Avoids potential overflow in size calculation.
-        if (i->addr_v4_size + 1 <= SIZE_MAX / sizeof (struct in_addr)) {
+        if (i->addr_v4_size + 1 <= numeric_limits<size_t>::max()
+                / sizeof (struct in_addr)) {
             addr_v4 = (struct in_addr *) realloc(i->addr_v4,
                     (i->addr_v4_size + 1) * sizeof (struct in_addr));
         }
@@ -521,7 +523,8 @@ void ifaddr_add_addr_v6(unsigned int index,
     if (j == i->addr_v6 + i->addr_v6_size) {
         struct in6_addr *addr_v6 = NULL;
         // Avoids potential overflow in size calculation.
-        if (i->addr_v6_size + 1 <= SIZE_MAX / sizeof (struct in6_addr)) {
+        if (i->addr_v6_size + 1 <= numeric_limits<size_t>::max()
+                / sizeof (struct in6_addr)) {
             addr_v6 = (struct in6_addr *) realloc(i->addr_v6,
                     (i->addr_v6_size + 1) * sizeof (struct in6_addr));
         }
@@ -668,7 +671,7 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
             break;
         case NLMSG_ERROR:
         {
-            struct nlmsgerr *err = NLMSG_DATA(nlmsg);
+            auto err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlmsg));
             if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
                 syslog(LOG_ERR, "Got rtnetlink error: %s",
                         strerror(-(err->error)));

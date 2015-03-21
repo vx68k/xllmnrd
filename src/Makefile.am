@@ -12,7 +12,7 @@ man_MANS = xllmnrd.8
 xllmnrd_LDADD = libxllmnrd.a $(LDADD)
 xllmnrd_SOURCES = main.cpp
 
-libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.c
+libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.cpp
 
 noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
 EXTRA_DIST = xllmnrd.8.in

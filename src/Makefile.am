@@ -6,15 +6,16 @@ AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu \
 LDADD = ../libgnu/libgnu.a
 
 sbin_PROGRAMS = xllmnrd
-noinst_LIBRARIES = libxllmnrd.a
 man_MANS = xllmnrd.8
+
+noinst_LIBRARIES = libxllmnrd.a
+noinst_HEADERS = posix.h responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
 
 xllmnrd_LDADD = libxllmnrd.a $(LDADD)
 xllmnrd_SOURCES = main.cpp
 
-libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.cpp
+libxllmnrd_a_SOURCES = posix.cpp responder.c llmnr.c ifaddr.cpp
 
-noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
 EXTRA_DIST = xllmnrd.8.in
 
 CLEANFILES = xllmnrd.8

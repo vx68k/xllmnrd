@@ -25,15 +25,15 @@
 
 #include "responder.h"
 #include "ifaddr.h"
-#include "gettext.h"
+#include <gettext.h>
 #include <getopt.h>
 #include <sysexits.h>
-#include <syslog.h>
 #if HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
 // Uses POSIX signals instead of ones from <csignal>.
 #include <signal.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <locale>
 #include <limits>

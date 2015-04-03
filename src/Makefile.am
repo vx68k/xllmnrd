@@ -9,12 +9,12 @@ sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
 noinst_LIBRARIES = libxllmnrd.a
-noinst_HEADERS = posix.h responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
+noinst_HEADERS = ascii.h llmnr_packet.h llmnr.h posix.h ifaddr.h responder.h
 
 xllmnrd_LDADD = libxllmnrd.a $(LDADD)
 xllmnrd_SOURCES = main.cpp
 
-libxllmnrd_a_SOURCES = posix.cpp responder.c llmnr.c ifaddr.cpp
+libxllmnrd_a_SOURCES = llmnr.c posix.cpp ifaddr.cpp responder.cpp
 
 EXTRA_DIST = xllmnrd.8.in
 

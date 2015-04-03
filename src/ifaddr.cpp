@@ -38,6 +38,7 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <system_error>
 #include <memory>
 #include <limits>
 #include <csignal>
@@ -254,7 +255,7 @@ static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
 /**
  * Returns non-zero if this module has been initialized.
  */
-static inline int ifaddr_initialized(void) {
+static inline bool ifaddr_initialized(void) {
     return bool(manager);
 }
 
@@ -338,6 +339,22 @@ static inline void ifaddr_complete_refresh(void) {
     unlock_mutex(&refresh_mutex);
 }
 
+ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
+        : interrupt_signal(interrupt_signal),
+        os(os) {
+    int err = open_rtnetlink(&rtnetlink_fd);
+    if (err != 0) {
+        throw system_error(err, system_category());
+    }
+}
+
+ifaddr_manager::~ifaddr_manager() noexcept {
+    if (os->close(rtnetlink_fd) < 0) {
+        syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
+                strerror(errno));
+    }
+}
+
 /*
  * Definitions for out-of-line functions.
  */
@@ -360,7 +377,7 @@ int ifaddr_initialize(int sig) {
             if (err == 0) {
                 err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    manager = make_shared<ifaddr_manager>();
+                    manager = make_shared<ifaddr_manager>(interrupt_signo);
                     return 0;
                 }
                 assume_no_error(pthread_cond_destroy(&refresh_cond),

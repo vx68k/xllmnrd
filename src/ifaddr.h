@@ -21,6 +21,8 @@
 
 #include <posix.h>
 #include <netinet/in.h>
+#include <condition_variable>
+#include <mutex>
 #include <memory>
 
 #if __cplusplus
@@ -35,15 +37,31 @@ namespace xllmnrd {
 
     using namespace std;
 
+    // Interface address manager.
     class ifaddr_manager {
     public:
 
-        explicit ifaddr_manager(shared_ptr<posix> os = make_shared<posix>())
-                : os(os) {
-        }
+        // Constructs this object.
+        // <var>interrupt_signal</var> is the signal number used to interrupt
+        // blocking system calls and its handler is expected to do nothing.
+        explicit ifaddr_manager(int interrupt_signal,
+                shared_ptr<posix> os = make_shared<posix>());
+
+        // Destructs this object and cleans up the allocated resources.
+        ~ifaddr_manager() noexcept;
 
     private:
+        int interrupt_signal;
         shared_ptr<posix> os;
+
+        unique_lock<mutex> object_lock;
+
+        bool refresh_in_progress = false;
+        condition_variable refresh_finished;
+        unique_lock<mutex> refresh_lock;
+
+        // File descriptor for the RTNETLINK socket.
+        int rtnetlink_fd;
     };
 }
 

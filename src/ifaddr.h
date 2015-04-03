@@ -23,6 +23,8 @@
 #include <netinet/in.h>
 #include <condition_variable>
 #include <mutex>
+#include <map>
+#include <forward_list>
 #include <memory>
 
 #if __cplusplus
@@ -70,6 +72,19 @@ namespace xllmnrd {
         void set_change_handler(ifaddr_change_handler change_handler,
                 ifaddr_change_handler *old_change_handler = nullptr);
 
+    protected:
+
+        // Addresses assigned to an interface.
+        struct addresses {
+            forward_list<struct in_addr> address_v4;
+            forward_list<struct in6_addr> address_v6;
+
+            // Returns true if and only if there are no addresses.
+            bool empty() const noexcept {
+                return address_v4.empty() && address_v6.empty();
+            }
+        };
+
     private:
         const int interrupt_signal;
         const shared_ptr<posix> os;
@@ -84,6 +99,9 @@ namespace xllmnrd {
 
         // File descriptor for the RTNETLINK socket.
         int rtnetlink_fd;
+
+        // Map from an interface to its addresses.
+        map<unsigned int, addresses> interface_addresses;
     };
 }
 

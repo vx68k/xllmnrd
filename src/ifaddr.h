@@ -35,10 +35,10 @@ namespace xllmnrd {
 
     using namespace std;
 
-    class if_manager {
+    class ifaddr_manager {
     public:
 
-        explicit if_manager(shared_ptr<posix> os = make_shared<posix>())
+        explicit ifaddr_manager(shared_ptr<posix> os = make_shared<posix>())
                 : os(os) {
         }
 

@@ -19,13 +19,9 @@
 #ifndef IFADDR_H
 #define IFADDR_H 1
 
-#if __cplusplus
 #include <posix.h>
-#endif
 #include <netinet/in.h>
-#if __cplusplus
 #include <memory>
-#endif
 
 #if __cplusplus
 #define BEGIN_C_LINKAGE extern "C" {
@@ -35,7 +31,6 @@
 #define END_C_LINKAGE
 #endif
 
-#if __cplusplus
 namespace xllmnrd {
 
     using namespace std;
@@ -51,7 +46,6 @@ namespace xllmnrd {
         shared_ptr<posix> os;
     };
 }
-#endif
 
 BEGIN_C_LINKAGE
 

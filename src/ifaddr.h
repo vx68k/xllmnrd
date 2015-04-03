@@ -37,6 +37,21 @@ namespace xllmnrd {
 
     using namespace std;
 
+    // Interface address change.
+    struct ifaddr_change {
+
+        enum change_type {
+            ADDED,
+            REMOVED,
+        };
+
+        change_type type;
+        unsigned int ifindex;
+    };
+
+    // Pointer to the interface address change handler.
+    typedef void (*ifaddr_change_handler)(const ifaddr_change *);
+
     // Interface address manager.
     class ifaddr_manager {
     public:
@@ -51,10 +66,12 @@ namespace xllmnrd {
         ~ifaddr_manager() noexcept;
 
     private:
-        int interrupt_signal;
-        shared_ptr<posix> os;
+        const int interrupt_signal;
+        const shared_ptr<posix> os;
 
         unique_lock<mutex> object_lock;
+
+        ifaddr_change_handler change_handler = nullptr;
 
         bool refresh_in_progress = false;
         condition_variable refresh_finished;
@@ -66,18 +83,6 @@ namespace xllmnrd {
 }
 
 BEGIN_C_LINKAGE
-
-enum ifaddr_change_type {
-    IFADDR_ADDED,
-    IFADDR_REMOVED,
-};
-
-struct ifaddr_change {
-    enum ifaddr_change_type type;
-    unsigned int ifindex;
-};
-
-typedef void (*ifaddr_change_handler)(const struct ifaddr_change *);
 
 /**
  * Initializes this module.
@@ -100,8 +105,8 @@ extern void ifaddr_finalize(void);
  * value is null, no output will be retrieved.
  * @return 0 if no error is detected, or any non-zero error number.
  */
-extern int ifaddr_set_change_handler(ifaddr_change_handler __handler,
-        ifaddr_change_handler *__old_handler);
+extern int ifaddr_set_change_handler(xllmnrd::ifaddr_change_handler __handler,
+        xllmnrd::ifaddr_change_handler *__old_handler);
 
 /**
  * Starts the internal worker thread.

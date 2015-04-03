@@ -31,8 +31,8 @@
 #include <csignal>
 #include <cerrno>
 
-using namespace std;
 using CppUnit::TestFixture;
+using namespace xllmnrd;
 
 /*
  * Uninitialized tests for ifaddr.

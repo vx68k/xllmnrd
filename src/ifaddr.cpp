@@ -548,10 +548,7 @@ void ifaddr_add_addr_v6(unsigned int index,
         }
         if (addr_v6) {
             if (i->addr_v6_size == 0 && if_change_handler) {
-                struct ifaddr_change change = {
-                    .type = IFADDR_ADDED,
-                    .ifindex = index,
-                };
+                ifaddr_change change = {ifaddr_change::ADDED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -593,10 +590,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
             i->addr_v6_size -= 1;
 
             if (i->addr_v6_size == 0 && if_change_handler) {
-                struct ifaddr_change change = {
-                    .type = IFADDR_REMOVED,
-                    .ifindex = index,
-                };
+                ifaddr_change change = {ifaddr_change::REMOVED, index};
                 (*if_change_handler)(&change);
             }
 

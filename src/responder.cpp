@@ -50,7 +50,7 @@
 #endif
 #endif /* !defined IPV6_DONTFRAG */
 
-using namespace std;
+using namespace xllmnrd;
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.
@@ -338,7 +338,7 @@ void responder_handle_ifaddr_change(
             if_indextoname(change->ifindex, ifname);
 
             switch (change->type) {
-            case IFADDR_ADDED:
+            case ifaddr_change::ADDED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
@@ -350,7 +350,7 @@ void responder_handle_ifaddr_change(
                 }
                 break;
 
-            case IFADDR_REMOVED:
+            case ifaddr_change::REMOVED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,

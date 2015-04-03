@@ -38,6 +38,7 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <memory>
 #include <limits>
 #include <csignal>
 #include <cstring>
@@ -45,7 +46,7 @@
 #include <cerrno>
 #include <cassert>
 
-using namespace std;
+using namespace xllmnrd;
 
 /**
  * Terminates the program abnormally if an error is detected.
@@ -115,9 +116,9 @@ struct ifaddr_interface {
 };
 
 /**
- * True if this module has been initialized.
+ * Pointer to the static interface address manager if initialized.
  */
-static bool initialized;
+static shared_ptr<ifaddr_manager> manager;
 
 /**
  * Signal number that will be used to interrupt the worker thread.
@@ -254,7 +255,7 @@ static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
  * Returns non-zero if this module has been initialized.
  */
 static inline int ifaddr_initialized(void) {
-    return initialized;
+    return bool(manager);
 }
 
 /**
@@ -359,7 +360,7 @@ int ifaddr_initialize(int sig) {
             if (err == 0) {
                 err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    initialized = true;
+                    manager = make_shared<ifaddr_manager>();
                     return 0;
                 }
                 assume_no_error(pthread_cond_destroy(&refresh_cond),
@@ -379,7 +380,7 @@ int ifaddr_initialize(int sig) {
 
 void ifaddr_finalize(void) {
     if (ifaddr_initialized()) {
-        initialized = false;
+        manager.reset();
 
         if (ifaddr_started()) {
             terminated = true;

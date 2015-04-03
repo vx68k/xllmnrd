@@ -355,6 +355,16 @@ ifaddr_manager::~ifaddr_manager() noexcept {
     }
 }
 
+void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
+        ifaddr_change_handler *old_change_handler) {
+    lock_guard<decltype(object_mutex)> lock(object_mutex);
+
+    if (old_change_handler) {
+        *old_change_handler = this->change_handler;
+    }
+    this->change_handler = change_handler;
+}
+
 /*
  * Definitions for out-of-line functions.
  */

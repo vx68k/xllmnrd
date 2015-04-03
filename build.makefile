@@ -17,7 +17,7 @@ TAR = tar
 CFLAGS = -g -O2 -Wall -Wextra
 CXXFLAGS = -g -O2 -Wall -Wextra
 
-build: clean all dist
+build: clean check dist
 	hg status || true
 
 all check dist distcheck: $(builddir)/Makefile

@@ -23,6 +23,8 @@
 #include <netinet/in.h>
 #include <condition_variable>
 #include <mutex>
+#include <thread>
+#include <atomic>
 #include <map>
 #include <forward_list>
 #include <memory>
@@ -73,6 +75,14 @@ namespace xllmnrd {
         void set_change_handler(ifaddr_change_handler change_handler,
                 ifaddr_change_handler *old_change_handler = nullptr);
 
+        // Refreshes the interface addresses.
+        // This function is thread safe.
+        void refresh();
+
+        // Starts the worker thread that monitors interface address changes.
+        // This function is thread-safe.
+        void start();
+
     protected:
 
         // Addresses assigned to an interface.
@@ -80,11 +90,14 @@ namespace xllmnrd {
             forward_list<struct in_addr> address_v4;
             forward_list<struct in6_addr> address_v6;
 
-            // Returns true if and only if there are no addresses.
+            // Returns true if there are no addresses.
             bool empty() const noexcept {
                 return address_v4.empty() && address_v6.empty();
             }
         };
+
+    protected:
+        void run();
 
     private:
         const int interrupt_signal;
@@ -94,15 +107,24 @@ namespace xllmnrd {
 
         ifaddr_change_handler change_handler = nullptr;
 
-        bool refresh_in_progress = false;
+        volatile bool refresh_in_progress = false;
         condition_variable refresh_finished;
         unique_lock<mutex> refresh_lock;
+
+        // Map from an interface to its addresses.
+        map<unsigned int, addresses> interface_addresses;
 
         // File descriptor for the RTNETLINK socket.
         int rtnetlink_fd;
 
-        // Map from an interface to its addresses.
-        map<unsigned int, addresses> interface_addresses;
+        // Indicates if the worker thread has been started.
+        bool started = false;
+
+        // Worker thread.
+        thread worker;
+
+        // Indicates if the worker thread is terminated.
+        atomic_bool worker_terminated;
     };
 }
 

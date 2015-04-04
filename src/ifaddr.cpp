@@ -38,8 +38,8 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vector>
 #include <system_error>
-#include <memory>
 #include <limits>
 #include <csignal>
 #include <cstring>
@@ -350,7 +350,7 @@ ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
 
 ifaddr_manager::~ifaddr_manager() noexcept {
     if (os->close(rtnetlink_fd) < 0) {
-        syslog(LOG_ERR, "ifaddr: Failed to close a socket: %s",
+        syslog(LOG_ERR, "Failed to close RTNETLINK: %s",
                 strerror(errno));
     }
 }
@@ -363,6 +363,96 @@ void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
         *old_change_handler = this->change_handler;
     }
     this->change_handler = change_handler;
+}
+
+void ifaddr_manager::refresh() {
+    lock_guard<decltype(refresh_lock)> lock(refresh_lock);
+
+    if (!refresh_in_progress) {
+        interface_addresses.clear();
+
+        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
+        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
+        *nl = nlmsghdr();
+        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
+        nl->nlmsg_type = RTM_GETADDR;
+        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+
+        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
+        *ifa = ifaddrmsg();
+        ifa->ifa_family = AF_UNSPEC;
+
+        ssize_t send_size = send(rtnetlink_fd, nl, nl->nlmsg_len, 0);
+        if (send_size < 0) {
+            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, system_category());
+        } else if (send_size != ssize_t(nl->nlmsg_len)) {
+            syslog(LOG_CRIT, "RTNETLINK request truncated");
+            throw runtime_error("RTNETLINK request truncated");
+        }
+
+        refresh_in_progress = true;
+    }
+}
+
+void ifaddr_manager::start() {
+    lock_guard<decltype(object_mutex)> lock(object_mutex);
+
+    if (!started) {
+        sigset_t mask, orignal_mask;
+        sigfillset(&mask);
+        if (interrupt_signo != 0) {
+            sigdelset(&mask, interrupt_signo);
+        }
+
+        int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
+        if (error > 0) {
+            throw system_error(error, system_category());
+        }
+
+        worker_terminated = false;
+        worker = thread(&ifaddr_manager::run, this);
+        started = true;
+
+        // Restores the signal mask before proceeding.
+        assume_no_error(pthread_sigmask(SIG_SETMASK, &orignal_mask, nullptr),
+                "restore the signal mask");
+
+        refresh();
+    }
+}
+
+void ifaddr_manager::run() {
+    while (!terminated) {
+        // Gets the required buffer size.
+        ssize_t recv_size_expected = recv(rtnetlink_fd, NULL, 0,
+                MSG_PEEK | MSG_TRUNC);
+        if (recv_size_expected < 0) {
+            if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                        strerror(errno));
+                throw system_error(errno, system_category());
+            }
+        } else {
+            vector<unsigned char> buffer(recv_size_expected);
+            ssize_t recv_size = recv(rtnetlink_fd, buffer.data(),
+                    recv_size_expected, 0);
+            if (recv_size >= 0) {
+                if (recv_size != recv_size_expected) {
+                    syslog(LOG_WARNING, "Unexpected received data size");
+                }
+
+                const nlmsghdr *nlmsg = reinterpret_cast<nlmsghdr *>(
+                        buffer.data());
+                ifaddr_decode_nlmsg(nlmsg, recv_size);
+            } else if (errno != EINTR) {
+                syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                        strerror(errno));
+                throw system_error(errno, system_category());
+            }
+        }
+    }
 }
 
 /*

@@ -67,7 +67,8 @@ namespace xllmnrd {
         // Destructs this object and cleans up the allocated resources.
         ~ifaddr_manager() noexcept;
 
-        // Set the interface address change handler.
+        // Set the interface address change handler that is called on each
+        // interface address change.
         // This function is thread-safe.
         void set_change_handler(ifaddr_change_handler change_handler,
                 ifaddr_change_handler *old_change_handler = nullptr);

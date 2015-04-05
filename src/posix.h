@@ -19,14 +19,17 @@
 #ifndef POSIX_H
 #define POSIX_H 1
 
+#include <sys/socket.h>
+
 namespace xllmnrd {
 
     class posix {
     public:
         virtual ~posix();
 
-        virtual int socket(int __domain, int __type, int __protocol);
-        virtual int close(int __fd);
+        virtual int socket(int domain, int type, int protocol);
+        virtual int bind(int fd, const struct sockaddr *addr, socklen_t len);
+        virtual int close(int fd);
     };
 }
 

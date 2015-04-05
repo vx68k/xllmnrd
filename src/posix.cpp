@@ -34,6 +34,10 @@ int posix::socket(int domain, int type, int protocol) {
     return ::socket(domain, type, protocol);
 }
 
+int posix::bind(int fd, const sockaddr *addr, socklen_t len) {
+    return ::bind(fd, addr, len);
+}
+
 int posix::close(int fd) {
     return ::close(fd);
 }

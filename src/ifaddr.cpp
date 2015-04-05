@@ -342,9 +342,9 @@ static inline void ifaddr_complete_refresh(void) {
 ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
         : interrupt_signal(interrupt_signal),
         os(os) {
-    int err = open_rtnetlink(&rtnetlink_fd);
-    if (err != 0) {
-        throw system_error(err, system_category());
+    int error = open_rtnetlink(&rtnetlink_fd);
+    if (error > 0) {
+        throw system_error(error, system_category());
     }
 }
 
@@ -386,7 +386,7 @@ void ifaddr_manager::refresh() {
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));
-            throw system_error(errno, system_category());
+            throw system_error(errno, generic_category());
         } else if (send_size != ssize_t(nl->nlmsg_len)) {
             syslog(LOG_CRIT, "RTNETLINK request truncated");
             throw runtime_error("RTNETLINK request truncated");
@@ -408,7 +408,7 @@ void ifaddr_manager::start() {
 
         int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
         if (error > 0) {
-            throw system_error(error, system_category());
+            throw system_error(error, generic_category());
         }
 
         worker_terminated = false;
@@ -432,7 +432,7 @@ void ifaddr_manager::run() {
             if (errno != EINTR) {
                 syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                         strerror(errno));
-                throw system_error(errno, system_category());
+                throw system_error(errno, generic_category());
             }
         } else {
             vector<unsigned char> buffer(recv_size_expected);
@@ -449,7 +449,7 @@ void ifaddr_manager::run() {
             } else if (errno != EINTR) {
                 syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                         strerror(errno));
-                throw system_error(errno, system_category());
+                throw system_error(errno, generic_category());
             }
         }
     }

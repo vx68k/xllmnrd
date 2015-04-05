@@ -472,7 +472,7 @@ int ifaddr_initialize(int sig) {
 #if IFADDR_CPLUSPLUS
     try {
         manager = make_shared<ifaddr_manager>(interrupt_signo);
-    } catch (const sytem_error &error) {
+    } catch (const system_error &error) {
         return error.code().value();
     }
     return 0;

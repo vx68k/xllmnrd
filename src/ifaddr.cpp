@@ -47,6 +47,11 @@
 #include <cerrno>
 #include <cassert>
 
+// TODO: Remove the original C-based code finally.
+#ifndef IFADDR_CPLUSPLUS
+#define IFADDR_CPLUSPLUS 0
+#endif
+
 using namespace xllmnrd;
 
 /**
@@ -463,6 +468,15 @@ int ifaddr_initialize(int sig) {
     if (ifaddr_initialized()) {
         return EBUSY;
     }
+
+#if IFADDR_CPLUSPLUS
+    try {
+        manager = make_shared<ifaddr_manager>(interrupt_signo);
+    } catch (const sytem_error &error) {
+        return error.code().value();
+    }
+    return 0;
+#else
     interrupt_signo = sig;
     if_change_handler = NULL;
     interfaces_size = 0;
@@ -493,9 +507,13 @@ int ifaddr_initialize(int sig) {
         }
     }
     return err;
+#endif
 }
 
 void ifaddr_finalize(void) {
+#if IFADDR_CPLUSPLUS
+    manager.reset();
+#else
     if (ifaddr_initialized()) {
         manager.reset();
 
@@ -519,6 +537,7 @@ void ifaddr_finalize(void) {
                     strerror(errno));
         }
     }
+#endif
 }
 
 int ifaddr_set_change_handler(ifaddr_change_handler handler,
@@ -527,6 +546,9 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
         return ENXIO;
     }
 
+#if IFADDR_CPLUSPLUS
+    manager->set_change_handler(handler, old_handler_out);
+#else
     lock_mutex(&if_mutex);
 
     if (old_handler_out) {
@@ -537,6 +559,7 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     unlock_mutex(&if_mutex);
 
     return 0;
+#endif
 }
 
 void ifaddr_add_addr_v4(unsigned int index,
@@ -715,6 +738,13 @@ int ifaddr_start(void) {
         return ENXIO;
     }
 
+#if IFADDR_CPLUSPLUS
+    try {
+        manager->start();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+#else
     int err = 0;
     if (!ifaddr_started()) {
         terminated = false;
@@ -739,8 +769,10 @@ int ifaddr_start(void) {
         }
     }
     return err;
+#endif
 }
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Runs the worker in a loop.
  * @param data
@@ -772,6 +804,7 @@ void *ifaddr_run(void *data) {
     }
     return data;
 }
+#endif
 
 void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
     while (NLMSG_OK(nlmsg, len)) {
@@ -896,7 +929,18 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
 }
 
 int ifaddr_refresh(void) {
-    if (!ifaddr_initialized() || !ifaddr_started()) {
+    if (!ifaddr_initialized()) {
+        return ENXIO;
+    }
+
+#if IFADDR_CPLUSPLUS
+    try {
+        manager->refresh();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+#else
+    if (!ifaddr_started()) {
         return ENXIO;
     }
 
@@ -938,6 +982,7 @@ int ifaddr_refresh(void) {
     unlock_mutex(&refresh_mutex);
 
     return err;
+#endif
 }
 
 int ifaddr_lookup_v6(unsigned int index, size_t addr_size,

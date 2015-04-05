@@ -90,6 +90,7 @@ static inline void unlock_mutex(pthread_mutex_t *mutex) {
     assume_no_error(pthread_mutex_unlock(mutex), "unlock a mutex");
 }
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Opens a RTNETLINK socket and binds to necessary groups.
  */
@@ -109,6 +110,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     }
     return err;
 }
+#endif
 
 /**
  * Interface record.
@@ -347,16 +349,12 @@ static inline void ifaddr_complete_refresh(void) {
 ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
         : interrupt_signal(interrupt_signal),
         os(os) {
-    int error = open_rtnetlink(&rtnetlink_fd);
-    if (error > 0) {
-        throw system_error(error, system_category());
-    }
+    rtnetlink_fd = open_rtnetlink();
 }
 
 ifaddr_manager::~ifaddr_manager() noexcept {
     if (os->close(rtnetlink_fd) < 0) {
-        syslog(LOG_ERR, "Failed to close RTNETLINK: %s",
-                strerror(errno));
+        syslog(LOG_ERR, "Failed to close RTNETLINK: %s", strerror(errno));
     }
 }
 
@@ -368,6 +366,30 @@ void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
         *old_change_handler = this->change_handler;
     }
     this->change_handler = change_handler;
+}
+
+int ifaddr_manager::open_rtnetlink() const {
+    int fd = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (fd < 0) {
+        int error = errno;
+        syslog(LOG_CRIT, "Failed to open RTNETLINK: %s", strerror(error));
+        throw system_error(error, generic_category());
+    }
+
+    auto addr = sockaddr_nl();
+    addr.nl_family = AF_NETLINK;
+    addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+
+    int result = os->bind(fd, reinterpret_cast<sockaddr *>(&addr),
+            sizeof(sockaddr_nl));
+    if (result < 0) {
+        int error = errno;
+        close(fd);
+        syslog(LOG_CRIT, "Failed to bind RTNETLINK: %s", strerror(error));
+        throw system_error(error, generic_category());
+    }
+
+    return fd;
 }
 
 void ifaddr_manager::refresh() {

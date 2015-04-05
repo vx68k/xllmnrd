@@ -99,6 +99,9 @@ namespace xllmnrd {
     protected:
         void run();
 
+        // Opens a RTNETLINK socket and returns its file descriptor.
+        int open_rtnetlink() const;
+
     private:
         const int interrupt_signal;
         const shared_ptr<posix> os;

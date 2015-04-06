@@ -451,7 +451,7 @@ void rtnetlink_ifaddr_manager::receive_netlink(int fd,
 }
 
 void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
-    const nlmsghdr *nlmsg = static_cast<const nlmsghdr *>(data);
+    auto nlmsg = static_cast<const nlmsghdr *>(data);
 
     while (NLMSG_OK(nlmsg, size)) {
         bool done = false;
@@ -461,14 +461,8 @@ void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
             syslog(LOG_INFO, "Got NLMSG_NOOP");
             break;
         case NLMSG_ERROR:
-        {
-            auto err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlmsg));
-            if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
-                syslog(LOG_ERR, "Got rtnetlink error: %s",
-                        strerror(-(err->error)));
-            }
+            handle_nlmsgerr(nlmsg);
             break;
-        }
         case NLMSG_DONE:
             finish_refresh();
             done = true;
@@ -489,6 +483,13 @@ void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
             break;
         }
         nlmsg = NLMSG_NEXT(nlmsg, size);
+    }
+}
+
+void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg) {
+    auto &&err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
+    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
+        syslog(LOG_ERR, "Got RTNETLINK error: %s", strerror(-(err->error)));
     }
 }
 

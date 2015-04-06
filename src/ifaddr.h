@@ -37,6 +37,8 @@
 #define END_C_LINKAGE
 #endif
 
+struct nlmsghdr;
+
 namespace xllmnrd {
 
     using namespace std;
@@ -109,17 +111,20 @@ namespace xllmnrd {
         void start() override;
 
     protected:
+        // Finishes the refresh of the interface addresses.
+        void finish_refresh();
+
         // Opens a RTNETLINK socket and returns its file descriptor.
         int open_rtnetlink() const;
 
-        // Receive a RTNETLINK message.
+        // Receives a RTNETLINK message.
         void receive_netlink(int fd, volatile atomic_bool *stopped);
 
-        // Decode a NETLINK message.
+        // Decodes a NETLINK message.
         void decode_nlmsg(const void *message, size_t size);
 
-        // Finishes the refresh of the interface addresses.
-        void finish_refresh();
+        // Handles a NETLINK error message.
+        void handle_nlmsgerr(const nlmsghdr *nlmsg);
 
     private:
 

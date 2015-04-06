@@ -182,10 +182,12 @@ static bool refresh_not_in_progress;
  */
 static bool started;
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Identifier for the worker thread.
  */
 static pthread_t worker_thread;
+#endif
 
 static volatile sig_atomic_t terminated;
 
@@ -225,7 +227,9 @@ static void ifaddr_remove_addr_v6(unsigned int __index,
  * Declarations for static functions.
  */
 
+#if !IFADDR_CPLUSPLUS
 static void *ifaddr_run(void *__data);
+#endif
 
 /**
  * Decodes netlink messages.
@@ -480,8 +484,8 @@ void rtnetlink_ifaddr_manager::start() {
     if (!worker.joinable()) {
         sigset_t mask, orignal_mask;
         sigfillset(&mask);
-        if (interrupt_signo != 0) {
-            sigdelset(&mask, interrupt_signo);
+        if (interrupt_signal != 0) {
+            sigdelset(&mask, interrupt_signal);
         }
 
         int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
@@ -528,10 +532,11 @@ int ifaddr_initialize(int sig) {
 
 #if IFADDR_CPLUSPLUS
     try {
-        manager = make_shared<rtnetlink_ifaddr_manager>(interrupt_signo);
+        manager = make_shared<rtnetlink_ifaddr_manager>(sig);
     } catch (const system_error &error) {
         return error.code().value();
     }
+
     return 0;
 #else
     interrupt_signo = sig;
@@ -614,9 +619,9 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     if_change_handler = handler;
 
     unlock_mutex(&if_mutex);
+#endif
 
     return 0;
-#endif
 }
 
 void ifaddr_add_addr_v4(unsigned int index,
@@ -801,6 +806,8 @@ int ifaddr_start(void) {
     } catch (const system_error &error) {
         return error.code().value();
     }
+
+    return 0;
 #else
     int err = 0;
     if (!ifaddr_started()) {
@@ -996,6 +1003,7 @@ int ifaddr_refresh(void) {
     } catch (const system_error &error) {
         return error.code().value();
     }
+    return 0;
 #else
     if (!ifaddr_started()) {
         return ENXIO;

@@ -236,13 +236,13 @@ static void *ifaddr_run(void *__data);
  * @param __size total size of the netlink messages
  */
 static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
-#endif
 
 /**
  * Handles a rtnetlink message of type 'struct ifaddrmsg'.
  * @param __nlmsg pointer to the netlink message
  */
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
+#endif
 
 /**
  * Handles a sequence of RTNETLINK attributes for an IPv4 ifaddrmsg.
@@ -469,8 +469,7 @@ void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
             break;
         case RTM_NEWADDR:
         case RTM_DELADDR:
-            // TODO: Use the C++ version.
-            ifaddr_handle_ifaddrmsg(nlmsg);
+            handle_ifaddrmsg(nlmsg);
             break;
         default:
             syslog(LOG_DEBUG, "Unknown netlink message type: %u",
@@ -490,6 +489,43 @@ void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg) {
     auto &&err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
     if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
         syslog(LOG_ERR, "Got RTNETLINK error: %s", strerror(-(err->error)));
+    }
+}
+
+void rtnetlink_ifaddr_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg) {
+    // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
+    // aligned.
+    const auto attr_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
+    if (nlmsg->nlmsg_len >= attr_offset) {
+        auto &&ifaddr = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
+        // Only handles non-temporary and at least link-local addresses.
+        if ((ifaddr->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
+                && ifaddr->ifa_scope <= RT_SCOPE_LINK) {
+            auto &&attr = reinterpret_cast<const rtattr *>(
+                    reinterpret_cast<const char *>(nlmsg) + attr_offset);
+            size_t attr_size = nlmsg->nlmsg_len - attr_offset;
+
+            char ifname[IF_NAMESIZE];
+            switch (ifaddr->ifa_family) {
+            case AF_INET:
+                // TODO: Use the C++ version.
+                ifaddr_v4_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
+                        attr, attr_size);
+                break;
+
+            case AF_INET6:
+                // TODO: Use the C++ version.
+                ifaddr_v6_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
+                        attr, attr_size);
+                break;
+
+            default:
+                if_indextoname(ifaddr->ifa_index, ifname);
+                syslog(LOG_INFO, "Ignored unknown address family %u on %s",
+                        ifaddr->ifa_family, ifname);
+                break;
+            }
+        }
     }
 }
 
@@ -941,7 +977,6 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
         nlmsg = NLMSG_NEXT(nlmsg, len);
     }
 }
-#endif
 
 void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     // We use 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must
@@ -979,6 +1014,7 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
         }
     }
 }
+#endif
 
 void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         const struct rtattr *restrict rta, size_t rta_size) {

@@ -187,9 +187,9 @@ static bool started;
  * Identifier for the worker thread.
  */
 static pthread_t worker_thread;
-#endif
 
 static volatile sig_atomic_t terminated;
+#endif
 
 /**
  * Adds an IPv4 address to an interface.
@@ -229,7 +229,6 @@ static void ifaddr_remove_addr_v6(unsigned int __index,
 
 #if !IFADDR_CPLUSPLUS
 static void *ifaddr_run(void *__data);
-#endif
 
 /**
  * Decodes netlink messages.
@@ -237,6 +236,7 @@ static void *ifaddr_run(void *__data);
  * @param __size total size of the netlink messages
  */
 static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
+#endif
 
 /**
  * Handles a rtnetlink message of type 'struct ifaddrmsg'.
@@ -389,6 +389,12 @@ rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager() noexcept {
     }
 }
 
+void rtnetlink_ifaddr_manager::run() {
+    while (!worker_terminated) {
+        receive_netlink(rtnetlink_fd, &worker_terminated);
+    }
+}
+
 int rtnetlink_ifaddr_manager::open_rtnetlink() const {
     int fd = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (fd < 0) {
@@ -413,37 +419,70 @@ int rtnetlink_ifaddr_manager::open_rtnetlink() const {
     return fd;
 }
 
-void rtnetlink_ifaddr_manager::run() {
-    while (!terminated) {
-        // Gets the required buffer size.
-        ssize_t recv_size_expected = recv(rtnetlink_fd, NULL, 0,
-                MSG_PEEK | MSG_TRUNC);
-        if (terminated) {
-            return;
-        }
-
-        if (recv_size_expected < 0) {
+void rtnetlink_ifaddr_manager::receive_netlink(int fd,
+        volatile atomic_bool *stopped) {
+    // Gets the required buffer size.
+    ssize_t recv_size = recv(fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
+    if (!stopped || !*stopped) {
+        if (recv_size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
             throw system_error(errno, generic_category());
-        } else {
-            vector<unsigned char> buffer(recv_size_expected);
-            ssize_t recv_size = recv(rtnetlink_fd, buffer.data(),
-                    recv_size_expected, 0);
-            if (recv_size >= 0) {
-                if (recv_size != recv_size_expected) {
-                    syslog(LOG_WARNING, "Unexpected received data size");
-                }
-
-                const nlmsghdr *nlmsg = reinterpret_cast<nlmsghdr *>(
-                        buffer.data());
-                ifaddr_decode_nlmsg(nlmsg, recv_size);
-            } else {
-                syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                        strerror(errno));
-                throw system_error(errno, generic_category());
-            }
         }
+
+        vector<unsigned char> buffer(recv_size);
+        // This must not block.
+        recv_size = recv(fd, buffer.data(), recv_size, 0);
+        if (recv_size < 0) {
+            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
+        }
+
+        decode_nlmsg(buffer.data(), recv_size);
+    }
+}
+
+void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
+    const nlmsghdr *nlmsg = static_cast<const nlmsghdr *>(data);
+
+    while (NLMSG_OK(nlmsg, size)) {
+        bool done = false;
+
+        switch (nlmsg->nlmsg_type) {
+        case NLMSG_NOOP:
+            syslog(LOG_INFO, "Got NLMSG_NOOP");
+            break;
+        case NLMSG_ERROR:
+        {
+            auto err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlmsg));
+            if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
+                syslog(LOG_ERR, "Got rtnetlink error: %s",
+                        strerror(-(err->error)));
+            }
+            break;
+        }
+        case NLMSG_DONE:
+            // TODO: Use the C++ version.
+            ifaddr_complete_refresh();
+            done = true;
+            break;
+        case RTM_NEWADDR:
+        case RTM_DELADDR:
+            // TODO: Use the C++ version.
+            ifaddr_handle_ifaddrmsg(nlmsg);
+            break;
+        default:
+            syslog(LOG_DEBUG, "Unknown netlink message type: %u",
+                    (unsigned int) nlmsg->nlmsg_type);
+            break;
+        }
+
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
+            // There are no more messages.
+            break;
+        }
+        nlmsg = NLMSG_NEXT(nlmsg, size);
     }
 }
 
@@ -856,7 +895,6 @@ void *ifaddr_run(void *data) {
     }
     return data;
 }
-#endif
 
 void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
     while (NLMSG_OK(nlmsg, len)) {
@@ -896,6 +934,7 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
         nlmsg = NLMSG_NEXT(nlmsg, len);
     }
 }
+#endif
 
 void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
     // We use 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must

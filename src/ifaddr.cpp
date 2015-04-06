@@ -389,6 +389,13 @@ rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager() noexcept {
     }
 }
 
+void rtnetlink_ifaddr_manager::finish_refresh() {
+    unique_lock<mutex> lock(refresh_mutex);
+
+    refresh_not_in_progress = true;
+    refresh_finished.notify_all();
+}
+
 void rtnetlink_ifaddr_manager::run() {
     while (!worker_terminated) {
         receive_netlink(rtnetlink_fd, &worker_terminated);
@@ -463,8 +470,7 @@ void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
             break;
         }
         case NLMSG_DONE:
-            // TODO: Use the C++ version.
-            ifaddr_complete_refresh();
+            finish_refresh();
             done = true;
             break;
         case RTM_NEWADDR:

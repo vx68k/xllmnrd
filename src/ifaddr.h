@@ -118,6 +118,9 @@ namespace xllmnrd {
         // Decode a NETLINK message.
         void decode_nlmsg(const void *message, size_t size);
 
+        // Finishes the refresh of the interface addresses.
+        void finish_refresh();
+
     private:
 
         // Addresses assigned to an interface.
@@ -134,9 +137,14 @@ namespace xllmnrd {
         // Map from an interface to its addresses.
         map<unsigned int, addresses> interface_addresses;
 
-        volatile bool refresh_in_progress = false;
-        condition_variable refresh_finished;
+        // Mutex for refresh_in_progress.
         mutex refresh_mutex;
+
+        // Condition variable for refresh_in_progress.
+        condition_variable refresh_finished;
+
+        // Indicates if a refresh is in progress.
+        volatile bool refresh_in_progress = false;
 
         // File descriptor for the RTNETLINK socket.
         int rtnetlink_fd;

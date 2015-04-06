@@ -123,10 +123,14 @@ struct ifaddr_interface {
     struct in6_addr *addr_v6;
 };
 
-/**
- * Pointer to the static interface address manager if initialized.
- */
+#if IFADDR_CPLUSPLUS
+// Pointer to the static interface address manager if initialized.
 static shared_ptr<ifaddr_manager> manager;
+#else
+/**
+ * True if this module has been initialized.
+ */
+static bool initialized;
 
 /**
  * Signal number that will be used to interrupt the worker thread.
@@ -138,6 +142,7 @@ static int interrupt_signo;
  * File descriptor for the rtnetlink socket.
  */
 static int rtnetlink_fd;
+#endif
 
 /**
  * Mutex for the interface table.
@@ -263,7 +268,11 @@ static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
  * Returns non-zero if this module has been initialized.
  */
 static inline bool ifaddr_initialized(void) {
+#if IFADDR_CPLUSPLUS
     return bool(manager);
+#else
+    return initialized;
+#endif
 }
 
 /**
@@ -539,8 +548,7 @@ int ifaddr_initialize(int sig) {
             if (err == 0) {
                 err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    manager = make_shared<rtnetlink_ifaddr_manager>(
-                            interrupt_signo);
+                    initialized = true;
                     return 0;
                 }
                 assume_no_error(pthread_cond_destroy(&refresh_cond),
@@ -564,7 +572,7 @@ void ifaddr_finalize(void) {
     manager.reset();
 #else
     if (ifaddr_initialized()) {
-        manager.reset();
+        initialized = false;
 
         if (ifaddr_started()) {
             terminated = true;

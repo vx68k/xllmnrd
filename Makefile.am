@@ -2,7 +2,7 @@
 
 ACLOCAL_AMFLAGS = -Ilibgnu/m4 -Im4
 
-SUBDIRS = libgnu src test lsb po
+SUBDIRS = libgnu src lsb po
 
 dist-hook:
 	revision=`cd $(srcdir) && hg identify -i 2> /dev/null`; \

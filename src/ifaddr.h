@@ -56,7 +56,7 @@ namespace xllmnrd {
     // Pointer to the interface address change handler.
     typedef void (*ifaddr_change_handler)(const ifaddr_change *);
 
-    // Interface address manager.
+    // Abstract interface address manager.
     class ifaddr_manager {
     public:
 
@@ -67,23 +67,54 @@ namespace xllmnrd {
                 shared_ptr<posix> os = make_shared<posix>());
 
         // Destructs this object and cleans up the allocated resources.
-        ~ifaddr_manager() noexcept;
+        virtual ~ifaddr_manager() noexcept;
 
         // Set the interface address change handler that is called on each
         // interface address change.
+        //
         // This function is thread-safe.
         void set_change_handler(ifaddr_change_handler change_handler,
                 ifaddr_change_handler *old_change_handler = nullptr);
 
         // Refreshes the interface addresses.
+        //
         // This function is thread safe.
-        void refresh();
+        virtual void refresh() = 0;
 
-        // Starts the worker thread that monitors interface address changes.
+        // Starts the worker threads that monitors interface address changes.
+        // This function does nothing if no worker threads are needed.
+        //
         // This function is thread-safe.
-        void start();
+        virtual void start() {
+        }
 
     protected:
+        const int interrupt_signal;
+        const shared_ptr<posix> os;
+
+    private:
+        recursive_mutex object_mutex;
+
+        ifaddr_change_handler change_handler = nullptr;
+    };
+
+    // Interface address manager based on RTNETLINK.
+    class rtnetlink_ifaddr_manager : public ifaddr_manager {
+    public:
+        explicit rtnetlink_ifaddr_manager(int interrupt_signal,
+                shared_ptr<posix> os = make_shared<posix>());
+        virtual ~rtnetlink_ifaddr_manager() noexcept;
+
+        void run();
+
+        void refresh() override;
+        void start() override;
+
+    protected:
+        // Opens a RTNETLINK socket and returns its file descriptor.
+        int open_rtnetlink() const;
+
+    private:
 
         // Addresses assigned to an interface.
         struct addresses {
@@ -96,38 +127,27 @@ namespace xllmnrd {
             }
         };
 
-    protected:
-        void run();
-
-        // Opens a RTNETLINK socket and returns its file descriptor.
-        int open_rtnetlink() const;
-
-    private:
-        const int interrupt_signal;
-        const shared_ptr<posix> os;
-
-        recursive_mutex object_mutex;
-
-        ifaddr_change_handler change_handler = nullptr;
+        // Map from an interface to its addresses.
+        map<unsigned int, addresses> interface_addresses;
 
         volatile bool refresh_in_progress = false;
         condition_variable refresh_finished;
-        unique_lock<mutex> refresh_lock;
-
-        // Map from an interface to its addresses.
-        map<unsigned int, addresses> interface_addresses;
+        mutex refresh_mutex;
 
         // File descriptor for the RTNETLINK socket.
         int rtnetlink_fd;
 
-        // Indicates if the worker thread has been started.
-        bool started = false;
+        // Mutex for worker.
+        mutex worker_mutex;
 
         // Worker thread.
         thread worker;
 
         // Indicates if the worker thread is terminated.
-        atomic_bool worker_terminated;
+        volatile atomic_bool worker_terminated;
+
+        // Stops the worker thread if started.
+        void stop();
     };
 }
 

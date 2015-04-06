@@ -349,13 +349,9 @@ static inline void ifaddr_complete_refresh(void) {
 ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
         : interrupt_signal(interrupt_signal),
         os(os) {
-    rtnetlink_fd = open_rtnetlink();
 }
 
 ifaddr_manager::~ifaddr_manager() noexcept {
-    if (os->close(rtnetlink_fd) < 0) {
-        syslog(LOG_ERR, "Failed to close RTNETLINK: %s", strerror(errno));
-    }
 }
 
 void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
@@ -368,7 +364,21 @@ void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
     this->change_handler = change_handler;
 }
 
-int ifaddr_manager::open_rtnetlink() const {
+rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(int interrupt_signal,
+        shared_ptr<posix> os)
+        : ifaddr_manager(interrupt_signal, os) {
+    rtnetlink_fd = open_rtnetlink();
+}
+
+rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager() noexcept {
+    stop();
+
+    if (os->close(rtnetlink_fd) < 0) {
+        syslog(LOG_ERR, "Failed to close RTNETLINK: %s", strerror(errno));
+    }
+}
+
+int rtnetlink_ifaddr_manager::open_rtnetlink() const {
     int fd = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (fd < 0) {
         int error = errno;
@@ -392,65 +402,7 @@ int ifaddr_manager::open_rtnetlink() const {
     return fd;
 }
 
-void ifaddr_manager::refresh() {
-    lock_guard<decltype(refresh_lock)> lock(refresh_lock);
-
-    if (!refresh_in_progress) {
-        interface_addresses.clear();
-
-        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
-        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
-        *nl = nlmsghdr();
-        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
-        nl->nlmsg_type = RTM_GETADDR;
-        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
-
-        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
-        *ifa = ifaddrmsg();
-        ifa->ifa_family = AF_UNSPEC;
-
-        ssize_t send_size = send(rtnetlink_fd, nl, nl->nlmsg_len, 0);
-        if (send_size < 0) {
-            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
-                    strerror(errno));
-            throw system_error(errno, generic_category());
-        } else if (send_size != ssize_t(nl->nlmsg_len)) {
-            syslog(LOG_CRIT, "RTNETLINK request truncated");
-            throw runtime_error("RTNETLINK request truncated");
-        }
-
-        refresh_in_progress = true;
-    }
-}
-
-void ifaddr_manager::start() {
-    lock_guard<decltype(object_mutex)> lock(object_mutex);
-
-    if (!started) {
-        sigset_t mask, orignal_mask;
-        sigfillset(&mask);
-        if (interrupt_signo != 0) {
-            sigdelset(&mask, interrupt_signo);
-        }
-
-        int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
-        if (error > 0) {
-            throw system_error(error, generic_category());
-        }
-
-        worker_terminated = false;
-        worker = thread(&ifaddr_manager::run, this);
-        started = true;
-
-        // Restores the signal mask before proceeding.
-        assume_no_error(pthread_sigmask(SIG_SETMASK, &orignal_mask, nullptr),
-                "restore the signal mask");
-
-        refresh();
-    }
-}
-
-void ifaddr_manager::run() {
+void rtnetlink_ifaddr_manager::run() {
     while (!terminated) {
         // Gets the required buffer size.
         ssize_t recv_size_expected = recv(rtnetlink_fd, NULL, 0,
@@ -482,6 +434,80 @@ void ifaddr_manager::run() {
     }
 }
 
+void rtnetlink_ifaddr_manager::refresh() {
+    unique_lock<mutex> lock(refresh_mutex);
+
+    if (!refresh_in_progress) {
+        interface_addresses.clear();
+
+        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
+        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
+        *nl = nlmsghdr();
+        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
+        nl->nlmsg_type = RTM_GETADDR;
+        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+
+        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
+        *ifa = ifaddrmsg();
+        ifa->ifa_family = AF_UNSPEC;
+
+        ssize_t send_size = send(rtnetlink_fd, nl, nl->nlmsg_len, 0);
+        if (send_size < 0) {
+            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
+        } else if (send_size != ssize_t(nl->nlmsg_len)) {
+            syslog(LOG_CRIT, "RTNETLINK request truncated");
+            throw runtime_error("RTNETLINK request truncated");
+        }
+
+        refresh_in_progress = true;
+    }
+}
+
+void rtnetlink_ifaddr_manager::start() {
+    lock_guard<mutex> lock(worker_mutex);
+
+    if (!worker.joinable()) {
+        sigset_t mask, orignal_mask;
+        sigfillset(&mask);
+        if (interrupt_signo != 0) {
+            sigdelset(&mask, interrupt_signo);
+        }
+
+        int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
+        if (error > 0) {
+            throw system_error(error, generic_category());
+        }
+
+        // Implementation note:
+        // <code>operator=</code> of volatile atomic classes were somehow
+        // deleted on GCC.
+        worker_terminated.store(false);
+        worker = thread([this]() {
+            run();
+        });
+
+        // Restores the signal mask before proceeding.
+        assume_no_error(pthread_sigmask(SIG_SETMASK, &orignal_mask, nullptr),
+                "restore the signal mask");
+
+        refresh();
+    }
+}
+
+void rtnetlink_ifaddr_manager::stop() {
+    lock_guard<mutex> lock(worker_mutex);
+
+    // Implementation note:
+    // <code>operator=</code> of volatile atomic classes were somehow deleted
+    // on GCC.
+    worker_terminated.store(true);
+    if (worker.joinable()) {
+        worker.join();
+    }
+}
+
 /*
  * Definitions for out-of-line functions.
  */
@@ -493,7 +519,7 @@ int ifaddr_initialize(int sig) {
 
 #if IFADDR_CPLUSPLUS
     try {
-        manager = make_shared<ifaddr_manager>(interrupt_signo);
+        manager = make_shared<rtnetlink_ifaddr_manager>(interrupt_signo);
     } catch (const system_error &error) {
         return error.code().value();
     }
@@ -513,7 +539,8 @@ int ifaddr_initialize(int sig) {
             if (err == 0) {
                 err = pthread_cond_init(&refresh_cond, 0);
                 if (err == 0) {
-                    manager = make_shared<ifaddr_manager>(interrupt_signo);
+                    manager = make_shared<rtnetlink_ifaddr_manager>(
+                            interrupt_signo);
                     return 0;
                 }
                 assume_no_error(pthread_cond_destroy(&refresh_cond),

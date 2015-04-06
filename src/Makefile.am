@@ -1,9 +1,9 @@
 ## Process this file with automake to produce a Makefile.in.
 
+AUTOMAKE_OPTIONS = parallel-tests
+
 AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu \
 -DLOCALEDIR=\"$(localedir)\"
-
-LDADD = ../libgnu/libgnu.a
 
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
@@ -11,14 +11,25 @@ man_MANS = xllmnrd.8
 noinst_LIBRARIES = libxllmnrd.a
 noinst_HEADERS = ascii.h llmnr_packet.h llmnr.h posix.h ifaddr.h responder.h
 
-xllmnrd_LDADD = libxllmnrd.a $(LDADD)
+check_PROGRAMS = runtest
+check_DATA = cppunit.test
+
 xllmnrd_SOURCES = main.cpp
+xllmnrd_LDADD = libxllmnrd.a ../libgnu/libgnu.a
 
 libxllmnrd_a_SOURCES = llmnr.c posix.cpp ifaddr.cpp responder.cpp
 
+runtest_CXXFLAGS = $(CPPUNIT_CFLAGS)
+runtest_SOURCES = testmain.cpp testifaddr.cpp
+runtest_LDADD = libxllmnrd.a ../libgnu/libgnu.a $(CPPUNIT_LIBS)
+
 EXTRA_DIST = xllmnrd.8.in
 
-CLEANFILES = xllmnrd.8
+TESTS = cppunit.test
+TEST_LOG_COMPILER = ./runtest
+AM_TEST_LOG_FLAGS = -x $(@:.log=.xml)
+
+CLEANFILES = xllmnrd.8 cppunit.test $(TEST_LOGS:.log=.xml)
 
 xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	@rm -f $@-t $@
@@ -27,3 +38,6 @@ xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	  -e 's,[@]PACKAGE_STRING[@],$(PACKAGE_STRING),g' \
 	  < $(srcdir)/xllmnrd.8.in > $@-t
 	mv -f $@-t $@
+
+cppunit.test:
+	touch $@

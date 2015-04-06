@@ -359,9 +359,8 @@ static inline void ifaddr_complete_refresh(void) {
     unlock_mutex(&refresh_mutex);
 }
 
-ifaddr_manager::ifaddr_manager(int interrupt_signal, shared_ptr<posix> os)
-        : interrupt_signal(interrupt_signal),
-        os(os) {
+ifaddr_manager::ifaddr_manager(shared_ptr<posix> os)
+        : os(os) {
 }
 
 ifaddr_manager::~ifaddr_manager() noexcept {
@@ -377,9 +376,8 @@ void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
     this->change_handler = change_handler;
 }
 
-rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(int interrupt_signal,
-        shared_ptr<posix> os)
-        : ifaddr_manager(interrupt_signal, os) {
+rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(shared_ptr<posix> os)
+        : ifaddr_manager(os) {
     rtnetlink_fd = open_rtnetlink();
 }
 
@@ -420,12 +418,14 @@ void rtnetlink_ifaddr_manager::run() {
         // Gets the required buffer size.
         ssize_t recv_size_expected = recv(rtnetlink_fd, NULL, 0,
                 MSG_PEEK | MSG_TRUNC);
+        if (terminated) {
+            return;
+        }
+
         if (recv_size_expected < 0) {
-            if (errno != EINTR) {
-                syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                        strerror(errno));
-                throw system_error(errno, generic_category());
-            }
+            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
         } else {
             vector<unsigned char> buffer(recv_size_expected);
             ssize_t recv_size = recv(rtnetlink_fd, buffer.data(),
@@ -438,7 +438,7 @@ void rtnetlink_ifaddr_manager::run() {
                 const nlmsghdr *nlmsg = reinterpret_cast<nlmsghdr *>(
                         buffer.data());
                 ifaddr_decode_nlmsg(nlmsg, recv_size);
-            } else if (errno != EINTR) {
+            } else {
                 syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                         strerror(errno));
                 throw system_error(errno, generic_category());
@@ -482,28 +482,13 @@ void rtnetlink_ifaddr_manager::start() {
     lock_guard<mutex> lock(worker_mutex);
 
     if (!worker.joinable()) {
-        sigset_t mask, orignal_mask;
-        sigfillset(&mask);
-        if (interrupt_signal != 0) {
-            sigdelset(&mask, interrupt_signal);
-        }
-
-        int error = pthread_sigmask(SIG_SETMASK, &mask, &orignal_mask);
-        if (error > 0) {
-            throw system_error(error, generic_category());
-        }
-
         // Implementation note:
-        // <code>operator=</code> of volatile atomic classes were somehow
-        // deleted on GCC.
+        // <code>operator=</code> of volatile atomic classes are somehow
+        // deleted on GCC 4.7.
         worker_terminated.store(false);
         worker = thread([this]() {
             run();
         });
-
-        // Restores the signal mask before proceeding.
-        assume_no_error(pthread_sigmask(SIG_SETMASK, &orignal_mask, nullptr),
-                "restore the signal mask");
 
         refresh();
     }
@@ -513,10 +498,13 @@ void rtnetlink_ifaddr_manager::stop() {
     lock_guard<mutex> lock(worker_mutex);
 
     // Implementation note:
-    // <code>operator=</code> of volatile atomic classes were somehow deleted
-    // on GCC.
+    // <code>operator=</code> of volatile atomic classes are somehow deleted
+    // on GCC 4.7.
     worker_terminated.store(true);
     if (worker.joinable()) {
+        // This should make a blocking recv call return.
+        refresh();
+
         worker.join();
     }
 }
@@ -532,7 +520,7 @@ int ifaddr_initialize(int sig) {
 
 #if IFADDR_CPLUSPLUS
     try {
-        manager = make_shared<rtnetlink_ifaddr_manager>(sig);
+        manager = make_shared<rtnetlink_ifaddr_manager>();
     } catch (const system_error &error) {
         return error.code().value();
     }

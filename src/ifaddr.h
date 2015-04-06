@@ -63,8 +63,7 @@ namespace xllmnrd {
         // Constructs this object.
         // <var>interrupt_signal</var> is the signal number used to interrupt
         // blocking system calls and its handler is expected to do nothing.
-        explicit ifaddr_manager(int interrupt_signal,
-                shared_ptr<posix> os = make_shared<posix>());
+        explicit ifaddr_manager(shared_ptr<posix> os = make_shared<posix>());
 
         // Destructs this object and cleans up the allocated resources.
         virtual ~ifaddr_manager() noexcept;
@@ -89,7 +88,6 @@ namespace xllmnrd {
         }
 
     protected:
-        const int interrupt_signal;
         const shared_ptr<posix> os;
 
     private:
@@ -101,8 +99,8 @@ namespace xllmnrd {
     // Interface address manager based on RTNETLINK.
     class rtnetlink_ifaddr_manager : public ifaddr_manager {
     public:
-        explicit rtnetlink_ifaddr_manager(int interrupt_signal,
-                shared_ptr<posix> os = make_shared<posix>());
+        explicit rtnetlink_ifaddr_manager(shared_ptr<posix> os
+                = make_shared<posix>());
         virtual ~rtnetlink_ifaddr_manager() noexcept;
 
         void run();

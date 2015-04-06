@@ -397,8 +397,8 @@ void rtnetlink_ifaddr_manager::finish_refresh() {
 }
 
 void rtnetlink_ifaddr_manager::run() {
-    while (!worker_terminated) {
-        receive_netlink(rtnetlink_fd, &worker_terminated);
+    while (!worker_stopped) {
+        receive_netlink(rtnetlink_fd, &worker_stopped);
     }
 }
 
@@ -526,12 +526,12 @@ void rtnetlink_ifaddr_manager::refresh() {
 void rtnetlink_ifaddr_manager::start() {
     lock_guard<mutex> lock(worker_mutex);
 
-    if (!worker.joinable()) {
+    if (!worker_thread.joinable()) {
         // Implementation note:
         // <code>operator=</code> of volatile atomic classes are somehow
         // deleted on GCC 4.7.
-        worker_terminated.store(false);
-        worker = thread([this]() {
+        worker_stopped.store(false);
+        worker_thread = thread([this]() {
             run();
         });
 
@@ -545,12 +545,12 @@ void rtnetlink_ifaddr_manager::stop() {
     // Implementation note:
     // <code>operator=</code> of volatile atomic classes are somehow deleted
     // on GCC 4.7.
-    worker_terminated.store(true);
-    if (worker.joinable()) {
+    worker_stopped.store(true);
+    if (worker_thread.joinable()) {
         // This should make a blocking recv call return.
         refresh();
 
-        worker.join();
+        worker_thread.join();
     }
 }
 

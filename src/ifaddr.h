@@ -153,10 +153,10 @@ namespace xllmnrd {
         mutex worker_mutex;
 
         // Worker thread.
-        thread worker;
+        thread worker_thread;
 
         // Indicates if the worker thread is terminated.
-        volatile atomic_bool worker_terminated;
+        volatile atomic_bool worker_stopped;
 
         // Stops the worker thread if started.
         void stop();

@@ -9,10 +9,10 @@ dist-hook:
 	if test -n "$$revision"; then \
 	  echo "PACKAGE_REVISION='$$revision'" > $(distdir)/config.revision; \
 	fi
-	@rm -f SHA1SUM-dist
-	(cd $(distdir) && find . -type f -print | sort | xargs sha1sum) \
-	  > SHA1SUM-dist
-	mv -f SHA1SUM-dist $(distdir)/SHA1SUM
+	@rm -f SHASUM-dist
+	(cd $(distdir) && find . -type f -print | sort | xargs shasum) \
+	  > SHASUM-dist
+	mv -f SHASUM-dist $(distdir)/SHASUM
 	@if test -x pgpsign; then \
-	  ./pgpsign $(distdir)/SHA1SUM; \
+	  ./pgpsign $(distdir)/SHASUM; \
 	fi

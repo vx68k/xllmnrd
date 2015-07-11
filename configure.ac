@@ -35,7 +35,7 @@ AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
 net/if.h syslog.h sys/socket.h])
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT_VERSION([0.19.3])
 gl_INIT
 
 # Checks for typedefs, structures, and compiler characteristics.

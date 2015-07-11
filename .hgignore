@@ -19,13 +19,6 @@ aclocal.m4
 #
 syntax: regexp
 
-(^|/)install-sh$
-(^|/)missing$
-(^|/)depcomp$
-(^|/)config\.guess$
-(^|/)config\.sub$
-(^|/)config\.rpath$
-
 ^m4/
 ^autom4te\.cache/
 

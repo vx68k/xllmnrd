@@ -19,7 +19,6 @@ aclocal.m4
 #
 syntax: regexp
 
-^m4/
 ^autom4te\.cache/
 
 # Libtool binary files

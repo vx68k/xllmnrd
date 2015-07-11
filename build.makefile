@@ -31,7 +31,6 @@ $(builddir)/config.status: configure build.makefile
 	cd $(builddir) && $(srcdir)/configure --no-create
 
 configure: force
-	@mkdir -p m4
 	autoreconf --no-recursive
 
 clean:

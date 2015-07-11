@@ -32,7 +32,7 @@ $(builddir)/config.status: configure build.makefile
 
 configure:
 	@mkdir -p m4
-	autoreconf --install --no-recursive
+	autoreconf --no-recursive
 
 clean:
 	rm -fr $(prefix)

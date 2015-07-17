@@ -34,7 +34,7 @@ using CppUnit::TestFactoryRegistry;
 
 int main(int argc, char *argv[]) {
     string xmlout_name = argv[0];
-    xmlout_name.replace(xmlout_name.rfind("."), xmlout_name.size(), ".xml");
+    xmlout_name.append(".xml");
 
     ofstream xmlout;
     xmlout.open(xmlout_name);

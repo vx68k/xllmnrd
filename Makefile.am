@@ -13,6 +13,6 @@ dist-hook:
 	(cd $(distdir) && find . -type f -print | sort | xargs shasum) \
 	  > SHASUM-dist
 	mv -f SHASUM-dist $(distdir)/SHASUM
-	@if test -x pgpsign; then \
-	  ./pgpsign $(distdir)/SHASUM; \
+	@if test -f $(srcdir)/pgpsign; then \
+	  $(SHELL) $(srcdir)/pgpsign $(distdir)/SHASUM; \
 	fi

@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = parallel-tests
 
 AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu \
 -DLOCALEDIR=\"$(localedir)\"
+AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
@@ -11,25 +12,24 @@ man_MANS = xllmnrd.8
 noinst_LIBRARIES = libxllmnrd.a
 noinst_HEADERS = ascii.h llmnr_packet.h llmnr.h posix.h ifaddr.h responder.h
 
-check_PROGRAMS = runtest
-check_DATA = cppunit.test
+check_PROGRAMS = ifaddr.test
+check_SCRIPTS = run
 
 xllmnrd_SOURCES = main.cpp
 xllmnrd_LDADD = libxllmnrd.a ../libgnu/libgnu.a
 
 libxllmnrd_a_SOURCES = llmnr.c posix.cpp ifaddr.cpp responder.cpp
 
-runtest_CXXFLAGS = $(CPPUNIT_CFLAGS)
-runtest_SOURCES = testmain.cpp testifaddr.cpp
-runtest_LDADD = libxllmnrd.a ../libgnu/libgnu.a $(CPPUNIT_LIBS)
+ifaddr_test_SOURCES = testmain.cpp testifaddr.cpp
+ifaddr_test_LDADD = $(xllmnrd_LDADD) $(CPPUNIT_LIBS)
 
-EXTRA_DIST = xllmnrd.8.in
+EXTRA_DIST = xllmnrd.8.in run.sh
 
-TESTS = cppunit.test
-TEST_LOG_COMPILER = ./runtest
-AM_TEST_LOG_FLAGS = -x $(@:.log=.xml)
+TESTS = $(check_PROGRAMS)
+TEST_LOG_COMPILER = ./run
 
-CLEANFILES = xllmnrd.8 cppunit.test $(TEST_LOGS:.log=.xml)
+MOSTLYCLEANFILES = xllmnrd.8-t run-t
+CLEANFILES = xllmnrd.8 run *.test.xml
 
 xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	@rm -f $@-t $@
@@ -39,5 +39,7 @@ xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	  < $(srcdir)/xllmnrd.8.in > $@-t
 	mv -f $@-t $@
 
-cppunit.test:
-	touch $@
+run: run.sh
+	cat < $(srcdir)/run.sh > $@-t
+	chmod a+x $@-t
+	mv -f $@-t $@

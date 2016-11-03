@@ -1,0 +1,16 @@
+# bitbucket-pipelines.yml - Bitbucket Pipelines configuration.
+# Copyright (C) 2016 Kaz Nishimura
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any warranty.
+
+image: gcc:5
+
+pipelines:
+  default:
+    - step:
+        script:
+          - autoreconf
+          - ./configure
+          - make check

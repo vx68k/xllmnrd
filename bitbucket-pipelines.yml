@@ -12,7 +12,7 @@ pipelines:
     - step:
         script:
           - apt-get -q update
-          - apt-get -qy install autopoint libcppunit-dev
+          - apt-get -qy install gettext autopoint libcppunit-dev
           - autoreconf --install
           - ./configure
           - make all dist

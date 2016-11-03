@@ -11,8 +11,8 @@ pipelines:
   default:
     - step:
         script:
-          - apt-get update
-          - apt-get install libcppunit-dev
+          - apt-get -q update
+          - apt-get -qy install libcppunit-dev
           - autoreconf --install
           - ./configure
           - make check

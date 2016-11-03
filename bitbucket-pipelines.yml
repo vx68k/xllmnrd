@@ -15,4 +15,4 @@ pipelines:
           - apt-get -qy install autopoint libcppunit-dev
           - autoreconf --install
           - ./configure
-          - make check
+          - make all dist

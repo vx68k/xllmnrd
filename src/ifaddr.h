@@ -1,6 +1,6 @@
 /*
  * ifaddr - interface addresses (interface)
- * Copyright (C) 2013-2014 Kaz Nishimura
+ * Copyright (C) 2013-2015 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -19,19 +19,159 @@
 #ifndef IFADDR_H
 #define IFADDR_H 1
 
+#include <posix.h>
 #include <netinet/in.h>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#include <atomic>
+#include <map>
+#include <forward_list>
+#include <memory>
 
-enum ifaddr_change_type {
-    IFADDR_ADDED,
-    IFADDR_REMOVED,
-};
+#if __cplusplus
+#define BEGIN_C_LINKAGE extern "C" {
+#define END_C_LINKAGE }
+#else
+#define BEGIN_C_LINKAGE
+#define END_C_LINKAGE
+#endif
 
-struct ifaddr_change {
-    enum ifaddr_change_type type;
-    unsigned int ifindex;
-};
+struct nlmsghdr;
 
-typedef void (*ifaddr_change_handler)(const struct ifaddr_change *);
+namespace xllmnrd {
+
+    using namespace std;
+
+    // Interface address change.
+    struct ifaddr_change {
+
+        enum change_type {
+            ADDED,
+            REMOVED,
+        };
+
+        change_type type;
+        unsigned int ifindex;
+    };
+
+    // Pointer to the interface address change handler.
+    typedef void (*ifaddr_change_handler)(const ifaddr_change *);
+
+    // Abstract interface address manager.
+    class ifaddr_manager {
+    public:
+
+        // Constructs this object.
+        // <var>interrupt_signal</var> is the signal number used to interrupt
+        // blocking system calls and its handler is expected to do nothing.
+        explicit ifaddr_manager(shared_ptr<posix> os = make_shared<posix>());
+
+        // Destructs this object and cleans up the allocated resources.
+        virtual ~ifaddr_manager() noexcept;
+
+        // Set the interface address change handler that is called on each
+        // interface address change.
+        //
+        // This function is thread-safe.
+        void set_change_handler(ifaddr_change_handler change_handler,
+                ifaddr_change_handler *old_change_handler = nullptr);
+
+        // Refreshes the interface addresses.
+        //
+        // This function is thread safe.
+        virtual void refresh() = 0;
+
+        // Starts the worker threads that monitors interface address changes.
+        // This function does nothing if no worker threads are needed.
+        //
+        // This function is thread-safe.
+        virtual void start() {
+        }
+
+    protected:
+        const shared_ptr<posix> os;
+
+    private:
+        recursive_mutex object_mutex;
+
+        ifaddr_change_handler change_handler = nullptr;
+    };
+
+    // Interface address manager based on RTNETLINK.
+    class rtnetlink_ifaddr_manager : public ifaddr_manager {
+    public:
+        explicit rtnetlink_ifaddr_manager(shared_ptr<posix> os
+                = make_shared<posix>());
+        virtual ~rtnetlink_ifaddr_manager() noexcept;
+
+        void run();
+
+        void refresh() override;
+        void start() override;
+
+    protected:
+        // Finishes the refresh of the interface addresses.
+        void finish_refresh();
+
+        // Opens a RTNETLINK socket and returns its file descriptor.
+        int open_rtnetlink() const;
+
+        // Receives a RTNETLINK message.
+        void receive_netlink(int fd, volatile atomic_bool *stopped);
+
+        // Decodes a NETLINK message.
+        void decode_nlmsg(const void *message, size_t size);
+
+        // Handles a NETLINK error message.
+        void handle_nlmsgerr(const nlmsghdr *nlmsg);
+
+        // Handles a RTNETLINK message for an interface address change.
+        void handle_ifaddrmsg(const nlmsghdr *nlmsg);
+
+    private:
+
+        // Addresses assigned to an interface.
+        struct addresses {
+            forward_list<struct in_addr> address_v4;
+            forward_list<struct in6_addr> address_v6;
+
+            // Returns true if there are no addresses.
+            bool empty() const noexcept {
+                return address_v4.empty() && address_v6.empty();
+            }
+        };
+
+        // Map from an interface to its addresses.
+        map<unsigned int, addresses> interface_addresses;
+
+        // Mutex for refresh_in_progress.
+        mutex refresh_mutex;
+
+        // Condition variable for refresh_in_progress.
+        condition_variable refresh_finished;
+
+        // Indicates if a refresh is in progress.
+        volatile bool refresh_in_progress = false;
+
+        // File descriptor for the RTNETLINK socket.
+        int rtnetlink_fd;
+
+        // Mutex for worker.
+        mutex worker_mutex;
+
+        // Worker thread.
+        thread worker_thread;
+
+        // Indicates if the worker thread is terminated.
+        volatile atomic_bool worker_stopped;
+
+        // Stops the worker thread if started.
+        void stop();
+    };
+}
+
+BEGIN_C_LINKAGE
 
 /**
  * Initializes this module.
@@ -54,8 +194,8 @@ extern void ifaddr_finalize(void);
  * value is null, no output will be retrieved.
  * @return 0 if no error is detected, or any non-zero error number.
  */
-extern int ifaddr_set_change_handler(ifaddr_change_handler __handler,
-        ifaddr_change_handler *__old_handler);
+extern int ifaddr_set_change_handler(xllmnrd::ifaddr_change_handler __handler,
+        xllmnrd::ifaddr_change_handler *__old_handler);
 
 /**
  * Starts the internal worker thread.
@@ -87,5 +227,10 @@ extern int ifaddr_refresh(void);
  */
 extern int ifaddr_lookup_v6(unsigned int __index, size_t __addr_size,
         struct in6_addr __addr[], size_t *__number_of_addresses);
+
+END_C_LINKAGE
+
+#undef END_C_LINKAGE
+#undef BEGIN_C_LINKAGE
 
 #endif

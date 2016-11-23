@@ -21,9 +21,7 @@
 #endif
 #undef _GNU_SOURCE
 
-extern "C" {
-#include <ifaddr.h>
-}
+#include "ifaddr.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
@@ -33,8 +31,8 @@ extern "C" {
 #include <csignal>
 #include <cerrno>
 
-using namespace std;
 using CppUnit::TestFixture;
+using namespace xllmnrd;
 
 /*
  * Uninitialized tests for ifaddr.

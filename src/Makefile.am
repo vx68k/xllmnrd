@@ -10,19 +10,19 @@ sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
 noinst_LIBRARIES = libxllmnrd.a
+noinst_HEADERS = ascii.h llmnr_packet.h llmnr.h posix.h ifaddr.h responder.h
 
 check_PROGRAMS = ifaddr.test
 check_SCRIPTS = run
 
-xllmnrd_SOURCES = main.c
+xllmnrd_SOURCES = main.cpp
 xllmnrd_LDADD = libxllmnrd.a ../libgnu/libgnu.a
 
-libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.c
+libxllmnrd_a_SOURCES = llmnr.c posix.cpp ifaddr.cpp responder.cpp
 
 ifaddr_test_SOURCES = testmain.cpp testifaddr.cpp
 ifaddr_test_LDADD = $(xllmnrd_LDADD) $(CPPUNIT_LIBS)
 
-noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
 EXTRA_DIST = xllmnrd.8.in run.sh
 
 TESTS = $(check_PROGRAMS)

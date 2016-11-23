@@ -36,13 +36,12 @@
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <assert.h>
+#include <csignal>
+#include <cstring>
+#include <cstdlib>
+#include <cerrno>
+#include <cinttypes>
+#include <cassert>
 
 #ifndef IPV6_DONTFRAG
 // Workaround for undefined 'IPV6_DONTFRAG' on Linux-based systems.
@@ -50,6 +49,8 @@
 #define IPV6_DONTFRAG 62
 #endif
 #endif /* !defined IPV6_DONTFRAG */
+
+using namespace xllmnrd;
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.
@@ -337,7 +338,7 @@ void responder_handle_ifaddr_change(
             if_indextoname(change->ifindex, ifname);
 
             switch (change->type) {
-            case IFADDR_ADDED:
+            case ifaddr_change::ADDED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
@@ -349,7 +350,7 @@ void responder_handle_ifaddr_change(
                 }
                 break;
 
-            case IFADDR_REMOVED:
+            case ifaddr_change::REMOVED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
@@ -517,7 +518,8 @@ int responder_respond_for_name(unsigned int index,
     }
 
     // Sends the response.
-    if (sendto(udp_fd, packet, packet_end - packet, 0, sender,
+    if (sendto(udp_fd, packet, packet_end - packet, 0,
+            reinterpret_cast<const struct sockaddr *>(sender),
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;
     }
@@ -526,7 +528,8 @@ int responder_respond_for_name(unsigned int index,
     if (packet_size > 512 && errno == EMSGSIZE) {
         // Resends with truncation.
         response->flags |= htons(LLMNR_HEADER_TC);
-        if (sendto(udp_fd, response, 512, 0, sender,
+        if (sendto(udp_fd, response, 512, 0,
+                reinterpret_cast<const struct sockaddr *>(sender),
                 sizeof (struct sockaddr_in6)) >= 0) {
             return 0;
         }

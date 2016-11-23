@@ -2,7 +2,7 @@
 AC_PREREQ([2.69])
 AC_INIT([XLLMNRD], [3.0],
 [https://bitbucket.org/kazssym/xllmnrd/issues], [xllmnrd],
-[http://xllmnrd.vx68k.org/])
+[http://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/responder.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])

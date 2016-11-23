@@ -14,7 +14,7 @@ xllmnrd is *[free software][]*: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].  You should be able to find a copy of
 it in the 'COPYING' file.
 
-For more information about xllmnrd, visit <http://xllmnrd.vx68k.org/>.
+For more information about xllmnrd, visit <http://www.vx68k.org/xllmnrd>.
 
 [LLMNR]: <http://tools.ietf.org/html/rfc4795>
          "Link-Local Multicast Name Resolution (LLMNR) [RFC 4795]"

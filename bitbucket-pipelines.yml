@@ -15,4 +15,4 @@ pipelines:
           - apt-get -qy install gettext autopoint libcppunit-dev
           - autoreconf --install
           - ./configure
-          - make all dist
+          - make install dist

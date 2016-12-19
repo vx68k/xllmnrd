@@ -1,34 +1,32 @@
-syntax: glob
-xllmnrd
-xllmnrd.8
+# .hgignore
 
+syntax: glob
+
+src/xllmnrd
+src/xllmnrd.8
+src/libxllmnrd.a
+libgnu/libgnu.a
+po/stamp-po
 *.o
 *.lo
+*.gmo
+.libs/
 
-config.status
-config.log
-config.h
-stamp-h1
 Makefile
+config.*
+stamp-h1
 .deps/
 
 configure
-config.h.in
 Makefile.in
 aclocal.m4
-#
-syntax: regexp
+autom4te.cache/
 
-^autom4te\.cache/
-
-# Libtool binary files
-\.libs/
-
-# NetBeans IDE files (not for commits)
-^nbproject/
+# NetBeans IDE private files
+nbproject/private/
 
 # Backup and garbage files
-~$
-\.~[^/]*$
-\.orig$
-\.rej$
+*~
+*.~*
+*.orig
+*.rej

@@ -1,18 +1,18 @@
-# bitbucket-pipelines.yml - Bitbucket Pipelines configuration.
-# Copyright (C) 2016 Kaz Nishimura
+# bitbucket-pipelines.yml - Bitbucket Pipelines configuration
+# Copyright (C) 2016-2017 Kaz Nishimura
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved.  This file is offered as-is, without any warranty.
-
+---
 image: gcc:5
-
 pipelines:
-  default:
-    - step:
-        script:
-          - apt-get -q update
-          - apt-get -qy install gettext autopoint libcppunit-dev
-          - autoreconf --install
-          - ./configure
-          - make install dist
+  bookmarks:
+    "**":
+      - step:
+          script:
+            - apt-get -q update
+            - apt-get -qy install gettext autopoint libcppunit-dev
+            - autoreconf --install
+            - ./configure --prefix=/opt/xllmnrd
+            - make install dist

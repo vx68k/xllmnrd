@@ -1,6 +1,8 @@
 ## Process this file with automake to produce a Makefile.in.
 
-ACLOCAL_AMFLAGS = -Ilibgnu/m4 -Im4
+ACLOCAL_AMFLAGS = -Im4
+
+EXTRA_DIST = m4/gnulib-cache.m4
 
 SUBDIRS = libgnu src lsb po
 

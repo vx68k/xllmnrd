@@ -14,7 +14,7 @@ XLLMNRD is *[free software][]*: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].  You should be able to find a copy of
 it in the 'COPYING' file.
 
-For more information about XLLMNRD, visit <http://www.vx68k.org/xllmnrd>.
+For more information about XLLMNRD, visit <https://www.vx68k.org/xllmnrd>.
 
 [LLMNR]: <http://tools.ietf.org/html/rfc4795>
          "Link-Local Multicast Name Resolution (LLMNR) [RFC 4795]"
@@ -29,4 +29,4 @@ See the 'INSTALL' file for installation instructions.  The 'configure' should
 work for most GNU/Linux operating systems (distributions).
 
 If you find any problem while installation, please report it to
-<https://bitbucket.org/kazssym/xllmnrd/issues>.
+<https://bitbucket.org/vx68k/xllmnrd/issues>.

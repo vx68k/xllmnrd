@@ -1,10 +1,3 @@
-**Note**: this file is provided as a repository 'README' file and *should not*
-be distributed with the XLLMNRD package.
-
----
-
-This repository contains the source code for XLLMNRD.
-
 XLLMNRD is an IPv6 [LLMNR][] responder daemon (primarily for GNU/Linux operating
 systems).  It allows Microsoft Windows clients to get the IPv6 address of a
 server on the same local network _without any DNS configuration_ and

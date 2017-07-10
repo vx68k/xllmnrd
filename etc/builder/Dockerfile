@@ -9,6 +9,6 @@
 FROM gcc:7
 
 RUN set -x && \
-apt-get update && \
-apt-get install --assume-yes gettext autopoint libcppunit-dev && \
-rm -rf /var/lib/apt/lists/*
+  apt-get update && \
+  apt-get install --assume-yes gettext autopoint libcppunit-dev && \
+  rm -rf /var/lib/apt/lists/*

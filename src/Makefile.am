@@ -2,27 +2,23 @@
 
 AUTOMAKE_OPTIONS = parallel-tests
 
-AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu \
--DLOCALEDIR=\"$(localedir)\"
+AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\" -I$(top_srcdir)/libxllmnrd \
+-I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu
 AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
-noinst_LIBRARIES = libxllmnrd.a
-
 check_PROGRAMS = ifaddr.test
 check_SCRIPTS = run
 
-xllmnrd_SOURCES = main.c
-xllmnrd_LDADD = libxllmnrd.a ../libgnu/libgnu.a
-
-libxllmnrd_a_SOURCES = responder.c llmnr.c ifaddr.c
+xllmnrd_SOURCES = main.c responder.c llmnr.c
+xllmnrd_LDADD = ../libxllmnrd/libxllmnrd.a ../libgnu/libgnu.a
 
 ifaddr_test_SOURCES = testmain.cpp testifaddr.cpp
 ifaddr_test_LDADD = $(xllmnrd_LDADD) $(CPPUNIT_LIBS)
 
-noinst_HEADERS = responder.h llmnr.h llmnr_packet.h ascii.h ifaddr.h
+noinst_HEADERS = responder.h llmnr.h llmnr_packet.h
 EXTRA_DIST = xllmnrd.8.in run.sh
 
 TESTS = $(check_PROGRAMS)

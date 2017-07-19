@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -Im4
 
 EXTRA_DIST = README.md m4/gnulib-cache.m4
 
-SUBDIRS = libgnu src lsb po
+SUBDIRS = libgnu libxllmnrd src lsb po
 
 dist-hook:
 	revision=`cd $(srcdir) && hg identify -i 2> /dev/null`; \

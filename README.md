@@ -9,12 +9,20 @@ it in the 'COPYING' file.
 
 For more information about XLLMNRD, visit <https://www.vx68k.org/xllmnrd>.
 
+[![(GNU General Public License v3.0 or later)](https://img.shields.io/badge/license-GPL--3.0+-blue.svg)][GPL-3.0]
+[![(Open Issues)](https://img.shields.io/bitbucket/issues/vx68k/xllmnrd.svg)][open issues]
+[![(Build Status)](https://linuxfront-functions.azurewebsites.net/api/bitbucket/build/vx68k/xllmnrd?branch=master)][pipelines]
+
 [LLMNR]: <http://tools.ietf.org/html/rfc4795>
          "Link-Local Multicast Name Resolution (LLMNR) [RFC 4795]"
 [Samba]: <http://www.samba.org/>
 [Free software]: <http://www.gnu.org/philosophy/free-sw.html>
                  "What is free software?"
 [GNU General Public License]: <http://www.gnu.org/licenses/gpl.html>
+
+[GPL-3.0]: https://opensource.org/licenses/GPL-3.0
+[Open issues]: https://bitbucket.org/vx68k/xllmnrd/issues?status=new&status=open
+[Pipelines]: https://bitbucket.org/vx68k/xllmnrd/addon/pipelines/home
 
 # Installation
 

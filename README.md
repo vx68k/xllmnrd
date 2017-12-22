@@ -15,11 +15,10 @@ For more information about XLLMNRD, visit <https://www.vx68k.org/xllmnrd>.
 [![(Open Issues)](https://img.shields.io/bitbucket/issues/vx68k/xllmnrd.svg)][open issues]
 [![(Build Status)](https://linuxfront-functions.azurewebsites.net/api/bitbucket/build/vx68k/xllmnrd?branch=master)][pipelines]
 
-[RFC 4795]: http://tools.ietf.org/html/rfc4795 "Link-Local Multicast Name Resolution (LLMNR)"
-[Samba]: <http://www.samba.org/>
-[Free software]: <http://www.gnu.org/philosophy/free-sw.html>
-                 "What is free software?"
-[GNU General Public License]: <http://www.gnu.org/licenses/gpl.html>
+[RFC 4795]: https://tools.ietf.org/html/rfc4795 "Link-Local Multicast Name Resolution (LLMNR)"
+[Samba]: <https://www.samba.org/>
+[Free software]: <https://www.gnu.org/philosophy/free-sw.html> "What is free software?"
+[GNU General Public License]: <https://www.gnu.org/licenses/gpl.html>
 
 [GPL-3.0]: https://opensource.org/licenses/GPL-3.0
 [Open issues]: https://bitbucket.org/vx68k/xllmnrd/issues?status=new&status=open

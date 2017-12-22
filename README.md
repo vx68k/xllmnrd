@@ -1,7 +1,9 @@
-XLLMNRD is an IPv6 [LLMNR][] responder daemon (primarily for GNU/Linux operating
-systems).  It allows Microsoft Windows clients to get the IPv6 address of a
+# Description
+
+XLLMNRD is a [LLMNR][RFC 4795] responder daemon (primarily for GNU/Linux operating
+systems).  It allows Microsoft Windows clients to get the IPv6 addresses of a
 server on the same local network _without any DNS configuration_ and
-effectively complements IPv4-only NetBIOS name resolution provided by [Samba][].
+supplements IPv4-only NetBIOS name resolution typically provided by [Samba][].
 
 XLLMNRD is *[free software][]*: you can redistribute it and/or modify it
 under the terms of the [GNU General Public License][].  You should be able to find a copy of
@@ -13,8 +15,7 @@ For more information about XLLMNRD, visit <https://www.vx68k.org/xllmnrd>.
 [![(Open Issues)](https://img.shields.io/bitbucket/issues/vx68k/xllmnrd.svg)][open issues]
 [![(Build Status)](https://linuxfront-functions.azurewebsites.net/api/bitbucket/build/vx68k/xllmnrd?branch=master)][pipelines]
 
-[LLMNR]: <http://tools.ietf.org/html/rfc4795>
-         "Link-Local Multicast Name Resolution (LLMNR) [RFC 4795]"
+[RFC 4795]: http://tools.ietf.org/html/rfc4795 "Link-Local Multicast Name Resolution (LLMNR)"
 [Samba]: <http://www.samba.org/>
 [Free software]: <http://www.gnu.org/philosophy/free-sw.html>
                  "What is free software?"

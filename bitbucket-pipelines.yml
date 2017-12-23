@@ -15,4 +15,4 @@ pipelines:
           - apt-get install --assume-yes gettext autopoint libcppunit-dev
           - autoreconf
           - ./configure --prefix=/opt/xllmnrd
-          - make install dist
+          - make check dist

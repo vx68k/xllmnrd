@@ -25,7 +25,7 @@ TESTS = $(check_PROGRAMS)
 TEST_LOG_COMPILER = ./run
 
 MOSTLYCLEANFILES = xllmnrd.8-t run-t
-CLEANFILES = xllmnrd.8 run *.test.xml
+CLEANFILES = xllmnrd.8 run test-reports/*
 
 xllmnrd.8: $(srcdir)/xllmnrd.8.in Makefile
 	@rm -f $@-t $@

@@ -21,6 +21,12 @@
 #endif
 #undef _GNU_SOURCE
 
+#if HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/ui/text/TestRunner.h>
@@ -33,10 +39,12 @@ using CppUnit::XmlOutputter;
 using CppUnit::TestFactoryRegistry;
 
 int main(int argc, char *argv[]) {
-    string xmlout_name = argv[0];
+    string xmlout_name = "test-reports/";
+    xmlout_name.append(basename(argv[0]));
     xmlout_name.append(".xml");
 
     ofstream xmlout;
+    mkdir("test-reports", 0777);
     xmlout.open(xmlout_name);
 
     TestRunner runner;

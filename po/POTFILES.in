@@ -1,2 +1,2 @@
 # List of source files which contain translatable strings.
-src/main.c
+src/main.cpp

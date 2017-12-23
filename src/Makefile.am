@@ -12,13 +12,14 @@ man_MANS = xllmnrd.8
 check_PROGRAMS = ifaddr.test
 check_SCRIPTS = run
 
-xllmnrd_SOURCES = main.c responder.c llmnr.c
+noinst_HEADERS = responder.h llmnr.h llmnr_packet.h
+
+xllmnrd_SOURCES = main.cpp responder.cpp llmnr.c
 xllmnrd_LDADD = ../libxllmnrd/libxllmnrd.a ../libgnu/libgnu.a
 
 ifaddr_test_SOURCES = testmain.cpp testifaddr.cpp
 ifaddr_test_LDADD = $(xllmnrd_LDADD) $(CPPUNIT_LIBS)
 
-noinst_HEADERS = responder.h llmnr.h llmnr_packet.h
 EXTRA_DIST = xllmnrd.8.in run.sh
 
 TESTS = $(check_PROGRAMS)

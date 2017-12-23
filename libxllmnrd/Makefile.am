@@ -3,7 +3,6 @@
 AM_CPPFLAGS = -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu
 
 noinst_LIBRARIES = libxllmnrd.a
+noinst_HEADERS = ifaddr.h posix.h ascii.h
 
-libxllmnrd_a_SOURCES = ifaddr.c
-
-noinst_HEADERS = ifaddr.h ascii.h
+libxllmnrd_a_SOURCES = ifaddr.cpp posix.cpp

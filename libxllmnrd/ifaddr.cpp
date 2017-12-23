@@ -1,6 +1,6 @@
 /*
  * ifaddr - interface addresses (implementation)
- * Copyright (C) 2013-2014 Kaz Nishimura
+ * Copyright (C) 2013-2015 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -38,12 +38,21 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <stdlib.h> /* abort */
-#include <errno.h>
-#include <stdbool.h>
-#include <assert.h>
+#include <vector>
+#include <system_error>
+#include <limits>
+#include <csignal>
+#include <cstring>
+#include <cstdlib> /* abort */
+#include <cerrno>
+#include <cassert>
+
+// TODO: Remove the original C-based code finally.
+#ifndef IFADDR_CPLUSPLUS
+#define IFADDR_CPLUSPLUS 0
+#endif
+
+using namespace xllmnrd;
 
 /**
  * Terminates the program abnormally if an error is detected.
@@ -81,6 +90,7 @@ static inline void unlock_mutex(pthread_mutex_t *mutex) {
     assume_no_error(pthread_mutex_unlock(mutex), "unlock a mutex");
 }
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Opens a RTNETLINK socket and binds to necessary groups.
  */
@@ -88,10 +98,9 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     int err = errno;
     if (fd >= 0) {
-        struct sockaddr_nl addr = {
-            .nl_family = AF_NETLINK,
-            .nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
-        };
+        struct sockaddr_nl addr = {};
+        addr.nl_family = AF_NETLINK;
+        addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
         if (bind(fd, (struct sockaddr *) &addr, sizeof addr) == 0) {
             *fd_out = fd;
             return 0;
@@ -101,6 +110,7 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     }
     return err;
 }
+#endif
 
 /**
  * Interface record.
@@ -113,6 +123,10 @@ struct ifaddr_interface {
     struct in6_addr *addr_v6;
 };
 
+#if IFADDR_CPLUSPLUS
+// Pointer to the static interface address manager if initialized.
+static shared_ptr<ifaddr_manager> manager;
+#else
 /**
  * True if this module has been initialized.
  */
@@ -128,6 +142,7 @@ static int interrupt_signo;
  * File descriptor for the rtnetlink socket.
  */
 static int rtnetlink_fd;
+#endif
 
 /**
  * Mutex for the interface table.
@@ -167,12 +182,14 @@ static bool refresh_not_in_progress;
  */
 static bool started;
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Identifier for the worker thread.
  */
 static pthread_t worker_thread;
 
 static volatile sig_atomic_t terminated;
+#endif
 
 /**
  * Adds an IPv4 address to an interface.
@@ -210,6 +227,7 @@ static void ifaddr_remove_addr_v6(unsigned int __index,
  * Declarations for static functions.
  */
 
+#if !IFADDR_CPLUSPLUS
 static void *ifaddr_run(void *__data);
 
 /**
@@ -224,6 +242,7 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
  * @param __nlmsg pointer to the netlink message
  */
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
+#endif
 
 /**
  * Handles a sequence of RTNETLINK attributes for an IPv4 ifaddrmsg.
@@ -252,8 +271,12 @@ static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
 /**
  * Returns non-zero if this module has been initialized.
  */
-static inline int ifaddr_initialized(void) {
+static inline bool ifaddr_initialized(void) {
+#if IFADDR_CPLUSPLUS
+    return bool(manager);
+#else
     return initialized;
+#endif
 }
 
 /**
@@ -336,6 +359,238 @@ static inline void ifaddr_complete_refresh(void) {
     unlock_mutex(&refresh_mutex);
 }
 
+ifaddr_manager::ifaddr_manager(shared_ptr<posix> os)
+        : os(os) {
+}
+
+ifaddr_manager::~ifaddr_manager() noexcept {
+}
+
+void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
+        ifaddr_change_handler *old_change_handler) {
+    lock_guard<decltype(object_mutex)> lock(object_mutex);
+
+    if (old_change_handler) {
+        *old_change_handler = this->change_handler;
+    }
+    this->change_handler = change_handler;
+}
+
+rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(shared_ptr<posix> os)
+        : ifaddr_manager(os) {
+    rtnetlink_fd = open_rtnetlink();
+}
+
+rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager() noexcept {
+    stop();
+
+    if (os->close(rtnetlink_fd) < 0) {
+        syslog(LOG_ERR, "Failed to close RTNETLINK: %s", strerror(errno));
+    }
+}
+
+void rtnetlink_ifaddr_manager::finish_refresh() {
+    unique_lock<mutex> lock(refresh_mutex);
+
+    refresh_not_in_progress = true;
+    refresh_finished.notify_all();
+}
+
+void rtnetlink_ifaddr_manager::run() {
+    while (!worker_stopped) {
+        receive_netlink(rtnetlink_fd, &worker_stopped);
+    }
+}
+
+int rtnetlink_ifaddr_manager::open_rtnetlink() const {
+    int fd = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (fd < 0) {
+        int error = errno;
+        syslog(LOG_CRIT, "Failed to open RTNETLINK: %s", strerror(error));
+        throw system_error(error, generic_category());
+    }
+
+    auto addr = sockaddr_nl();
+    addr.nl_family = AF_NETLINK;
+    addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+
+    int result = os->bind(fd, reinterpret_cast<sockaddr *>(&addr),
+            sizeof(sockaddr_nl));
+    if (result < 0) {
+        int error = errno;
+        close(fd);
+        syslog(LOG_CRIT, "Failed to bind RTNETLINK: %s", strerror(error));
+        throw system_error(error, generic_category());
+    }
+
+    return fd;
+}
+
+void rtnetlink_ifaddr_manager::receive_netlink(int fd,
+        volatile atomic_bool *stopped) {
+    // Gets the required buffer size.
+    ssize_t recv_size = recv(fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
+    if (!stopped || !*stopped) {
+        if (recv_size < 0) {
+            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
+        }
+
+        vector<unsigned char> buffer(recv_size);
+        // This must not block.
+        recv_size = recv(fd, buffer.data(), recv_size, 0);
+        if (recv_size < 0) {
+            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
+        }
+
+        decode_nlmsg(buffer.data(), recv_size);
+    }
+}
+
+void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
+    auto nlmsg = static_cast<const nlmsghdr *>(data);
+
+    while (NLMSG_OK(nlmsg, size)) {
+        bool done = false;
+
+        switch (nlmsg->nlmsg_type) {
+        case NLMSG_NOOP:
+            syslog(LOG_INFO, "Got NLMSG_NOOP");
+            break;
+        case NLMSG_ERROR:
+            handle_nlmsgerr(nlmsg);
+            break;
+        case NLMSG_DONE:
+            finish_refresh();
+            done = true;
+            break;
+        case RTM_NEWADDR:
+        case RTM_DELADDR:
+            handle_ifaddrmsg(nlmsg);
+            break;
+        default:
+            syslog(LOG_DEBUG, "Unknown netlink message type: %u",
+                    (unsigned int) nlmsg->nlmsg_type);
+            break;
+        }
+
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
+            // There are no more messages.
+            break;
+        }
+        nlmsg = NLMSG_NEXT(nlmsg, size);
+    }
+}
+
+void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg) {
+    auto &&err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
+    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
+        syslog(LOG_ERR, "Got RTNETLINK error: %s", strerror(-(err->error)));
+    }
+}
+
+void rtnetlink_ifaddr_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg) {
+    // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
+    // aligned.
+    const auto attr_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
+    if (nlmsg->nlmsg_len >= attr_offset) {
+        auto &&ifaddr = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
+        // Only handles non-temporary and at least link-local addresses.
+        if ((ifaddr->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
+                && ifaddr->ifa_scope <= RT_SCOPE_LINK) {
+            auto &&attr = reinterpret_cast<const rtattr *>(
+                    reinterpret_cast<const char *>(nlmsg) + attr_offset);
+            size_t attr_size = nlmsg->nlmsg_len - attr_offset;
+
+            char ifname[IF_NAMESIZE];
+            switch (ifaddr->ifa_family) {
+            case AF_INET:
+                // TODO: Use the C++ version.
+                ifaddr_v4_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
+                        attr, attr_size);
+                break;
+
+            case AF_INET6:
+                // TODO: Use the C++ version.
+                ifaddr_v6_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
+                        attr, attr_size);
+                break;
+
+            default:
+                if_indextoname(ifaddr->ifa_index, ifname);
+                syslog(LOG_INFO, "Ignored unknown address family %u on %s",
+                        ifaddr->ifa_family, ifname);
+                break;
+            }
+        }
+    }
+}
+
+void rtnetlink_ifaddr_manager::refresh() {
+    unique_lock<mutex> lock(refresh_mutex);
+
+    if (!refresh_in_progress) {
+        interface_addresses.clear();
+
+        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
+        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
+        *nl = nlmsghdr();
+        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
+        nl->nlmsg_type = RTM_GETADDR;
+        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+
+        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
+        *ifa = ifaddrmsg();
+        ifa->ifa_family = AF_UNSPEC;
+
+        ssize_t send_size = send(rtnetlink_fd, nl, nl->nlmsg_len, 0);
+        if (send_size < 0) {
+            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
+                    strerror(errno));
+            throw system_error(errno, generic_category());
+        } else if (send_size != ssize_t(nl->nlmsg_len)) {
+            syslog(LOG_CRIT, "RTNETLINK request truncated");
+            throw runtime_error("RTNETLINK request truncated");
+        }
+
+        refresh_in_progress = true;
+    }
+}
+
+void rtnetlink_ifaddr_manager::start() {
+    lock_guard<mutex> lock(worker_mutex);
+
+    if (!worker_thread.joinable()) {
+        // Implementation note:
+        // <code>operator=</code> of volatile atomic classes are somehow
+        // deleted on GCC 4.7.
+        worker_stopped.store(false);
+        worker_thread = thread([this]() {
+            run();
+        });
+
+        refresh();
+    }
+}
+
+void rtnetlink_ifaddr_manager::stop() {
+    lock_guard<mutex> lock(worker_mutex);
+
+    // Implementation note:
+    // <code>operator=</code> of volatile atomic classes are somehow deleted
+    // on GCC 4.7.
+    worker_stopped.store(true);
+    if (worker_thread.joinable()) {
+        // This should make a blocking recv call return.
+        refresh();
+
+        worker_thread.join();
+    }
+}
+
 /*
  * Definitions for out-of-line functions.
  */
@@ -344,6 +599,16 @@ int ifaddr_initialize(int sig) {
     if (ifaddr_initialized()) {
         return EBUSY;
     }
+
+#if IFADDR_CPLUSPLUS
+    try {
+        manager = make_shared<rtnetlink_ifaddr_manager>();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+
+    return 0;
+#else
     interrupt_signo = sig;
     if_change_handler = NULL;
     interfaces_size = 0;
@@ -374,9 +639,13 @@ int ifaddr_initialize(int sig) {
         }
     }
     return err;
+#endif
 }
 
 void ifaddr_finalize(void) {
+#if IFADDR_CPLUSPLUS
+    manager.reset();
+#else
     if (ifaddr_initialized()) {
         initialized = false;
 
@@ -400,6 +669,7 @@ void ifaddr_finalize(void) {
                     strerror(errno));
         }
     }
+#endif
 }
 
 int ifaddr_set_change_handler(ifaddr_change_handler handler,
@@ -408,6 +678,9 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
         return ENXIO;
     }
 
+#if IFADDR_CPLUSPLUS
+    manager->set_change_handler(handler, old_handler_out);
+#else
     lock_mutex(&if_mutex);
 
     if (old_handler_out) {
@@ -416,6 +689,7 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     if_change_handler = handler;
 
     unlock_mutex(&if_mutex);
+#endif
 
     return 0;
 }
@@ -443,7 +717,8 @@ void ifaddr_add_addr_v4(unsigned int index,
     if (j == i->addr_v4 + i->addr_v4_size) {
         struct in_addr *addr_v4 = NULL;
         // Avoids potential overflow in size calculation.
-        if (i->addr_v4_size + 1 <= SIZE_MAX / sizeof (struct in_addr)) {
+        if (i->addr_v4_size + 1 <= numeric_limits<size_t>::max()
+                / sizeof (struct in_addr)) {
             addr_v4 = (struct in_addr *) realloc(i->addr_v4,
                     (i->addr_v4_size + 1) * sizeof (struct in_addr));
         }
@@ -521,16 +796,14 @@ void ifaddr_add_addr_v6(unsigned int index,
     if (j == i->addr_v6 + i->addr_v6_size) {
         struct in6_addr *addr_v6 = NULL;
         // Avoids potential overflow in size calculation.
-        if (i->addr_v6_size + 1 <= SIZE_MAX / sizeof (struct in6_addr)) {
+        if (i->addr_v6_size + 1 <= numeric_limits<size_t>::max()
+                / sizeof (struct in6_addr)) {
             addr_v6 = (struct in6_addr *) realloc(i->addr_v6,
                     (i->addr_v6_size + 1) * sizeof (struct in6_addr));
         }
         if (addr_v6) {
             if (i->addr_v6_size == 0 && if_change_handler) {
-                struct ifaddr_change change = {
-                    .type = IFADDR_ADDED,
-                    .ifindex = index,
-                };
+                ifaddr_change change = {ifaddr_change::ADDED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -572,10 +845,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
             i->addr_v6_size -= 1;
 
             if (i->addr_v6_size == 0 && if_change_handler) {
-                struct ifaddr_change change = {
-                    .type = IFADDR_REMOVED,
-                    .ifindex = index,
-                };
+                ifaddr_change change = {ifaddr_change::REMOVED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -600,6 +870,15 @@ int ifaddr_start(void) {
         return ENXIO;
     }
 
+#if IFADDR_CPLUSPLUS
+    try {
+        manager->start();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+
+    return 0;
+#else
     int err = 0;
     if (!ifaddr_started()) {
         terminated = false;
@@ -624,8 +903,10 @@ int ifaddr_start(void) {
         }
     }
     return err;
+#endif
 }
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Runs the worker in a loop.
  * @param data
@@ -668,7 +949,7 @@ void ifaddr_decode_nlmsg(const struct nlmsghdr *nlmsg, size_t len) {
             break;
         case NLMSG_ERROR:
         {
-            struct nlmsgerr *err = NLMSG_DATA(nlmsg);
+            auto err = static_cast<struct nlmsgerr *>(NLMSG_DATA(nlmsg));
             if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof *err)) {
                 syslog(LOG_ERR, "Got rtnetlink error: %s",
                         strerror(-(err->error)));
@@ -733,6 +1014,7 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
         }
     }
 }
+#endif
 
 void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         const struct rtattr *restrict rta, size_t rta_size) {
@@ -781,7 +1063,19 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
 }
 
 int ifaddr_refresh(void) {
-    if (!ifaddr_initialized() || !ifaddr_started()) {
+    if (!ifaddr_initialized()) {
+        return ENXIO;
+    }
+
+#if IFADDR_CPLUSPLUS
+    try {
+        manager->refresh();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+    return 0;
+#else
+    if (!ifaddr_started()) {
         return ENXIO;
     }
 
@@ -823,6 +1117,7 @@ int ifaddr_refresh(void) {
     unlock_mutex(&refresh_mutex);
 
     return err;
+#endif
 }
 
 int ifaddr_lookup_v6(unsigned int index, size_t addr_size,

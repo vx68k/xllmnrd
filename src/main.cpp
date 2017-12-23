@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013-2014 Kaz Nishimura
+ * Copyright (C) 2013-2015 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -31,16 +31,16 @@
 #if HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
+// Uses POSIX signals instead of ones from <csignal>.
+#include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <locale.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdbool.h>
+#include <locale>
+#include <limits>
+#include <cstring>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
@@ -53,13 +53,14 @@
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013-2014"
+#define COPYRIGHT_YEARS "2013-2015"
 #endif
 
 // Marks localization strings.
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
+using namespace std;
 
 struct program_options {
     bool foreground;
@@ -92,7 +93,7 @@ static int make_pid_file(const char *__name);
  * @param __argv pointer array of command-line arguments.
  * @param __options [out] parsed options.
  */
-static void parse_arguments(int __argc, char *__argv[__argc + 1],
+static void parse_arguments(int __argc, char *__argv[],
         struct program_options *__options);
 
 /**
@@ -119,9 +120,8 @@ static void handle_signal_to_terminate(int __sig);
  */
 static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         const sigset_t *restrict mask) {
-    struct sigaction action = {
-        .sa_handler = handler,
-    };
+    struct sigaction action = {};
+    action.sa_handler = handler;
     if (mask) {
         action.sa_mask = *mask;
     } else {
@@ -135,8 +135,8 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[argc + 1]) {
-    setlocale(LC_ALL, "");
+int main(int argc, char *argv[]) {
+    locale::global(locale(""));
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[argc + 1]) {
     parse_arguments(argc, argv, &options);
 
     // Sets the locale back to the default to keep logs untranslated.
-    setlocale(LC_ALL, "POSIX");
+    locale::global(locale::classic());
 
     const char *program_name = basename(argv[0]);
     if (options.foreground) {
@@ -225,9 +225,8 @@ int main(int argc, char *argv[argc + 1]) {
 
         ifaddr_finalize(); // The exit functions will not be called.
 
-        const struct sigaction default_action = {
-            .sa_handler = SIG_DFL,
-        };
+        struct sigaction default_action = {};
+        default_action.sa_handler = SIG_DFL;
         if (sigaction(caught_signal, &default_action, 0) == 0) {
             raise(caught_signal);
         }
@@ -274,10 +273,10 @@ int make_pid_file(const char *restrict name) {
     return err;
 }
 
-void parse_arguments(int argc, char *argv[argc + 1],
+void parse_arguments(int argc, char *argv[],
         struct program_options *restrict options) {
     enum opt_char {
-        OPT_VERSION = UCHAR_MAX + 1,
+        OPT_VERSION = numeric_limits<unsigned char>::max() + 1,
         OPT_HELP,
     };
     static const struct option long_options[] = {

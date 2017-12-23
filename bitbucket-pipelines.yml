@@ -8,12 +8,11 @@
 ---
 image: kazssym/xllmnrd-builder
 pipelines:
-  bookmarks:
-    "**":
-      - step:
-          script:
-            - apt-get update
-            - apt-get install --assume-yes gettext autopoint libcppunit-dev
-            - autoreconf
-            - ./configure --prefix=/opt/xllmnrd
-            - make install dist
+  default:
+    - step:
+        script:
+          - apt-get update
+          - apt-get install --assume-yes gettext autopoint libcppunit-dev
+          - autoreconf
+          - ./configure --prefix=/opt/xllmnrd
+          - make install dist

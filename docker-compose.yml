@@ -11,6 +11,7 @@ services:
   builder:
     build: etc/builder
     image: kazssym/xllmnrd-builder
+    network_mode: host
     volumes:
       - .:/usr/src/xllmnrd
     working_dir: /usr/src/xllmnrd

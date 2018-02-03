@@ -362,7 +362,7 @@ int ifaddr_initialize(int sig) {
                     return 0;
                 }
                 assume_no_error(pthread_cond_destroy(&refresh_cond),
-                        "destroy a conditon");
+                        "destroy a condition");
             }
             destroy_mutex(&refresh_mutex);
         }

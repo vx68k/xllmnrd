@@ -11,7 +11,7 @@ it in the 'COPYING' file.
 
 For more information about XLLMNRD, visit <https://www.vx68k.org/xllmnrd>.
 
-[![(GNU General Public License v3.0 or later)](https://img.shields.io/badge/license-GPL--3.0+-blue.svg)][GPL-3.0]
+[![(GNU General Public License v3.0 or later)](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)][GPL-3.0]
 [![(Open Issues)](https://img.shields.io/bitbucket/issues/vx68k/xllmnrd.svg)][open issues]
 [![(Build Status)](https://linuxfront-functions.azurewebsites.net/api/bitbucket/build/vx68k/xllmnrd?branch=master)][pipelines]
 

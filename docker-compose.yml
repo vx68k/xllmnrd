@@ -10,7 +10,7 @@ version: "3"
 services:
   builder:
     build: etc/builder
-    image: kazssym/xllmnrd-builder
+    image: kazssym/xllmnrd-builder:latest
     network_mode: host
     volumes:
       - .:/usr/src/xllmnrd

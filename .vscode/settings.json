@@ -1,12 +1,11 @@
 {
     "files.exclude": {
-        "autom4te.cache": true,
+        "**/autom4te.cache": true,
         "**/.deps": true,
         "**/*.gmo": true,
-        "**/*.a": true,
         "**/*.o": true,
-        "**/*.orig": true,
         "**/*.rej": true,
+        "**/*.orig": true,
         "**/*~": true
     }
 }

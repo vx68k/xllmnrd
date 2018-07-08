@@ -8,8 +8,8 @@
 version: "2.1"
 services:
   builder:
-    build: etc/builder
-    image: kazssym/xllmnrd-builder:latest
+    build: etc/gcc
+    image: kazssym/xllmnrd-builder:gcc
     network_mode: host
     volumes:
       - .:/usr/src/xllmnrd

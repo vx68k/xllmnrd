@@ -13,5 +13,5 @@ services:
     network_mode: host
     volumes:
       - .:/usr/src/xllmnrd
-    working_dir: /usr/src/xllmnrd
-    command: make
+    working_dir: /usr/src/xllmnrd/build
+    command: make check

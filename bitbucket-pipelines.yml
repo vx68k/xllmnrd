@@ -13,6 +13,6 @@ pipelines:
   default:
     - step:
         script:
-          - autoreconf
+          - autoreconf -i
           - ./configure --prefix=/opt/xllmnrd
           - make check dist

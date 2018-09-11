@@ -15,3 +15,5 @@ services:
       - .:/usr/src/xllmnrd
     working_dir: /usr/src/xllmnrd/build
     command: make check
+      CFLAGS="-g -O2 -Wpedantic -Wall"
+      CXXFLAGS="-g -O2 -Wpedantic -Wall"

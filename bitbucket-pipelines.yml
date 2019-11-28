@@ -8,12 +8,19 @@
 # See <https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html>
 # for details.
 ---
+definitions:
+  steps:
+    - step: &test
+        name: Test
+        image: kazssym/xllmnrd-builder:gcc
+        script:
+          - autoreconf --install
+          - ./configure --prefix=/opt/xllmnrd
+          - make check
 pipelines:
   branches:
     master:
-      - step:
-          image: kazssym/xllmnrd-builder:gcc
-          script:
-            - autoreconf --install
-            - ./configure --prefix=/opt/xllmnrd
-            - make check
+      - step: *test
+  pull-requests:
+    "**":
+      - step: *test

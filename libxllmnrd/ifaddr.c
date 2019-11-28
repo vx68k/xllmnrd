@@ -41,6 +41,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h> /* abort */
+#include <stdint.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <assert.h>

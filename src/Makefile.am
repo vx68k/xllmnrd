@@ -9,8 +9,10 @@ AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
+if CPPUNIT
 check_PROGRAMS = ifaddr.test
 check_SCRIPTS = run
+endif
 
 xllmnrd_SOURCES = main.c responder.c llmnr.c
 xllmnrd_LDADD = ../libxllmnrd/libxllmnrd.a ../libgnu/libgnu.a

@@ -15,8 +15,12 @@ definitions:
         image: kazssym/xllmnrd-builder:gcc
         script:
           - autoreconf --install
-          - ./configure --prefix=/opt/xllmnrd
+          - mkdir -p _build
+          - cd _build
+          - ../configure --prefix=/opt/xllmnrd
           - make check
+        artifacts:
+          - _build/**
 pipelines:
   branches:
     master:

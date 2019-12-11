@@ -5,7 +5,9 @@
             "label": "Build",
             "type": "process",
             "command": "make",
-            "args": [],
+            "args": [
+                "check"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -15,16 +17,17 @@
             ]
         },
         {
-            "label": "Test",
+            "label": "Rebuild",
             "type": "process",
             "command": "make",
             "args": [
+                "clean",
                 "check"
             ],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "Clean",
@@ -33,7 +36,8 @@
             "args": [
                 "clean"
             ],
-            "group": "none"
+            "group": "none",
+            "problemMatcher": []
         }
     ]
 }

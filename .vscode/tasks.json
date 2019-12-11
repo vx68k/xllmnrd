@@ -9,13 +9,18 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "Test",
             "type": "process",
             "command": "make",
-            "args": ["check"],
+            "args": [
+                "check"
+            ],
             "group": {
                 "kind": "test",
                 "isDefault": true
@@ -25,7 +30,9 @@
             "label": "Clean",
             "type": "process",
             "command": "make",
-            "args": ["clean"],
+            "args": [
+                "clean"
+            ],
             "group": "none"
         }
     ]

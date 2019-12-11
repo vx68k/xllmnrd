@@ -5,28 +5,39 @@
             "label": "Build",
             "type": "process",
             "command": "make",
-            "args": [],
+            "args": [
+                "check"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
-            "label": "Test",
+            "label": "Rebuild",
             "type": "process",
             "command": "make",
-            "args": ["check"],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            }
+            "args": [
+                "clean",
+                "check"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
         },
         {
             "label": "Clean",
             "type": "process",
             "command": "make",
-            "args": ["clean"],
-            "group": "none"
+            "args": [
+                "clean"
+            ],
+            "group": "none",
+            "problemMatcher": []
         }
     ]
 }

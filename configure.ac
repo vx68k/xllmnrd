@@ -53,7 +53,8 @@ dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 AM_PATH_CPPUNIT([1.12.1])
-AM_CONDITIONAL([CPPUNIT], [test -n "$CPPUNIT_LIBS"])
+AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
+
 AC_CONFIG_FILES([Makefile libgnu/Makefile libxllmnrd/Makefile src/Makefile \
 lsb/Makefile po/Makefile.in])
 AC_OUTPUT

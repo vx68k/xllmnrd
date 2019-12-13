@@ -9,8 +9,10 @@ AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 sbin_PROGRAMS = xllmnrd
 man_MANS = xllmnrd.8
 
+if CPPUNIT
 check_PROGRAMS = ifaddr.test
 check_SCRIPTS = run
+endif
 
 noinst_HEADERS = responder.h llmnr.h llmnr_packet.h
 

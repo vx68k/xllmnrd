@@ -52,7 +52,9 @@ dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
 dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
-AM_PATH_CPPUNIT([1.12.1])
+PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
+AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
+
 AC_CONFIG_FILES([Makefile libgnu/Makefile libxllmnrd/Makefile src/Makefile \
 lsb/Makefile po/Makefile.in])
 AC_OUTPUT

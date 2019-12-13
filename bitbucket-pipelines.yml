@@ -1,15 +1,30 @@
 # bitbucket-pipelines.yml - Bitbucket Pipelines configuration
-# Copyright (C) 2016-2017 Kaz Nishimura
+# Copyright (C) 2016-2019 Kaz Nishimura
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved.  This file is offered as-is, without any warranty.
+
+# See <https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html>
+# for details.
 ---
-image: kazssym/xllmnrd-builder
-pipelines:
-  default:
-    - step:
+definitions:
+  steps:
+    - step: &test
+        name: Test
+        image: kazssym/xllmnrd-builder:gcc
         script:
-          - autoreconf
-          - ./configure --prefix=/opt/xllmnrd
-          - make check dist
+          - autoreconf --install
+          - mkdir -p _build
+          - cd _build
+          - ../configure --prefix=/opt/xllmnrd
+          - make check
+        artifacts:
+          - _build/**
+pipelines:
+  branches:
+    master:
+      - step: *test
+  pull-requests:
+    "**":
+      - step: *test

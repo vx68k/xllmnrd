@@ -10,8 +10,8 @@
 ---
 definitions:
   steps:
-    - step: &test
-        name: Test
+    - step: &build
+        name: Build
         image: kazssym/xllmnrd-builder:gcc
         script:
           - autoreconf --install
@@ -19,12 +19,13 @@ definitions:
           - cd _build
           - ../configure --prefix=/opt/xllmnrd
           - make check
+          - make dist
         artifacts:
           - _build/**
 pipelines:
   branches:
     master:
-      - step: *test
+      - step: *build
   pull-requests:
     "**":
-      - step: *test
+      - step: *build

@@ -19,13 +19,18 @@ definitions:
           - cd _build
           - ../configure --prefix=/opt/xllmnrd
           - make check
-          - make dist
+          - make dist VERSION="`sh ./config.status --version | sed -n '1s/^.* config\.status //p'`-snapshot.$BITBUCKET_BUILD_NUMBER"
         artifacts:
           - _build/**
+    - step: &upload
+        name: Upload to Bitbucket Cloud
+        script:
+          - sh ./upload.sh _build/*.tar.*
 pipelines:
   branches:
     master:
       - step: *build
+      - step: *upload
   pull-requests:
     "**":
       - step: *build

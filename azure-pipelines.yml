@@ -1,0 +1,142 @@
+# azure-pipelines.yml - configuration for Azure Pipelines
+# Copyright (C) 2020 Kaz Nishimura
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any warranty.
+---
+variables:
+  package.version: "3.0"
+trigger:
+  - master
+  - release/**
+  - feature/**
+stages:
+  - stage: Default
+    jobs:
+      - job: Build
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          - group: gpg
+        steps:
+          - task: DownloadSecureFile@1
+            name: gpgKeys
+            inputs:
+              secureFile: keys.asc
+          - bash: |
+              echo '$(gpg.passphrase)' | \
+              sh ./setupkeys.sh '$(gpgKeys.secureFilePath)'
+            displayName: Set up signing keys
+          - bash: |
+              sudo apt-get install -q --no-install-recommends \
+                  gettext \
+                  autopoint \
+                  texinfo \
+                  libcppunit-dev
+            displayName: Install build dependencies
+          - bash: |
+              autoreconf --install
+            displayName: Bootstrap
+          - bash: |
+              mkdir -p _build
+              cd _build
+              ../configure --disable-static
+            displayName: Configure
+          - bash: |
+              cd _build
+              make check
+            displayName: Build
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+          - bash: |
+              cd _build
+              make VERSION=$(package.version) dist || exit $?
+              mkdir -p ../dist
+              mv -f xllmnrd-$(package.version).tar.* ../dist
+            displayName: Make source archive
+          - publish: dist
+            artifact: dist
+  - stage: Test
+    jobs:
+      - job: Test
+        strategy:
+          matrix:
+            Ubuntu:
+              VM_IMAGE: ubuntu-latest
+              CC: gcc
+              CXX: g++
+            macOS:
+              VM_IMAGE: macOS-latest
+              CC: clang
+              CXX: clang++ -std=c++11
+        continueOnError: true
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: none
+          - download: current
+            artifact: dist
+          - bash: |
+              $CXX --version
+            displayName: Show versions
+          - bash: |
+              gzip -dc $(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz | \
+              tar -x
+            displayName: Unpack
+          - bash: |
+              cd xllmnrd-$(package.version)
+              ./configure --prefix=$(Build.BinariesDirectory)
+            displayName: Configure
+          - bash: |
+              cd xllmnrd-$(package.version)
+              make check
+            displayName: Build
+          - bash: |
+              cd xllmnrd-$(package.version)
+              make install installcheck
+            displayName: Install
+  - stage: Publish
+    dependsOn: Default
+    condition: >-
+      and(succeeded(),
+        startsWith(variables['Build.SourceBranch'], 'refs/heads/'))
+    jobs:
+      - job: UploadToBitbucket
+        displayName: Upload snapshot to Bitbucket
+        condition: >-
+          in(variables['Build.SourceBranch'], 'refs/heads/master')
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          - group: bitbucket
+          - name: repository
+            value: kazssym/xllmnrd
+        steps:
+          - checkout: none
+          - download: current
+            artifact: dist
+          - bash: |
+              curl --fail --user '$(bitbucket.username):$(bitbucket.password)' \
+                  --form 'files=@$(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz;
+              filename=xllmnrd-$(package.version)-snapshot$(Build.BuildNumber).tar.gz' \
+                  https://api.bitbucket.org/2.0/repositories/$(repository)/downloads
+            displayName: Upload
+      - job: Publish
+        condition: >-
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - checkout: none
+          - download: current
+            artifact: dist
+          - task: UniversalPackages@0
+            inputs:
+              command: publish
+              publishDirectory: $(Pipeline.Workspace)/dist
+              vstsFeedPublish: $(System.TeamProject)/xllmnrd
+              vstsFeedPackagePublish: xllmnrd-$(package.version)
+              versionOption: patch
+              packagePublishDescription: >
+                This package contains XLLMNRD $(package.version).

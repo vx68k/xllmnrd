@@ -81,17 +81,17 @@ stages:
               tar -x
             displayName: Unpack
           - bash: |
-              cd xllmnrd-$(package.version)
               ./configure --prefix='$(Build.BinariesDirectory)'
             displayName: Configure
+            workingDirectory: xllmnrd-$(package.version)
           - bash: |
-              cd xllmnrd-$(package.version)
               make check
             displayName: Build
+            workingDirectory: xllmnrd-$(package.version)
           - bash: |
-              cd xllmnrd-$(package.version)
               make install installcheck
             displayName: Install
+            workingDirectory: xllmnrd-$(package.version)
   - stage: Publish
     dependsOn: Default
     condition: >-

@@ -39,21 +39,17 @@ stages:
               autoreconf --install
             displayName: Bootstrap
           - bash: |
-              mkdir -p _build
-              cd _build
-              ../configure --disable-static
+              ./configure --disable-static
             displayName: Configure
           - bash: |
-              cd _build
               make check
             displayName: Build
           - task: PublishTestResults@2
             condition: succeededOrFailed()
           - bash: |
-              cd _build
               make VERSION='$(package.version)' dist || exit $?
-              mkdir -p ../dist
-              mv -f 'xllmnrd-$(package.version)'.* ../dist
+              mkdir -p dist
+              mv -f 'xllmnrd-$(package.version)'.* dist/
             displayName: Make source archive
           - publish: dist
             artifact: dist

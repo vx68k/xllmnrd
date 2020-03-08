@@ -51,9 +51,9 @@ stages:
             condition: succeededOrFailed()
           - bash: |
               cd _build
-              make VERSION=$(package.version) dist || exit $?
+              make VERSION='$(package.version)' dist || exit $?
               mkdir -p ../dist
-              mv -f xllmnrd-$(package.version).tar.* ../dist
+              mv -f 'xllmnrd-$(package.version)'.* ../dist
             displayName: Make source archive
           - publish: dist
             artifact: dist
@@ -81,12 +81,12 @@ stages:
               $CXX --version
             displayName: Show versions
           - bash: |
-              gzip -dc $(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz | \
+              gzip -dc '$(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz' | \
               tar -x
             displayName: Unpack
           - bash: |
               cd xllmnrd-$(package.version)
-              ./configure --prefix=$(Build.BinariesDirectory)
+              ./configure --prefix='$(Build.BinariesDirectory)'
             displayName: Configure
           - bash: |
               cd xllmnrd-$(package.version)
@@ -118,9 +118,9 @@ stages:
             artifact: dist
           - bash: |
               curl --fail --user '$(bitbucket.username):$(bitbucket.password)' \
-                  --form 'files=@$(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz;
-              filename=xllmnrd-$(package.version)-snapshot$(Build.BuildNumber).tar.gz' \
-                  https://api.bitbucket.org/2.0/repositories/$(repository)/downloads
+                  --form 'files=@"$(Pipeline.Workspace)/dist/xllmnrd-$(package.version).tar.gz";
+              filename="xllmnrd-$(package.version)-snapshot$(Build.BuildNumber).tar.gz"' \
+                  'https://api.bitbucket.org/2.0/repositories/$(repository)/downloads'
             displayName: Upload
       - job: Publish
         condition: >-

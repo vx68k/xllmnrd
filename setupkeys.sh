@@ -13,6 +13,6 @@ echo allow-preset-passphrase >> "$GNUPGHOME"/gpg-agent.conf || exit $?
 
 gpg --import --batch "$1" || exit $?
 
-keygrip=`gpg --list-secret-keys --with-colons "$GPG_USERNAME" | \
+keygrip=`gpg --list-secret-keys --with-colons "$GPG_KEYNAME" | \
     awk -F : '$1 == "grp" { print $10 }'`
 exec /usr/lib/gnupg/gpg-preset-passphrase --preset "$keygrip"

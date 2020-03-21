@@ -106,12 +106,9 @@ stages:
           - name: repository
             value: kazssym/xllmnrd
         steps:
-          - checkout: none
           - download: current
             artifact: dist
           - bash: |
-              curl --fail --user '$(bitbucket.username):$(bitbucket.password)' \
-                  --form 'files=@"$(Pipeline.Workspace)/dist/$(package.distName).tar.gz";
-              filename="$(package.distName)-snapshot$(Build.BuildNumber).tar.gz"' \
-                  'https://api.bitbucket.org/2.0/repositories/$(repository)/downloads'
+              sh ./upload.sh -u '$(bitbucket.username):$(bitbucket.password)' \
+                  -r '$(repository)' '$(Pipeline.Workspace)'/dist/*
             displayName: Upload

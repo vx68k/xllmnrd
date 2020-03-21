@@ -6,6 +6,12 @@
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved.  This file is offered as-is, without any warranty.
 
+# This script set up GnuPG keys for automated signing.
+#
+# The signing keys are imported from the file given as the first parameter.
+# It also reads a passphrase from the standard input for the key specified by
+# the 'GPG_KEYNAME' environment variable.
+
 export GNUPGHOME=${GNUPGHOME:-$HOME/.gnupg}
 
 mkdir -p -m go-rwx "$GNUPGHOME"

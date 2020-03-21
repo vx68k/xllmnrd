@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([XLLMNRD], [3.0],
+AC_INIT([XLLMNRD], [3-alpha.1],
 [https://bitbucket.org/vx68k/xllmnrd/issues], [xllmnrd],
 [https://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/responder.cpp])

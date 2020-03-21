@@ -91,16 +91,14 @@ stages:
               make install installcheck
             displayName: Install
             workingDirectory: $(package.distName)
-  - stage: Publish
+  - stage: Release
     dependsOn: Default
     condition: >-
       and(succeeded(),
-        startsWith(variables['Build.SourceBranch'], 'refs/heads/'))
+        startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
     jobs:
       - job: UploadToBitbucket
-        displayName: Upload snapshot to Bitbucket
-        condition: >-
-          in(variables['Build.SourceBranch'], 'refs/heads/master')
+        displayName: Upload to Bitbucket
         pool:
           vmImage: ubuntu-latest
         variables:

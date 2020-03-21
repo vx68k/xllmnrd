@@ -7,19 +7,27 @@
 # this notice are preserved.  This file is offered as-is, without any warranty.
 
 repository="$BITBUCKET_REPO_FULL_NAME"
+user="$USERNAME${PASSWORD+:$PASSWORD}"
 
-test -n "$USERNAME" || exit 0
+while getopts 'r:u:' opt; do
+    case "$opt" in
+    r) repository="$OPTARG" ;;
+    u) user="$OPTARG" ;;
+    '?') exit 64 ;;
+    esac
+done
+set -- _ "$@"
+shift "$OPTIND"
 
 if test -z "$repository"; then
-    echo "Repository not specified" >&2
+    echo "$0: repository not specified" >&2
     exit 1
 fi
 
+args=
 for file in "$@"; do
-    files="$files --form files=@\"$file\""
+    args="$args --fail --form files=@\"$file\""
 done
-test -n "$files" || exit 1
 
-exec curl --silent --show-error --user "$USERNAME${PASSWORD+:$PASSWORD}" \
-    --request POST $files \
-    https://api.bitbucket.org/2.0/repositories/$repository/downloads
+exec curl ${user:+--user "$user"} --request POST $args \
+    "https://api.bitbucket.org/2.0/repositories/$repository/downloads"

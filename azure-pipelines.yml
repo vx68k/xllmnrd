@@ -9,8 +9,8 @@ variables:
   package.version: "3.0"
 trigger:
   - master
-  - release/**
-  - feature/**
+  - release/*
+  - feature/*
 stages:
   - stage: Default
     jobs:

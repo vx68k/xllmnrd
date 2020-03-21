@@ -74,13 +74,12 @@ stages:
           - download: current
             artifact: dist
           - bash: |
-              $CXX --version
-            displayName: Show versions
-          - bash: |
               gzip -dc '$(Pipeline.Workspace)/dist/$(package.distName).tar.gz' | \
               tar -x
             displayName: Unpack
           - bash: |
+              $CC --version
+              $CXX --version
               ./configure --prefix='$(Build.BinariesDirectory)'
             displayName: Configure
             workingDirectory: $(package.distName)

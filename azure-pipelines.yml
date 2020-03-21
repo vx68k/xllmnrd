@@ -118,21 +118,3 @@ stages:
               filename="xllmnrd-$(package.version)-snapshot$(Build.BuildNumber).tar.gz"' \
                   'https://api.bitbucket.org/2.0/repositories/$(repository)/downloads'
             displayName: Upload
-      - job: Publish
-        condition: >-
-          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
-        pool:
-          vmImage: ubuntu-latest
-        steps:
-          - checkout: none
-          - download: current
-            artifact: dist
-          - task: UniversalPackages@0
-            inputs:
-              command: publish
-              publishDirectory: $(Pipeline.Workspace)/dist
-              vstsFeedPublish: $(System.TeamProject)/xllmnrd
-              vstsFeedPackagePublish: xllmnrd-$(package.version)
-              versionOption: patch
-              packagePublishDescription: >
-                This package contains XLLMNRD $(package.version).

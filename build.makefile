@@ -1,5 +1,5 @@
 # -*-Makefile-*- for maintenance jobs
-# Copyright (C) 2013  Kaz Nishimura
+# Copyright (C) 2013-2015 Kaz Nishimura
 
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
@@ -8,32 +8,36 @@
 
 # This file SHOULD NOT be contained in the source package.
 
-builddir = build
-prefix = /tmp/xllmnrd
+topdir := $(if $(WORKSPACE),$(WORKSPACE),$(shell pwd))
+srcdir = $(topdir)
+builddir = $(topdir)/_build
 
-AUTORECONF = autoreconf
 TAR = tar
 
 CFLAGS = -g -O2 -Wall -Wextra
+CXXFLAGS = -g -O2 -Wall -Wextra
 
-build: clean check dist
+build: clean all dist
 	hg status || true
 
-all check clean: $(builddir)/Makefile
-	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+all check dist distcheck: $(builddir)/Makefile
+	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' CXXFLAGS='$(CXXFLAGS)' $@
 
-dist distcheck: $(builddir)/Makefile update-ChangeLog
-	rm -f $(builddir)/xllmnrd-*.*
-	cd $(builddir) && $(MAKE) CFLAGS='$(CFLAGS)' $@
+$(builddir)/Makefile: $(builddir)/config.status config.h.in force
+	cd $(builddir) && ./config.status
 
-install: $(builddir)/Makefile
-	cd $(builddir) && \
-	  $(MAKE) CFLAGS='$(CFLAGS)' DESTDIR=$$(pwd)/root $@
+$(builddir)/config.status: configure build.makefile
+	mkdir -p $(builddir)
+	cd $(builddir) && $(srcdir)/configure --no-create
 
-$(builddir)/Makefile: stamp-configure build.makefile
-	test -d $(builddir) || mkdir $(builddir)
-	srcdir=$$(pwd); \
-	cd $(builddir) && $$srcdir/configure --prefix=$(prefix)
+configure: force
+	autoreconf --no-recursive
+
+clean:
+	rm -fr $(prefix)
+	rm -fr $(builddir)
+
+force:
 
 update-ChangeLog:
 	@rm -f ChangeLog-t
@@ -46,10 +50,4 @@ update-ChangeLog:
 	  rm -f ChangeLog-t; \
 	fi
 
-configure: stamp-configure
-stamp-configure: configure.ac
-	@rm -f $@
-	$(AUTORECONF) --install
-	touch $@
-
-.PHONY: build all check clean dist distcheck install image
+.PHONY: build all check dist distcheck clean force update-ChangeLog

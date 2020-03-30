@@ -23,6 +23,16 @@
 #include "llmnr.h"
 #include <netinet/in.h> /* in_port_t */
 
+#if __cplusplus
+#define BEGIN_C_LINKAGE extern "C" {
+#define END_C_LINKAGE }
+#else
+#define BEGIN_C_LINKAGE
+#define END_C_LINKAGE
+#endif
+
+BEGIN_C_LINKAGE
+
 /**
  * Initializes the responder object.
  * @param __port port number in the network byte order; if this value is 0,
@@ -55,5 +65,10 @@ int responder_run(void);
  * This function is atomic regarding signals.
  */
 extern void responder_terminate(void);
+
+END_C_LINKAGE
+
+#undef END_C_LINKAGE
+#undef BEGIN_C_LINKAGE
 
 #endif

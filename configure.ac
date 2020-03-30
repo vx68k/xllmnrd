@@ -1,8 +1,9 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([xllmnrd], [2.0], [https://bitbucket.org/kazssym/xllmnrd/issues/new],,
-[http://www.vx68k.org/xllmnrd])
-AC_CONFIG_SRCDIR([src/main.c])
+AC_INIT([XLLMNRD], [3-alpha.1],
+[https://bitbucket.org/vx68k/xllmnrd/issues], [xllmnrd],
+[https://www.vx68k.org/xllmnrd])
+AC_CONFIG_SRCDIR([src/responder.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
@@ -18,8 +19,9 @@ fi
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC_STDC
-AC_PROG_CXX
 gl_EARLY
+AC_PROG_CXX
+AC_PROG_RANLIB
 XX_PROG_CXX_STD11
 
 # Checks for libraries.
@@ -31,13 +33,14 @@ AC_DEFINE([_POSIX_C_SOURCE], [200809L],
 visible if available.])dnl
 AC_HEADER_STDBOOL
 AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
-net/if.h sysexits.h syslog.h sys/socket.h])
+net/if.h syslog.h sys/socket.h])
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT_VERSION([0.19.3])
 gl_INIT
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_C_INLINE
+dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.
+dnl Note: on the other hand, 'restrict' is not standard in C++ yet.
 AC_C_RESTRICT
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT8_T
@@ -45,11 +48,13 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions.
-# We have omitted [AC_FUNC_MALLOC] and [AC_FUNC_REALLOC] as we rely only on
-# the standard behavior.
+dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
+dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
-AM_PATH_CPPUNIT([1.12.1])
-AC_CONFIG_FILES([Makefile libgnu/Makefile src/Makefile test/Makefile \
+PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
+AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
+
+AC_CONFIG_FILES([Makefile libgnu/Makefile libxllmnrd/Makefile src/Makefile \
 lsb/Makefile po/Makefile.in])
 AC_OUTPUT

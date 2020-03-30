@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "check"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Rebuild",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "clean",
+                "check"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Clean",
+            "type": "process",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}

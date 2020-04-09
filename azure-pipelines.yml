@@ -1,0 +1,114 @@
+# azure-pipelines.yml - configuration for Azure Pipelines
+# Copyright (C) 2020 Kaz Nishimura
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any warranty.
+---
+variables:
+  package.distName: xllmnrd-3-alpha.2
+trigger:
+  - master
+  - release/*
+  - feature/*
+stages:
+  - stage: Default
+    jobs:
+      - job: Build
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          - group: gpg
+        steps:
+          - task: DownloadSecureFile@1
+            name: Keys
+            inputs:
+              secureFile: keys.asc
+          - bash: |
+              echo '$(gpg.passphrase)' | \
+              sh ./setupkeys.sh '$(Keys.secureFilePath)'
+            displayName: Set up signing keys
+          - bash: |
+              sudo apt-get install -q --no-install-recommends \
+                  gettext \
+                  autopoint \
+                  texinfo \
+                  libcppunit-dev
+            displayName: Install build dependencies
+          - bash: |
+              autoreconf --install
+            displayName: Bootstrap
+          - bash: |
+              ./configure --disable-static
+            displayName: Configure
+          - bash: |
+              make check
+            displayName: Build
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+          - bash: |
+              make dist || exit $?
+              mkdir -p dist
+              mv -f '$(package.distName)'.* dist/
+            displayName: Make source archive
+          - publish: dist
+            artifact: dist
+  - stage: Test
+    jobs:
+      - job: Test
+        strategy:
+          matrix:
+            Ubuntu:
+              VM_IMAGE: ubuntu-latest
+              CC: gcc
+              CXX: g++
+            macOS:
+              VM_IMAGE: macOS-latest
+              CC: clang
+              CXX: clang++ -std=c++11
+        continueOnError: true
+        pool:
+          vmImage: $(VM_IMAGE)
+        steps:
+          - checkout: none
+          - download: current
+            artifact: dist
+          - bash: |
+              gzip -dc '$(Pipeline.Workspace)/dist/$(package.distName).tar.gz' | \
+              tar -x
+            displayName: Unpack
+          - bash: |
+              $CC --version
+              $CXX --version
+              ./configure --prefix='$(Build.BinariesDirectory)'
+            displayName: Configure
+            workingDirectory: $(package.distName)
+          - bash: |
+              make check
+            displayName: Build
+            workingDirectory: $(package.distName)
+          - bash: |
+              make install installcheck
+            displayName: Install
+            workingDirectory: $(package.distName)
+  - stage: Release
+    dependsOn: Default
+    condition: >-
+      and(succeeded(),
+        startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+    jobs:
+      - job: UploadToBitbucket
+        displayName: Upload to Bitbucket
+        pool:
+          vmImage: ubuntu-latest
+        variables:
+          - group: bitbucket
+          - name: repository
+            value: kazssym/xllmnrd
+        steps:
+          - download: current
+            artifact: dist
+          - bash: |
+              sh ./upload.sh -u '$(bitbucket.username):$(bitbucket.password)' \
+                  -r '$(repository)' '$(Pipeline.Workspace)'/dist/*
+            displayName: Upload

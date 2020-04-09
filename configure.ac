@@ -50,6 +50,7 @@ AC_TYPE_UINT32_T
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
 dnl AM_PATH_CPPUNIT([1.12.1])
+PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
 AC_CONFIG_FILES([Makefile libgnu/Makefile src/Makefile test/Makefile \
 lsb/Makefile po/Makefile.in])
 AC_OUTPUT

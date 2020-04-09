@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013-2015 Kaz Nishimura
+ * Copyright (C) 2013-2020 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -53,7 +53,7 @@
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013-2015"
+#define COPYRIGHT_YEARS "2013-2020"
 #endif
 
 // Marks localization strings.
@@ -135,8 +135,15 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[]) {
-    locale::global(locale(""));
+int main(int argc, char *argv[])
+{
+    try {
+        locale::global(locale(""));
+    }
+    catch (runtime_error &error) {
+        fprintf(stderr, "error: failed to set locale: %s\n", error.what());
+    }
+
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
 

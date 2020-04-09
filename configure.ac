@@ -49,7 +49,7 @@ AC_TYPE_UINT32_T
 # the standard behavior.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
 
-AM_PATH_CPPUNIT([1.12.1])
+dnl AM_PATH_CPPUNIT([1.12.1])
 AC_CONFIG_FILES([Makefile libgnu/Makefile src/Makefile test/Makefile \
 lsb/Makefile po/Makefile.in])
 AC_OUTPUT

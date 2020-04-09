@@ -42,6 +42,7 @@
 #include <string.h>
 #include <stdlib.h> /* abort */
 #include <errno.h>
+#include <stdint.h> /* Fix for undefined SIZE_MAX */
 #include <stdbool.h>
 #include <assert.h>
 

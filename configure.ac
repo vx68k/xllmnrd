@@ -22,7 +22,6 @@ AC_PROG_CC_STDC
 gl_EARLY
 AC_PROG_CXX
 AC_PROG_RANLIB
-XX_PROG_CXX_STD11
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread])

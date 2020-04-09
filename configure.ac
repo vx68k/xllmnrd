@@ -18,10 +18,8 @@ fi
 
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_STDC
-gl_EARLY
 AC_PROG_CXX
-AC_PROG_RANLIB
+gl_EARLY
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread])

@@ -5,7 +5,7 @@ AC_INIT([xllmnrd], [2.0], [https://bitbucket.org/kazssym/xllmnrd/issues/new],,
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([no-define])
+AM_INIT_AUTOMAKE([no-define subdir-objects])
 
 # Define the unique package revision if 'config.revision' exists.
 if test -f $srcdir/config.revision; then

@@ -1,4 +1,5 @@
 syntax: regexp
+(^|/)run-test$
 (^|/)xllmnrd$
 (^|/)xllmnrd\.8$
 (^|/)libxllmnrd\.a$

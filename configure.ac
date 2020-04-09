@@ -5,6 +5,7 @@ AC_INIT([XLLMNRD], [3-alpha.2],
 [https://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([src/responder.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([no-define])
 

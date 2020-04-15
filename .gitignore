@@ -1,3 +1,5 @@
+TEST-*.xml
+test*.exec
 run-test
 xllmnrd
 xllmnrd.8

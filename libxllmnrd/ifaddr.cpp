@@ -1093,22 +1093,24 @@ int ifaddr_refresh(void) {
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
-        *nlmsg = (struct nlmsghdr) {
+
+        const struct nlmsghdr hdr = {
             NLMSG_LENGTH(sizeof (struct ifaddrmsg)), // .nlmsg_len
             RTM_GETADDR,                             // .nlmsg_type
             NLM_F_REQUEST | NLM_F_ROOT,              // .nlmsg_flags
             0,                                       // .nlmsg_seq
             0,                                       // .nlmsg_pid
         };
+        *nlmsg = hdr;
 
-        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
-        *ifa = (struct ifaddrmsg) {
+        const struct ifaddrmsg data = {
             AF_UNSPEC, // .ifa_family
             0,         // .ifa_prefixlen
             0,         // .ifa_flags
             0,         // .ifa_scope
             0,         // .ifa_index
         };
+        *(struct ifaddrmsg *) NLMSG_DATA(nlmsg) = data;
 
         ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);
         if (send_len < 0) {

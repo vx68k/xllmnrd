@@ -108,11 +108,11 @@ static inline int open_udp(in_port_t port, int *fd_out) {
         err = set_udp_options(fd);
         if (err == 0) {
             const struct sockaddr_in6 addr = {
-                .sin6_family = AF_INET6,
-                .sin6_port = port,
-                .sin6_flowinfo = 0,
-                .sin6_addr = in6addr_any,
-                .sin6_scope_id = 0,
+                AF_INET6,    // .sin6_family
+                port,        // .sin6_port
+                0,           // .sin6_flowinfo
+                in6addr_any, // .sin6_addr
+                0,           // .sin6_scode_id
             };
             if (bind(fd, (const struct sockaddr *) &addr,
                     sizeof (struct sockaddr_in6)) == 0) {
@@ -291,8 +291,8 @@ int responder_run(void) {
         unsigned char packet[1500]; // TODO: Handle jumbo packet.
         struct sockaddr_in6 sender;
         struct in6_pktinfo pktinfo = {
-            .ipi6_addr = IN6ADDR_ANY_INIT,
-            .ipi6_ifindex = 0,
+            IN6ADDR_ANY_INIT, // .ipi6_addr
+            0,                // .ipi6_ifindex
         };
         ssize_t packet_size = responder_receive_udp(udp_fd, packet, sizeof packet,
                 &sender, &pktinfo);
@@ -330,8 +330,8 @@ void responder_handle_ifaddr_change(
     if (responder_initialized()) {
         if (change->ifindex != 0) {
             const struct ipv6_mreq mr = {
-                .ipv6mr_multiaddr = in6addr_mc_llmnr,
-                .ipv6mr_interface = change->ifindex,
+                in6addr_mc_llmnr, // .ipv6mr_multiaddr
+                change->ifindex,  // .ipv6mr_interface
             };
 
             char ifname[IF_NAMESIZE];
@@ -371,18 +371,19 @@ ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,
         struct in6_pktinfo *restrict pktinfo) {
     struct iovec iov[1] = {
         {
-            .iov_base = buf,
-            .iov_len = bufsize,
+            buf,     // .iov_base
+            bufsize, // .iov_len
         },
     };
     unsigned char cmsgbuf[128];
     struct msghdr msg = {
-        .msg_name = sender,
-        .msg_namelen = sizeof *sender,
-        .msg_iov = iov,
-        .msg_iovlen = 1,
-        .msg_control = cmsgbuf,
-        .msg_controllen = sizeof cmsgbuf,
+        sender,         // msg_name
+        sizeof *sender, // msg_namelen
+        iov,            // msg_iov
+        1,              // msg_iovlen
+        cmsgbuf,        // msg_control
+        sizeof cmsgbuf, // msg_controllen
+        0,              // msg_flags
     };
     ssize_t recv_size = recvmsg(sock, &msg, 0);
     if (recv_size > 0) {

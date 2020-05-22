@@ -704,7 +704,11 @@ void ifaddr_add_addr_v4(unsigned int index,
             abort(); // TODO: Think later.
         }
         *i = (struct ifaddr_interface) {
-            .index = index,
+            index,
+            0,
+            NULL,
+            0,
+            NULL,
         };
         ++interfaces_size;
     }
@@ -782,7 +786,11 @@ void ifaddr_add_addr_v6(unsigned int index,
             abort(); // TODO: Think later.
         }
         *i = (struct ifaddr_interface) {
-            .index = index,
+            index,
+            0,
+            NULL,
+            0,
+            NULL,
         };
         ++interfaces_size;
     }
@@ -1091,14 +1099,20 @@ int ifaddr_refresh(void) {
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
         *nlmsg = (struct nlmsghdr) {
-            .nlmsg_len = NLMSG_LENGTH(sizeof (struct ifaddrmsg)),
-            .nlmsg_type = RTM_GETADDR,
-            .nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT,
+            NLMSG_LENGTH(sizeof (struct ifaddrmsg)), // .nlmsg_len
+            RTM_GETADDR,                             // .nlmsg_type
+            NLM_F_REQUEST | NLM_F_ROOT,              // .nlmsg_flags
+            0,                                       // .nlmsg_seq
+            0,                                       // .nlmsg_pid
         };
 
         struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
         *ifa = (struct ifaddrmsg) {
-            .ifa_family = AF_UNSPEC,
+            AF_UNSPEC, // .ifa_family
+            0,         // .ifa_prefixlen
+            0,         // .ifa_flags
+            0,         // .ifa_scope
+            0,         // .ifa_index
         };
 
         ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);

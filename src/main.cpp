@@ -147,9 +147,7 @@ int main(int argc, char *argv[])
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
 
-    struct program_options options = {
-        .foreground = false,
-    };
+    struct program_options options = {};
     parse_arguments(argc, argv, &options);
 
     // Sets the locale back to the default to keep logs untranslated.

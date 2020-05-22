@@ -10,7 +10,8 @@
                 "${workspaceFolder}/libgnu"
             ],
             "defines": [
-                "HAVE_CONFIG_H"
+                "HAVE_CONFIG_H",
+                "LOCALEDIR=\"/usr/share/locale\""
             ],
             "cStandard": "c11",
             "cppStandard": "c++11",

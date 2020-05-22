@@ -291,7 +291,7 @@ void parse_arguments(int argc, char *argv[],
         {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
-        {NULL},
+        {NULL, no_argument, NULL, 0},
     };
 
     int opt;

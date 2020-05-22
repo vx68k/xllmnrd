@@ -121,6 +121,13 @@ struct ifaddr_interface {
     struct in_addr *addr_v4;
     size_t addr_v6_size;
     struct in6_addr *addr_v6;
+
+    ifaddr_interface() = default;
+
+    explicit ifaddr_interface(unsigned int index):
+        index {index}, addr_v4_size {}, addr_v4 {}, addr_v6_size {}, addr_v6 {}
+    {
+    }
 };
 
 #if IFADDR_CPLUSPLUS
@@ -703,13 +710,7 @@ void ifaddr_add_addr_v4(unsigned int index,
         if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
-        *i = (struct ifaddr_interface) {
-            index,
-            0,
-            NULL,
-            0,
-            NULL,
-        };
+        *i = ifaddr_interface(index);
         ++interfaces_size;
     }
 
@@ -785,13 +786,7 @@ void ifaddr_add_addr_v6(unsigned int index,
         if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
-        *i = (struct ifaddr_interface) {
-            index,
-            0,
-            NULL,
-            0,
-            NULL,
-        };
+        *i = ifaddr_interface(index);
         ++interfaces_size;
     }
 

@@ -931,10 +931,10 @@ void *ifaddr_run(void *data) {
                 return data;
             }
         } else {
-            unsigned char buf[recv_size];
-            ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
+            std::vector<unsigned char> buf(recv_size);
+            ssize_t recv_len = recv(rtnetlink_fd, buf.data(), recv_size, 0);
             if (recv_len >= 0) {
-                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf.data();
                 assert(recv_len == recv_size);
                 ifaddr_decode_nlmsg(nlmsg, recv_len);
             } else if (errno != EINTR) {

@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vector>
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
@@ -465,20 +466,20 @@ int responder_respond_for_name(unsigned int index,
         }
     }
 
-    uint8_t packet[packet_size];
-    memcpy(packet, query, query_size);
+    std::vector<uint8_t> packet(packet_size);
+    memcpy(packet.data(), query, query_size);
 
-    struct llmnr_header *response = (struct llmnr_header *) packet;
+    struct llmnr_header *response = (struct llmnr_header *) packet.data();
     response->flags = htons(LLMNR_HEADER_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
     response->arcount = htons(0);
 
-    uint8_t *packet_end = packet + query_size;
+    uint8_t *packet_end = packet.data() + query_size;
     if (number_of_addr_v6 != 0) {
-        struct in6_addr addr_v6[number_of_addr_v6];
+        std::vector<struct in6_addr> addr_v6(number_of_addr_v6);
         size_t n = 0;
-        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6, &n);
+        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6.data(), &n);
         if (e == 0 && n < number_of_addr_v6) {
             // The number of interface addresses changed.
             // TODO: We should log it.
@@ -487,7 +488,7 @@ int responder_respond_for_name(unsigned int index,
 
         for (size_t i = 0; i != number_of_addr_v6; ++i) {
             // TODO: Clean up the following code.
-            if (packet_end == packet + query_size) {
+            if (packet_end == packet.data() + query_size) {
                 // The first must be a name.
                 memcpy(packet_end, host_name, 1 + host_name[0]);
                 packet_end += 1 + host_name[0];
@@ -519,7 +520,7 @@ int responder_respond_for_name(unsigned int index,
     }
 
     // Sends the response.
-    if (sendto(udp_fd, packet, packet_end - packet, 0,
+    if (sendto(udp_fd, packet.data(), packet_end - packet.data(), 0,
             reinterpret_cast<const struct sockaddr *>(sender),
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;

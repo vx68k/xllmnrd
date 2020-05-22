@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vector>
 #include <locale>
 #include <limits>
 #include <cstring>
@@ -250,9 +251,9 @@ int set_default_host_name(void) {
         host_name_max = 255;
     }
 
-    char host_name[host_name_max + 1];
-    if (gethostname(host_name, host_name_max + 1) == 0) {
-        responder_set_host_name(host_name);
+    std::vector<char> host_name(host_name_max + 1);
+    if (gethostname(host_name.data(), host_name_max + 1) == 0) {
+        responder_set_host_name(host_name.data());
         return 0;
     }
 

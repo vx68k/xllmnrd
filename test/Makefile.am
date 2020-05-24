@@ -23,7 +23,7 @@ test_ifaddr_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \
 $(CPPUNIT_LIBS)
 
 run-test: $(srcdir)/run-test.in $(top_builddir)/config.status
-	cd $(top_builddir) && $(SHELL) ./config.status --file=$(srcdir)/$@
+	cd $(top_builddir) && $(SHELL) ./config.status --file=$(subdir)/$@
 	chmod +x $@
 
 clean-local::

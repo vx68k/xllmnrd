@@ -36,6 +36,8 @@
 
 namespace xllmnrd
 {
+    using std::size_t;
+
     /// Interface manager class based on the Linux RTNETLINK socket.
     class rtnetlink_ifaddr_manager: public ifaddr_manager
     {
@@ -65,10 +67,10 @@ namespace xllmnrd
 
     protected:
         void add_interface_address(unsigned int index, int family,
-            const void *address, std::size_t address_size);
+            const void *address, size_t address_size);
 
         void remove_interface_address(unsigned int index, int family,
-            const void *address, std::size_t address_size);
+            const void *address, size_t address_size);
 
     protected:
         // Finishes the refresh of the interface addresses.
@@ -78,7 +80,7 @@ namespace xllmnrd
         void receive_netlink(int fd, volatile std::atomic_bool *stopped);
 
         // Decodes a NETLINK message.
-        void decode_nlmsg(const void *message, std::size_t size);
+        void decode_nlmsg(const void *message, size_t size);
 
         // Handles a NETLINK error message.
         void handle_nlmsgerr(const nlmsghdr *nlmsg);

@@ -161,10 +161,12 @@ static int rtnetlink_fd;
  */
 static pthread_mutex_t if_mutex;
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Pointer to the interface change handler.
  */
 static ifaddr_change_handler if_change_handler;
+#endif /* !IFADDR_CPLUSPLUS */
 
 /**
  * Table of interfaces.
@@ -203,6 +205,11 @@ static pthread_t worker_thread;
 static volatile sig_atomic_t terminated;
 #endif
 
+/*
+ * Declarations for static functions.
+ */
+
+#if !IFADDR_CPLUSPLUS
 /**
  * Adds an IPv4 address to an interface.
  * @param __index interface index.
@@ -235,11 +242,6 @@ static void ifaddr_add_addr_v6(unsigned int __index,
 static void ifaddr_remove_addr_v6(unsigned int __index,
         const struct in6_addr *__addr);
 
-/*
- * Declarations for static functions.
- */
-
-#if !IFADDR_CPLUSPLUS
 static void *ifaddr_run(void *__data);
 
 /**
@@ -254,7 +256,6 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
  * @param __nlmsg pointer to the netlink message
  */
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
-#endif
 
 /**
  * Handles a sequence of RTNETLINK attributes for an IPv4 ifaddrmsg.
@@ -275,6 +276,7 @@ static void ifaddr_v4_handle_rtattrs(unsigned int __nlmsg_type,
  */
 static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
         unsigned int __index, const struct rtattr *__rta, size_t __rta_size);
+#endif
 
 /*
  * Definitions for in-line functions.
@@ -474,6 +476,7 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     return 0;
 }
 
+#if !IFADDR_CPLUSPLUS
 void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     lock_mutex(&if_mutex);
@@ -640,6 +643,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
 
     unlock_mutex(&if_mutex);
 }
+#endif /* !IFADDR_CPLUSPLUS */
 
 int ifaddr_start(void) {
     if (!ifaddr_initialized()) {
@@ -790,7 +794,6 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
         }
     }
 }
-#endif
 
 void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         const struct rtattr *restrict rta, size_t rta_size) {
@@ -837,6 +840,7 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         rta = RTA_NEXT(rta, rta_size);
     }
 }
+#endif
 
 int ifaddr_refresh(void) {
     if (!ifaddr_initialized()) {

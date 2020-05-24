@@ -89,7 +89,7 @@ rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager()
 
 void rtnetlink_ifaddr_manager::finish_refresh()
 {
-    unique_lock<mutex> lock(refresh_mutex);
+    std::unique_lock<std::mutex> lock(refresh_mutex);
 
     refresh_in_progress = false;
     refresh_finished.notify_all();
@@ -103,7 +103,7 @@ void rtnetlink_ifaddr_manager::run()
 }
 
 void rtnetlink_ifaddr_manager::receive_netlink(int fd,
-        volatile atomic_bool *stopped)
+        volatile std::atomic_bool *stopped)
 {
     // Gets the required buffer size.
     ssize_t recv_size = recv(fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
@@ -111,16 +111,16 @@ void rtnetlink_ifaddr_manager::receive_netlink(int fd,
         if (recv_size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
-            throw system_error(errno, generic_category());
+            throw std::system_error(errno, std::generic_category());
         }
 
-        vector<unsigned char> buffer(recv_size);
+        std::vector<unsigned char> buffer(recv_size);
         // This must not block.
         recv_size = recv(fd, buffer.data(), recv_size, 0);
         if (recv_size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
-            throw system_error(errno, generic_category());
+            throw std::system_error(errno, std::generic_category());
         }
 
         decode_nlmsg(buffer.data(), recv_size);
@@ -255,7 +255,7 @@ void rtnetlink_ifaddr_manager::remove_interface_address(unsigned int index,
 
 void rtnetlink_ifaddr_manager::refresh()
 {
-    unique_lock<mutex> lock(refresh_mutex);
+    std::unique_lock<std::mutex> lock(refresh_mutex);
 
     if (!refresh_in_progress) {
         interface_addresses.clear();
@@ -275,10 +275,10 @@ void rtnetlink_ifaddr_manager::refresh()
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));
-            throw system_error(errno, generic_category());
+            throw std::system_error(errno, std::generic_category());
         } else if (send_size != ssize_t(nl->nlmsg_len)) {
             syslog(LOG_CRIT, "RTNETLINK request truncated");
-            throw runtime_error("RTNETLINK request truncated");
+            throw std::runtime_error("RTNETLINK request truncated");
         }
 
         refresh_in_progress = true;
@@ -287,14 +287,14 @@ void rtnetlink_ifaddr_manager::refresh()
 
 void rtnetlink_ifaddr_manager::start()
 {
-    lock_guard<mutex> lock(worker_mutex);
+    std::lock_guard<std::mutex> lock(worker_mutex);
 
     if (!worker_thread.joinable()) {
         // Implementation note:
         // <code>operator=</code> of volatile atomic classes are somehow
         // deleted on GCC 4.7.
         worker_stopped.store(false);
-        worker_thread = thread([this]() {
+        worker_thread = std::thread([this]() {
             run();
         });
 
@@ -304,7 +304,7 @@ void rtnetlink_ifaddr_manager::start()
 
 void rtnetlink_ifaddr_manager::stop()
 {
-    lock_guard<mutex> lock(worker_mutex);
+    std::lock_guard<std::mutex> lock(worker_mutex);
 
     // Implementation note:
     // <code>operator=</code> of volatile atomic classes are somehow deleted

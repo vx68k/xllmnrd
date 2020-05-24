@@ -90,8 +90,8 @@ namespace xllmnrd
 
         // Addresses assigned to an interface.
         struct addresses {
-            forward_list<struct in_addr> address_v4;
-            forward_list<struct in6_addr> address_v6;
+            std::forward_list<struct in_addr> address_v4;
+            std::forward_list<struct in6_addr> address_v6;
 
             // Returns true if there are no addresses.
             bool empty() const noexcept {

@@ -1,4 +1,4 @@
-## Process this file with automake to produce a Makefile.in.
+## Process this file with automake to produce Makefile.in.
 
 AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\" -I$(top_srcdir)/libxllmnrd \
 -I$(top_builddir)/libgnu -I$(top_srcdir)/libgnu

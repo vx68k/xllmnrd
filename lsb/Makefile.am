@@ -1,4 +1,4 @@
-## Process this file with automake to produce a Makefile.in.
+## Process this file with automake to produce Makefile.in.
 
 noinst_SCRIPTS = xllmnrd
 

@@ -13,7 +13,7 @@ check_SCRIPTS = run-test
 
 EXEC_TEST_LOG_COMPILER = $(SHELL) ./run-test
 TESTS += $(check_PROGRAMS)
-CLEANFILES += $(check_SCRIPTS) test-reports/*
+CLEANFILES += $(check_SCRIPTS)
 endif
 
 noinst_HEADERS = xmlreport.h
@@ -25,3 +25,6 @@ $(CPPUNIT_LIBS)
 run-test: $(srcdir)/run-test.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status --file=$(srcdir)/$@
 	chmod +x $@
+
+clean-local::
+	rm -rf test-reports

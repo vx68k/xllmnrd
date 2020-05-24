@@ -55,8 +55,8 @@
 
 using xllmnrd::ifaddr_change;
 using xllmnrd::ifaddr_change_handler;
-using xllmnrd::ifaddr_manager;
-using xllmnrd::rtnetlink_ifaddr_manager;
+using xllmnrd::interface_manager;
+using xllmnrd::rtnetlink_interface_manager;
 using namespace std;
 
 /**
@@ -137,7 +137,7 @@ struct ifaddr_interface {
 
 #if IFADDR_CPLUSPLUS
 // Pointer to the static interface address manager if initialized.
-static shared_ptr<ifaddr_manager> manager;
+static shared_ptr<interface_manager> manager;
 #else
 /**
  * True if this module has been initialized.
@@ -382,7 +382,7 @@ int ifaddr_initialize(int sig) {
 
 #if IFADDR_CPLUSPLUS
     try {
-        manager = make_shared<rtnetlink_ifaddr_manager>();
+        manager = make_shared<rtnetlink_interface_manager>();
     } catch (const system_error &error) {
         return error.code().value();
     }

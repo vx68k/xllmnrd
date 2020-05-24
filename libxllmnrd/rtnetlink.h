@@ -39,7 +39,7 @@ namespace xllmnrd
     using std::size_t;
 
     /// Interface manager class based on the Linux RTNETLINK socket.
-    class rtnetlink_ifaddr_manager: public ifaddr_manager
+    class rtnetlink_interface_manager: public interface_manager
     {
     private:
         /// File descriptor for the RTNETLINK socket.
@@ -50,14 +50,12 @@ namespace xllmnrd
         static int open_rtnetlink(const std::shared_ptr<posix> &os);
 
     public:
-        rtnetlink_ifaddr_manager();
+        rtnetlink_interface_manager();
 
-        explicit rtnetlink_ifaddr_manager(const std::shared_ptr<posix> &os);
-
-        rtnetlink_ifaddr_manager(const rtnetlink_ifaddr_manager &) = delete;
+        explicit rtnetlink_interface_manager(const std::shared_ptr<posix> &os);
 
     public:
-        virtual ~rtnetlink_ifaddr_manager();
+        virtual ~rtnetlink_interface_manager();
 
     public:
         void run();

@@ -26,16 +26,16 @@
 
 using namespace xllmnrd;
 
-ifaddr_manager::ifaddr_manager(std::shared_ptr<posix> os)
+interface_manager::interface_manager(std::shared_ptr<posix> os)
         : os(os)
 {
 }
 
-ifaddr_manager::~ifaddr_manager()
+interface_manager::~interface_manager()
 {
 }
 
-void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
+void interface_manager::set_change_handler(ifaddr_change_handler change_handler,
         ifaddr_change_handler *old_change_handler)
 {
     std::lock_guard<decltype(object_mutex)> lock(object_mutex);

@@ -35,7 +35,8 @@
 
 using namespace xllmnrd;
 
-int rtnetlink_ifaddr_manager::open_rtnetlink(const std::shared_ptr<posix> &os)
+int rtnetlink_interface_manager::open_rtnetlink(
+    const std::shared_ptr<posix> &os)
 {
     int rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
@@ -65,18 +66,18 @@ int rtnetlink_ifaddr_manager::open_rtnetlink(const std::shared_ptr<posix> &os)
     return rtnetlink;
 }
 
-rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager()
-    : rtnetlink_ifaddr_manager(std::make_shared<posix>())
+rtnetlink_interface_manager::rtnetlink_interface_manager()
+    : rtnetlink_interface_manager(std::make_shared<posix>())
 {
 }
 
-rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(
+rtnetlink_interface_manager::rtnetlink_interface_manager(
     const std::shared_ptr<posix> &os)
-    : ifaddr_manager(os), rtnetlink {open_rtnetlink(os)}
+    : interface_manager(os), rtnetlink {open_rtnetlink(os)}
 {
 }
 
-rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager()
+rtnetlink_interface_manager::~rtnetlink_interface_manager()
 {
     stop();
 
@@ -87,7 +88,7 @@ rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager()
     }
 }
 
-void rtnetlink_ifaddr_manager::finish_refresh()
+void rtnetlink_interface_manager::finish_refresh()
 {
     std::unique_lock<std::mutex> lock(refresh_mutex);
 
@@ -95,14 +96,14 @@ void rtnetlink_ifaddr_manager::finish_refresh()
     refresh_finished.notify_all();
 }
 
-void rtnetlink_ifaddr_manager::run()
+void rtnetlink_interface_manager::run()
 {
     while (!worker_stopped) {
         receive_netlink(rtnetlink, &worker_stopped);
     }
 }
 
-void rtnetlink_ifaddr_manager::receive_netlink(int fd,
+void rtnetlink_interface_manager::receive_netlink(int fd,
         volatile std::atomic_bool *stopped)
 {
     // Gets the required buffer size.
@@ -127,7 +128,7 @@ void rtnetlink_ifaddr_manager::receive_netlink(int fd,
     }
 }
 
-void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size)
+void rtnetlink_interface_manager::decode_nlmsg(const void *data, size_t size)
 {
     auto nlmsg = static_cast<const nlmsghdr *>(data);
 
@@ -167,7 +168,7 @@ void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size)
     }
 }
 
-void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_nlmsgerr(const nlmsghdr *nlmsg)
 {
     auto &&err = static_cast<const struct nlmsgerr *>(NLMSG_DATA(nlmsg));
     if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (struct nlmsgerr))) {
@@ -175,7 +176,7 @@ void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg)
     }
 }
 
-void rtnetlink_ifaddr_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
 {
     // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
     // aligned.
@@ -213,7 +214,7 @@ void rtnetlink_ifaddr_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
     }
 }
 
-void rtnetlink_ifaddr_manager::add_interface_address(unsigned int index,
+void rtnetlink_interface_manager::add_interface_address(unsigned int index,
     int family, const void *address, std::size_t address_size)
 {
     // TODO: Implement this function.
@@ -233,7 +234,7 @@ void rtnetlink_ifaddr_manager::add_interface_address(unsigned int index,
     }
 }
 
-void rtnetlink_ifaddr_manager::remove_interface_address(unsigned int index,
+void rtnetlink_interface_manager::remove_interface_address(unsigned int index,
     int family, const void *address, std::size_t address_size)
 {
     // TODO: Implement this function.
@@ -253,7 +254,7 @@ void rtnetlink_ifaddr_manager::remove_interface_address(unsigned int index,
     }
 }
 
-void rtnetlink_ifaddr_manager::refresh()
+void rtnetlink_interface_manager::refresh()
 {
     std::unique_lock<std::mutex> lock(refresh_mutex);
 
@@ -285,7 +286,7 @@ void rtnetlink_ifaddr_manager::refresh()
     }
 }
 
-void rtnetlink_ifaddr_manager::start()
+void rtnetlink_interface_manager::start()
 {
     std::lock_guard<std::mutex> lock(worker_mutex);
 
@@ -302,7 +303,7 @@ void rtnetlink_ifaddr_manager::start()
     }
 }
 
-void rtnetlink_ifaddr_manager::stop()
+void rtnetlink_interface_manager::stop()
 {
     std::lock_guard<std::mutex> lock(worker_mutex);
 

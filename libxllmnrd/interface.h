@@ -29,9 +29,11 @@ namespace xllmnrd
     using std::size_t;
 
     // Interface address change.
-    struct ifaddr_change {
+    struct ifaddr_change
+    {
 
-        enum change_type {
+        enum change_type
+        {
             ADDED,
             REMOVED,
         };
@@ -43,18 +45,24 @@ namespace xllmnrd
     // Pointer to the interface address change handler.
     typedef void (*ifaddr_change_handler)(const ifaddr_change *);
 
-    // Abstract interface address manager.
-    class ifaddr_manager
+    /// Abstract interface manager class.
+    class interface_manager
     {
     public:
         // Constructs this object.
         // <var>interrupt_signal</var> is the signal number used to interrupt
         // blocking system calls and its handler is expected to do nothing.
-        explicit ifaddr_manager(std::shared_ptr<posix> os = std::make_shared<posix>());
+        explicit interface_manager(std::shared_ptr<posix> os = std::make_shared<posix>());
+
+        // The copy constructor is deleted.
+        interface_manager(const interface_manager &) = delete;
+
+        // The copy assignment operator is deleted.
+        void operator =(const interface_manager &) = delete;
 
     public:
         // Destructs this object and cleans up the allocated resources.
-        virtual ~ifaddr_manager();
+        virtual ~interface_manager();
 
     public:
         // Set the interface address change handler that is called on each

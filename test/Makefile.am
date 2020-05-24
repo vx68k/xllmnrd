@@ -3,16 +3,15 @@
 AM_CPPFLAGS = -DTEST -I$(top_srcdir)/libxllmnrd -I$(top_builddir)/libxllmnrd
 AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
-TEST_EXTENSIONS =
+TEST_EXTENSIONS = .exec
 TESTS =
 CLEANFILES =
 
 if CPPUNIT
 check_PROGRAMS = test_ifaddr.exec
 check_SCRIPTS = run-test
-EXEC_TEST_LOG_COMPILER = ./run-test
 
-TEST_EXTENSIONS += .exec
+EXEC_TEST_LOG_COMPILER = $(SHELL) ./run-test
 TESTS += $(check_PROGRAMS)
 CLEANFILES += $(check_SCRIPTS) test-reports/*
 endif

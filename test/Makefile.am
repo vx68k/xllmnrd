@@ -1,6 +1,6 @@
 ## Process this file with automake to produce a Makefile.in.
 
-AM_CPPFLAGS = -DTEST -I$(top_srcdir)/libxllmnrd
+AM_CPPFLAGS = -DTEST -I$(top_srcdir)/libxllmnrd -I$(top_builddir)/libxllmnrd
 AM_CXXFLAGS = $(CPPUNIT_CFLAGS)
 
 TEST_EXTENSIONS =

@@ -22,7 +22,8 @@
 #include "posix.h"
 #include <netinet/in.h>
 #include <mutex>
-#include <memory>
+#include <unordered_map>
+#include <cstddef>
 
 namespace xllmnrd
 {
@@ -47,10 +48,18 @@ namespace xllmnrd
     /// Abstract interface manager class.
     class interface_manager
     {
+    protected:
+        struct interface
+        {
+        };
+
     private:
         std::recursive_mutex object_mutex;
 
         ifaddr_change_handler change_handler = nullptr;
+
+        /// Map from interface indices to interfaces.
+        std::unordered_map<unsigned int, interface> _interfaces;
 
     protected:
         /// Constructs an interface manager.
@@ -86,6 +95,10 @@ namespace xllmnrd
         virtual void start()
         {
         }
+
+    protected:
+        /// Removes all the interfaces.
+        void remove_interfaces();
     };
 }
 

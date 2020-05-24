@@ -32,6 +32,7 @@ interface_manager::interface_manager()
 
 interface_manager::~interface_manager()
 {
+    remove_interfaces();
 }
 
 void interface_manager::set_change_handler(ifaddr_change_handler change_handler,
@@ -43,4 +44,10 @@ void interface_manager::set_change_handler(ifaddr_change_handler change_handler,
         *old_change_handler = this->change_handler;
     }
     this->change_handler = change_handler;
+}
+
+void interface_manager::remove_interfaces()
+{
+    // TODO: Implement this function.
+    _interfaces.clear();
 }

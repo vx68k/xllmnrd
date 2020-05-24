@@ -19,7 +19,7 @@
 #ifndef RTNETLINK_H
 #define RTNETLINK_H 1
 
-#include "ifaddr.h"
+#include "interface.h"
 #include "posix.h"
 
 #if HAVE_LINUX_RTNETLINK_H

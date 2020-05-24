@@ -52,7 +52,9 @@
 #define IFADDR_CPLUSPLUS 0
 #endif
 
-using namespace xllmnrd;
+using xllmnrd::ifaddr_change;
+using xllmnrd::ifaddr_change_handler;
+using namespace std;
 
 /**
  * Terminates the program abnormally if an error is detected.
@@ -364,23 +366,6 @@ static inline void ifaddr_complete_refresh(void) {
             "broadcast a condition");
 
     unlock_mutex(&refresh_mutex);
-}
-
-ifaddr_manager::ifaddr_manager(shared_ptr<posix> os)
-        : os(os) {
-}
-
-ifaddr_manager::~ifaddr_manager() noexcept {
-}
-
-void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
-        ifaddr_change_handler *old_change_handler) {
-    lock_guard<decltype(object_mutex)> lock(object_mutex);
-
-    if (old_change_handler) {
-        *old_change_handler = this->change_handler;
-    }
-    this->change_handler = change_handler;
 }
 
 /*
@@ -711,7 +696,7 @@ void *ifaddr_run(void *data) {
                 return data;
             }
         } else {
-            std::vector<unsigned char> buf(recv_size);
+            vector<unsigned char> buf(recv_size);
             ssize_t recv_len = recv(rtnetlink_fd, buf.data(), recv_size, 0);
             if (recv_len >= 0) {
                 const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf.data();

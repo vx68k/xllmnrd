@@ -19,7 +19,7 @@
 #ifndef IFADDR_H
 #define IFADDR_H 1
 
-#include <posix.h>
+#include "interface.h"
 #include <netinet/in.h>
 #include <condition_variable>
 #include <mutex>
@@ -36,68 +36,6 @@
 #define BEGIN_C_LINKAGE
 #define END_C_LINKAGE
 #endif
-
-struct nlmsghdr;
-
-namespace xllmnrd {
-
-    using namespace std;
-
-    // Interface address change.
-    struct ifaddr_change {
-
-        enum change_type {
-            ADDED,
-            REMOVED,
-        };
-
-        change_type type;
-        unsigned int ifindex;
-    };
-
-    // Pointer to the interface address change handler.
-    typedef void (*ifaddr_change_handler)(const ifaddr_change *);
-
-    // Abstract interface address manager.
-    class ifaddr_manager {
-    public:
-
-        // Constructs this object.
-        // <var>interrupt_signal</var> is the signal number used to interrupt
-        // blocking system calls and its handler is expected to do nothing.
-        explicit ifaddr_manager(shared_ptr<posix> os = make_shared<posix>());
-
-        // Destructs this object and cleans up the allocated resources.
-        virtual ~ifaddr_manager() noexcept;
-
-        // Set the interface address change handler that is called on each
-        // interface address change.
-        //
-        // This function is thread-safe.
-        void set_change_handler(ifaddr_change_handler change_handler,
-                ifaddr_change_handler *old_change_handler = nullptr);
-
-        // Refreshes the interface addresses.
-        //
-        // This function is thread safe.
-        virtual void refresh() = 0;
-
-        // Starts the worker threads that monitors interface address changes.
-        // This function does nothing if no worker threads are needed.
-        //
-        // This function is thread-safe.
-        virtual void start() {
-        }
-
-    protected:
-        const shared_ptr<posix> os;
-
-    private:
-        recursive_mutex object_mutex;
-
-        ifaddr_change_handler change_handler = nullptr;
-    };
-}
 
 BEGIN_C_LINKAGE
 

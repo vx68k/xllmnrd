@@ -28,6 +28,7 @@
 
 #include "ifaddr.h"
 
+#include "rtnetlink.h"
 #if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
@@ -54,6 +55,8 @@
 
 using xllmnrd::ifaddr_change;
 using xllmnrd::ifaddr_change_handler;
+using xllmnrd::ifaddr_manager;
+using xllmnrd::rtnetlink_ifaddr_manager;
 using namespace std;
 
 /**

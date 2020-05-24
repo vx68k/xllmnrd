@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd 3.0\n"
+"Project-Id-Version: xllmnrd 3-alpha.2\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2015-03-18 19:00+0900\n"
+"POT-Creation-Date: 2020-04-07 13:20+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,66 +17,66 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/main.c:312
+#: src/main.cpp:311
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: src/main.c:319
+#: src/main.cpp:318
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: src/main.c:320
+#: src/main.cpp:319
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: src/main.c:322
+#: src/main.cpp:321
 #, c-format
 msgid "  -f, --foreground      run in foreground\n"
 msgstr ""
 
-#: src/main.c:324
+#: src/main.cpp:323
 #, c-format
 msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
 msgstr ""
 
-#: src/main.c:326
+#: src/main.cpp:325
 #, c-format
 msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 msgstr ""
 
-#: src/main.c:328
+#: src/main.cpp:327
 #, c-format
 msgid "      --help            display this help and exit\n"
 msgstr ""
 
-#: src/main.c:330
+#: src/main.cpp:329
 #, c-format
 msgid "      --version         output version information and exit\n"
 msgstr ""
 
-#: src/main.c:333
+#: src/main.cpp:332
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: src/main.c:337
+#: src/main.cpp:336
 #, c-format
 msgid "%s %s\n"
 msgstr ""
 
-#: src/main.c:339
+#: src/main.cpp:338
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr ""
 
-#: src/main.c:341
+#: src/main.cpp:340
 msgid "(C)"
 msgstr ""
 
-#: src/main.c:342
+#: src/main.cpp:341
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

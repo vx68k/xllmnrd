@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vector>
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
@@ -108,11 +109,11 @@ static inline int open_udp(in_port_t port, int *fd_out) {
         err = set_udp_options(fd);
         if (err == 0) {
             const struct sockaddr_in6 addr = {
-                .sin6_family = AF_INET6,
-                .sin6_port = port,
-                .sin6_flowinfo = 0,
-                .sin6_addr = in6addr_any,
-                .sin6_scope_id = 0,
+                AF_INET6,    // .sin6_family
+                port,        // .sin6_port
+                0,           // .sin6_flowinfo
+                in6addr_any, // .sin6_addr
+                0,           // .sin6_scode_id
             };
             if (bind(fd, (const struct sockaddr *) &addr,
                     sizeof (struct sockaddr_in6)) == 0) {
@@ -291,8 +292,8 @@ int responder_run(void) {
         unsigned char packet[1500]; // TODO: Handle jumbo packet.
         struct sockaddr_in6 sender;
         struct in6_pktinfo pktinfo = {
-            .ipi6_addr = IN6ADDR_ANY_INIT,
-            .ipi6_ifindex = 0,
+            IN6ADDR_ANY_INIT, // .ipi6_addr
+            0,                // .ipi6_ifindex
         };
         ssize_t packet_size = responder_receive_udp(udp_fd, packet, sizeof packet,
                 &sender, &pktinfo);
@@ -330,8 +331,8 @@ void responder_handle_ifaddr_change(
     if (responder_initialized()) {
         if (change->ifindex != 0) {
             const struct ipv6_mreq mr = {
-                .ipv6mr_multiaddr = in6addr_mc_llmnr,
-                .ipv6mr_interface = change->ifindex,
+                in6addr_mc_llmnr, // .ipv6mr_multiaddr
+                change->ifindex,  // .ipv6mr_interface
             };
 
             char ifname[IF_NAMESIZE];
@@ -371,18 +372,19 @@ ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,
         struct in6_pktinfo *restrict pktinfo) {
     struct iovec iov[1] = {
         {
-            .iov_base = buf,
-            .iov_len = bufsize,
+            buf,     // .iov_base
+            bufsize, // .iov_len
         },
     };
     unsigned char cmsgbuf[128];
     struct msghdr msg = {
-        .msg_name = sender,
-        .msg_namelen = sizeof *sender,
-        .msg_iov = iov,
-        .msg_iovlen = 1,
-        .msg_control = cmsgbuf,
-        .msg_controllen = sizeof cmsgbuf,
+        sender,         // msg_name
+        sizeof *sender, // msg_namelen
+        iov,            // msg_iov
+        1,              // msg_iovlen
+        cmsgbuf,        // msg_control
+        sizeof cmsgbuf, // msg_controllen
+        0,              // msg_flags
     };
     ssize_t recv_size = recvmsg(sock, &msg, 0);
     if (recv_size > 0) {
@@ -464,20 +466,20 @@ int responder_respond_for_name(unsigned int index,
         }
     }
 
-    uint8_t packet[packet_size];
-    memcpy(packet, query, query_size);
+    std::vector<uint8_t> packet(packet_size);
+    memcpy(packet.data(), query, query_size);
 
-    struct llmnr_header *response = (struct llmnr_header *) packet;
+    struct llmnr_header *response = (struct llmnr_header *) packet.data();
     response->flags = htons(LLMNR_HEADER_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
     response->arcount = htons(0);
 
-    uint8_t *packet_end = packet + query_size;
+    uint8_t *packet_end = packet.data() + query_size;
     if (number_of_addr_v6 != 0) {
-        struct in6_addr addr_v6[number_of_addr_v6];
+        std::vector<struct in6_addr> addr_v6(number_of_addr_v6);
         size_t n = 0;
-        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6, &n);
+        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6.data(), &n);
         if (e == 0 && n < number_of_addr_v6) {
             // The number of interface addresses changed.
             // TODO: We should log it.
@@ -486,7 +488,7 @@ int responder_respond_for_name(unsigned int index,
 
         for (size_t i = 0; i != number_of_addr_v6; ++i) {
             // TODO: Clean up the following code.
-            if (packet_end == packet + query_size) {
+            if (packet_end == packet.data() + query_size) {
                 // The first must be a name.
                 memcpy(packet_end, host_name, 1 + host_name[0]);
                 packet_end += 1 + host_name[0];
@@ -518,7 +520,7 @@ int responder_respond_for_name(unsigned int index,
     }
 
     // Sends the response.
-    if (sendto(udp_fd, packet, packet_end - packet, 0,
+    if (sendto(udp_fd, packet.data(), packet_end - packet.data(), 0,
             reinterpret_cast<const struct sockaddr *>(sender),
             sizeof (struct sockaddr_in6)) >= 0) {
         return 0;

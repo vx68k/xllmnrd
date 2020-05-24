@@ -21,7 +21,7 @@
                 "clean",
                 "check"
             ],
-            "group": "build",
+            "group": "none",
             "problemMatcher": [
                 "$gcc"
             ]

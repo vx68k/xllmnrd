@@ -121,6 +121,13 @@ struct ifaddr_interface {
     struct in_addr *addr_v4;
     size_t addr_v6_size;
     struct in6_addr *addr_v6;
+
+    ifaddr_interface() = default;
+
+    explicit ifaddr_interface(unsigned int index):
+        index {index}, addr_v4_size {}, addr_v4 {}, addr_v6_size {}, addr_v6 {}
+    {
+    }
 };
 
 #if IFADDR_CPLUSPLUS
@@ -376,221 +383,6 @@ void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
     this->change_handler = change_handler;
 }
 
-rtnetlink_ifaddr_manager::rtnetlink_ifaddr_manager(shared_ptr<posix> os)
-        : ifaddr_manager(os) {
-    rtnetlink_fd = open_rtnetlink();
-}
-
-rtnetlink_ifaddr_manager::~rtnetlink_ifaddr_manager() noexcept {
-    stop();
-
-    if (os->close(rtnetlink_fd) < 0) {
-        syslog(LOG_ERR, "Failed to close RTNETLINK: %s", strerror(errno));
-    }
-}
-
-void rtnetlink_ifaddr_manager::finish_refresh() {
-    unique_lock<mutex> lock(refresh_mutex);
-
-    refresh_not_in_progress = true;
-    refresh_finished.notify_all();
-}
-
-void rtnetlink_ifaddr_manager::run() {
-    while (!worker_stopped) {
-        receive_netlink(rtnetlink_fd, &worker_stopped);
-    }
-}
-
-int rtnetlink_ifaddr_manager::open_rtnetlink() const {
-    int fd = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    if (fd < 0) {
-        int error = errno;
-        syslog(LOG_CRIT, "Failed to open RTNETLINK: %s", strerror(error));
-        throw system_error(error, generic_category());
-    }
-
-    auto addr = sockaddr_nl();
-    addr.nl_family = AF_NETLINK;
-    addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
-
-    int result = os->bind(fd, reinterpret_cast<sockaddr *>(&addr),
-            sizeof(sockaddr_nl));
-    if (result < 0) {
-        int error = errno;
-        close(fd);
-        syslog(LOG_CRIT, "Failed to bind RTNETLINK: %s", strerror(error));
-        throw system_error(error, generic_category());
-    }
-
-    return fd;
-}
-
-void rtnetlink_ifaddr_manager::receive_netlink(int fd,
-        volatile atomic_bool *stopped) {
-    // Gets the required buffer size.
-    ssize_t recv_size = recv(fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
-    if (!stopped || !*stopped) {
-        if (recv_size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw system_error(errno, generic_category());
-        }
-
-        vector<unsigned char> buffer(recv_size);
-        // This must not block.
-        recv_size = recv(fd, buffer.data(), recv_size, 0);
-        if (recv_size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw system_error(errno, generic_category());
-        }
-
-        decode_nlmsg(buffer.data(), recv_size);
-    }
-}
-
-void rtnetlink_ifaddr_manager::decode_nlmsg(const void *data, size_t size) {
-    auto nlmsg = static_cast<const nlmsghdr *>(data);
-
-    while (NLMSG_OK(nlmsg, size)) {
-        bool done = false;
-
-        switch (nlmsg->nlmsg_type) {
-        case NLMSG_NOOP:
-            syslog(LOG_INFO, "Got NLMSG_NOOP");
-            break;
-        case NLMSG_ERROR:
-            handle_nlmsgerr(nlmsg);
-            break;
-        case NLMSG_DONE:
-            finish_refresh();
-            done = true;
-            break;
-        case RTM_NEWADDR:
-        case RTM_DELADDR:
-            handle_ifaddrmsg(nlmsg);
-            break;
-        default:
-            syslog(LOG_DEBUG, "Unknown netlink message type: %u",
-                    (unsigned int) nlmsg->nlmsg_type);
-            break;
-        }
-
-        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
-            // There are no more messages.
-            break;
-        }
-        nlmsg = NLMSG_NEXT(nlmsg, size);
-    }
-}
-
-void rtnetlink_ifaddr_manager::handle_nlmsgerr(const nlmsghdr *nlmsg) {
-    auto &&err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
-    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
-        syslog(LOG_ERR, "Got RTNETLINK error: %s", strerror(-(err->error)));
-    }
-}
-
-void rtnetlink_ifaddr_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg) {
-    // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
-    // aligned.
-    const auto attr_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
-    if (nlmsg->nlmsg_len >= attr_offset) {
-        auto &&ifaddr = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
-        // Only handles non-temporary and at least link-local addresses.
-        if ((ifaddr->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
-                && ifaddr->ifa_scope <= RT_SCOPE_LINK) {
-            auto &&attr = reinterpret_cast<const rtattr *>(
-                    reinterpret_cast<const char *>(nlmsg) + attr_offset);
-            size_t attr_size = nlmsg->nlmsg_len - attr_offset;
-
-            char ifname[IF_NAMESIZE];
-            switch (ifaddr->ifa_family) {
-            case AF_INET:
-                // TODO: Use the C++ version.
-                ifaddr_v4_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
-                        attr, attr_size);
-                break;
-
-            case AF_INET6:
-                // TODO: Use the C++ version.
-                ifaddr_v6_handle_rtattrs(nlmsg->nlmsg_type, ifaddr->ifa_index,
-                        attr, attr_size);
-                break;
-
-            default:
-                if_indextoname(ifaddr->ifa_index, ifname);
-                syslog(LOG_INFO, "Ignored unknown address family %u on %s",
-                        ifaddr->ifa_family, ifname);
-                break;
-            }
-        }
-    }
-}
-
-void rtnetlink_ifaddr_manager::refresh() {
-    unique_lock<mutex> lock(refresh_mutex);
-
-    if (!refresh_in_progress) {
-        interface_addresses.clear();
-
-        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
-        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
-        *nl = nlmsghdr();
-        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
-        nl->nlmsg_type = RTM_GETADDR;
-        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
-
-        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
-        *ifa = ifaddrmsg();
-        ifa->ifa_family = AF_UNSPEC;
-
-        ssize_t send_size = send(rtnetlink_fd, nl, nl->nlmsg_len, 0);
-        if (send_size < 0) {
-            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
-                    strerror(errno));
-            throw system_error(errno, generic_category());
-        } else if (send_size != ssize_t(nl->nlmsg_len)) {
-            syslog(LOG_CRIT, "RTNETLINK request truncated");
-            throw runtime_error("RTNETLINK request truncated");
-        }
-
-        refresh_in_progress = true;
-    }
-}
-
-void rtnetlink_ifaddr_manager::start() {
-    lock_guard<mutex> lock(worker_mutex);
-
-    if (!worker_thread.joinable()) {
-        // Implementation note:
-        // <code>operator=</code> of volatile atomic classes are somehow
-        // deleted on GCC 4.7.
-        worker_stopped.store(false);
-        worker_thread = thread([this]() {
-            run();
-        });
-
-        refresh();
-    }
-}
-
-void rtnetlink_ifaddr_manager::stop() {
-    lock_guard<mutex> lock(worker_mutex);
-
-    // Implementation note:
-    // <code>operator=</code> of volatile atomic classes are somehow deleted
-    // on GCC 4.7.
-    worker_stopped.store(true);
-    if (worker_thread.joinable()) {
-        // This should make a blocking recv call return.
-        refresh();
-
-        worker_thread.join();
-    }
-}
-
 /*
  * Definitions for out-of-line functions.
  */
@@ -703,9 +495,7 @@ void ifaddr_add_addr_v4(unsigned int index,
         if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
-        *i = (struct ifaddr_interface) {
-            .index = index,
-        };
+        *i = ifaddr_interface(index);
         ++interfaces_size;
     }
 
@@ -781,9 +571,7 @@ void ifaddr_add_addr_v6(unsigned int index,
         if (interfaces_size == interfaces_capacity) {
             abort(); // TODO: Think later.
         }
-        *i = (struct ifaddr_interface) {
-            .index = index,
-        };
+        *i = ifaddr_interface(index);
         ++interfaces_size;
     }
 
@@ -923,10 +711,10 @@ void *ifaddr_run(void *data) {
                 return data;
             }
         } else {
-            unsigned char buf[recv_size];
-            ssize_t recv_len = recv(rtnetlink_fd, buf, recv_size, 0);
+            std::vector<unsigned char> buf(recv_size);
+            ssize_t recv_len = recv(rtnetlink_fd, buf.data(), recv_size, 0);
             if (recv_len >= 0) {
-                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
+                const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf.data();
                 assert(recv_len == recv_size);
                 ifaddr_decode_nlmsg(nlmsg, recv_len);
             } else if (errno != EINTR) {
@@ -1090,16 +878,24 @@ int ifaddr_refresh(void) {
 
         unsigned char buf[NLMSG_LENGTH(sizeof (struct ifaddrmsg))];
         struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf;
-        *nlmsg = (struct nlmsghdr) {
-            .nlmsg_len = NLMSG_LENGTH(sizeof (struct ifaddrmsg)),
-            .nlmsg_type = RTM_GETADDR,
-            .nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT,
-        };
 
-        struct ifaddrmsg *ifa = (struct ifaddrmsg *) NLMSG_DATA(nlmsg);
-        *ifa = (struct ifaddrmsg) {
-            .ifa_family = AF_UNSPEC,
+        const struct nlmsghdr hdr = {
+            NLMSG_LENGTH(sizeof (struct ifaddrmsg)), // .nlmsg_len
+            RTM_GETADDR,                             // .nlmsg_type
+            NLM_F_REQUEST | NLM_F_ROOT,              // .nlmsg_flags
+            0,                                       // .nlmsg_seq
+            0,                                       // .nlmsg_pid
         };
+        *nlmsg = hdr;
+
+        const struct ifaddrmsg data = {
+            AF_UNSPEC, // .ifa_family
+            0,         // .ifa_prefixlen
+            0,         // .ifa_flags
+            0,         // .ifa_scope
+            0,         // .ifa_index
+        };
+        *(struct ifaddrmsg *) NLMSG_DATA(nlmsg) = data;
 
         ssize_t send_len = send(rtnetlink_fd, nlmsg, nlmsg->nlmsg_len, 0);
         if (send_len < 0) {

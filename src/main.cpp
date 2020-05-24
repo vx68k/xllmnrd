@@ -1,6 +1,6 @@
 /*
  * IPv6 LLMNR responder daemon (main)
- * Copyright (C) 2013-2015 Kaz Nishimura
+ * Copyright (C) 2013-2020 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <vector>
 #include <locale>
 #include <limits>
 #include <cstring>
@@ -53,7 +54,7 @@
 
 // Copyright years for printing.
 #ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013-2015"
+#define COPYRIGHT_YEARS "2013-2020"
 #endif
 
 // Marks localization strings.
@@ -135,14 +136,19 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[]) {
-    locale::global(locale(""));
+int main(int argc, char *argv[])
+{
+    try {
+        locale::global(locale(""));
+    }
+    catch (runtime_error &error) {
+        fprintf(stderr, "error: failed to set locale: %s\n", error.what());
+    }
+
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
     textdomain(PACKAGE_TARNAME);
 
-    struct program_options options = {
-        .foreground = false,
-    };
+    struct program_options options = {};
     parse_arguments(argc, argv, &options);
 
     // Sets the locale back to the default to keep logs untranslated.
@@ -245,9 +251,9 @@ int set_default_host_name(void) {
         host_name_max = 255;
     }
 
-    char host_name[host_name_max + 1];
-    if (gethostname(host_name, host_name_max + 1) == 0) {
-        responder_set_host_name(host_name);
+    std::vector<char> host_name(host_name_max + 1);
+    if (gethostname(host_name.data(), host_name_max + 1) == 0) {
+        responder_set_host_name(host_name.data());
         return 0;
     }
 
@@ -285,7 +291,7 @@ void parse_arguments(int argc, char *argv[],
         {"name", required_argument, 0, 'n'},
         {"help", no_argument, 0, OPT_HELP},
         {"version", no_argument, 0, OPT_VERSION},
-        {NULL},
+        {NULL, no_argument, NULL, 0},
     };
 
     int opt;

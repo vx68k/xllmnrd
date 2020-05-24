@@ -1,15 +1,17 @@
 {
+    "version": 4,
     "configurations": [
         {
-            "name": "POSIX",
-            "intelliSenseMode": "clang-x64",
+            "name": "POSIX (GCC)",
+            "compilerPath": "/usr/bin/gcc",
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/libxllmnrd",
                 "${workspaceFolder}/libgnu"
             ],
             "defines": [
-                "HAVE_CONFIG_H"
+                "HAVE_CONFIG_H",
+                "LOCALEDIR=\"/usr/share/locale\""
             ],
             "cStandard": "c11",
             "cppStandard": "c++11",
@@ -20,6 +22,5 @@
                 "limitSymbolsToIncludedHeaders": true
             }
         }
-    ],
-    "version": 4
+    ]
 }

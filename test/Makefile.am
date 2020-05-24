@@ -22,6 +22,6 @@ test_ifaddr_exec_SOURCES = main.cpp xmlreport.cpp test_ifaddr.cpp
 test_ifaddr_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \
 $(CPPUNIT_LIBS)
 
-run-test: $(srcdir)/run-test.in Makefile
-	cat $(srcdir)/run-test.in > $@
+run-test: $(srcdir)/run-test.in $(top_builddir)/config.status
+	cd $(top_builddir) && $(SHELL) ./config.status --file=$(srcdir)/$@
 	chmod +x $@

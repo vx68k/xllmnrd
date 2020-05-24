@@ -31,7 +31,6 @@ namespace xllmnrd
     // Interface address change.
     struct ifaddr_change
     {
-
         enum change_type
         {
             ADDED,
@@ -48,11 +47,14 @@ namespace xllmnrd
     /// Abstract interface manager class.
     class interface_manager
     {
-    public:
-        // Constructs this object.
-        // <var>interrupt_signal</var> is the signal number used to interrupt
-        // blocking system calls and its handler is expected to do nothing.
-        explicit interface_manager(std::shared_ptr<posix> os = std::make_shared<posix>());
+    private:
+        std::recursive_mutex object_mutex;
+
+        ifaddr_change_handler change_handler = nullptr;
+
+    protected:
+        /// Constructs an interface manager.
+        interface_manager();
 
         // The copy constructor is deleted.
         interface_manager(const interface_manager &) = delete;
@@ -61,7 +63,7 @@ namespace xllmnrd
         void operator =(const interface_manager &) = delete;
 
     public:
-        // Destructs this object and cleans up the allocated resources.
+        /// Destructs an interface manager.
         virtual ~interface_manager();
 
     public:
@@ -84,14 +86,6 @@ namespace xllmnrd
         virtual void start()
         {
         }
-
-    protected:
-        const std::shared_ptr<posix> os;
-
-    private:
-        std::recursive_mutex object_mutex;
-
-        ifaddr_change_handler change_handler = nullptr;
     };
 }
 

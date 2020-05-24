@@ -42,8 +42,11 @@ namespace xllmnrd
     class rtnetlink_interface_manager: public interface_manager
     {
     private:
+        /// Operating system interface.
+        std::shared_ptr<posix> _os;
+
         /// File descriptor for the RTNETLINK socket.
-        int rtnetlink;
+        int _rtnetlink = -1;
 
     protected:
         /// Opens the RTNETLINK socket.

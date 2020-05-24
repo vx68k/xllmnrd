@@ -26,8 +26,7 @@
 
 using namespace xllmnrd;
 
-interface_manager::interface_manager(std::shared_ptr<posix> os)
-        : os(os)
+interface_manager::interface_manager()
 {
 }
 

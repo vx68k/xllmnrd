@@ -38,7 +38,7 @@ using namespace xllmnrd;
 int rtnetlink_interface_manager::open_rtnetlink(
     const std::shared_ptr<posix> &os)
 {
-    int rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int &&rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
         throw std::runtime_error(std::strerror(errno));
     }
@@ -51,7 +51,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
             RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
 
-        auto result = os->bind(rtnetlink,
+        auto &&result = os->bind(rtnetlink,
             reinterpret_cast<const struct sockaddr *>(&address),
             sizeof (struct sockaddr_nl));
         if (result < 0) {
@@ -73,7 +73,7 @@ rtnetlink_interface_manager::rtnetlink_interface_manager()
 
 rtnetlink_interface_manager::rtnetlink_interface_manager(
     const std::shared_ptr<posix> &os)
-    : interface_manager(os), rtnetlink {open_rtnetlink(os)}
+    : _os {os}, _rtnetlink {open_rtnetlink(_os)}
 {
 }
 
@@ -81,7 +81,7 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 {
     stop();
 
-    auto result = os->close(rtnetlink);
+    auto result = _os->close(_rtnetlink);
     if (result < 0) {
         syslog(LOG_ERR, "Failed to close the RTNETLINK socket: %s",
             strerror(errno));
@@ -99,7 +99,7 @@ void rtnetlink_interface_manager::finish_refresh()
 void rtnetlink_interface_manager::run()
 {
     while (!worker_stopped) {
-        receive_netlink(rtnetlink, &worker_stopped);
+        receive_netlink(_rtnetlink, &worker_stopped);
     }
 }
 
@@ -272,7 +272,7 @@ void rtnetlink_interface_manager::refresh()
         *ifa = ifaddrmsg();
         ifa->ifa_family = AF_UNSPEC;
 
-        ssize_t send_size = send(rtnetlink, nl, nl->nlmsg_len, 0);
+        ssize_t send_size = send(_rtnetlink, nl, nl->nlmsg_len, 0);
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));

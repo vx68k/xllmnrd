@@ -214,46 +214,6 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
     }
 }
 
-void rtnetlink_interface_manager::add_interface_address(unsigned int index,
-    int family, const void *address, std::size_t address_size)
-{
-    // TODO: Implement this function.
-    char ifname[IF_NAMESIZE];
-    switch (family) {
-    case AF_INET:
-        break;
-
-    case AF_INET6:
-        break;
-
-    default:
-        if_indextoname(index, ifname);
-        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
-            family, ifname);
-        break;
-    }
-}
-
-void rtnetlink_interface_manager::remove_interface_address(unsigned int index,
-    int family, const void *address, std::size_t address_size)
-{
-    // TODO: Implement this function.
-    char ifname[IF_NAMESIZE];
-    switch (family) {
-    case AF_INET:
-        break;
-
-    case AF_INET6:
-        break;
-
-    default:
-        if_indextoname(index, ifname);
-        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
-            family, ifname);
-        break;
-    }
-}
-
 void rtnetlink_interface_manager::refresh()
 {
     std::unique_lock<std::mutex> lock(refresh_mutex);

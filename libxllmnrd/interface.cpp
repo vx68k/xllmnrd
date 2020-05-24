@@ -22,6 +22,8 @@
 
 #include "interface.h"
 
+#include <net/if.h>
+#include <syslog.h>
 #include <cstring>
 #include <cassert>
 
@@ -51,7 +53,7 @@ interface_manager::~interface_manager()
 void interface_manager::set_change_handler(ifaddr_change_handler change_handler,
         ifaddr_change_handler *old_change_handler)
 {
-    std::lock_guard<decltype(object_mutex)> lock(object_mutex);
+    std::lock_guard<decltype(mutex())> lock {mutex()};
 
     if (old_change_handler) {
         *old_change_handler = this->change_handler;
@@ -61,6 +63,52 @@ void interface_manager::set_change_handler(ifaddr_change_handler change_handler,
 
 void interface_manager::remove_interfaces()
 {
+    std::lock_guard<decltype(mutex())> lock {mutex()};
+
     // TODO: Implement this function.
     _interfaces.clear();
+}
+
+void interface_manager::add_interface_address(unsigned int index,
+    int family, const void *address, std::size_t address_size)
+{
+    std::lock_guard<decltype(mutex())> lock {mutex()};
+
+    // TODO: Implement this function.
+    char interface_name[IF_NAMESIZE];
+    switch (family) {
+    case AF_INET:
+        break;
+
+    case AF_INET6:
+        break;
+
+    default:
+        if_indextoname(index, interface_name);
+        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
+            family, interface_name);
+        break;
+    }
+}
+
+void interface_manager::remove_interface_address(unsigned int index,
+    int family, const void *address, std::size_t address_size)
+{
+    std::lock_guard<decltype(mutex())> lock {mutex()};
+
+    // TODO: Implement this function.
+    char interface_name[IF_NAMESIZE];
+    switch (family) {
+    case AF_INET:
+        break;
+
+    case AF_INET6:
+        break;
+
+    default:
+        if_indextoname(index, interface_name);
+        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
+            family, interface_name);
+        break;
+    }
 }

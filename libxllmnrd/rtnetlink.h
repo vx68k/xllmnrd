@@ -33,6 +33,7 @@
 #include <map>
 #include <forward_list>
 #include <memory>
+#include <cstddef>
 
 namespace xllmnrd
 {
@@ -65,13 +66,6 @@ namespace xllmnrd
 
         void refresh() override;
         void start() override;
-
-    protected:
-        void add_interface_address(unsigned int index, int family,
-            const void *address, size_t address_size);
-
-        void remove_interface_address(unsigned int index, int family,
-            const void *address, size_t address_size);
 
     protected:
         // Finishes the refresh of the interface addresses.

@@ -71,7 +71,7 @@ namespace xllmnrd
         };
 
     private:
-        std::recursive_mutex object_mutex;
+        mutable std::recursive_mutex _mutex;
 
         ifaddr_change_handler change_handler = nullptr;
 
@@ -114,8 +114,20 @@ namespace xllmnrd
         }
 
     protected:
+        /// Returns the reference to the mutex object.
+        std::recursive_mutex &mutex() const
+        {
+            return _mutex;
+        }
+
         /// Removes all the interfaces.
         void remove_interfaces();
+
+        void add_interface_address(unsigned int index, int family,
+            const void *address, size_t address_size);
+
+        void remove_interface_address(unsigned int index, int family,
+            const void *address, size_t address_size);
     };
 }
 

@@ -22,9 +22,22 @@
 
 #include "interface.h"
 
+#include <cstring>
 #include <cassert>
 
 using namespace xllmnrd;
+
+constexpr bool std::less<struct in_addr>::operator ()(
+    const struct in_addr &x, const struct in_addr &y) const
+{
+    return std::memcmp(&x, &y, sizeof (struct in_addr)) < 0;
+}
+
+constexpr bool std::less<struct in6_addr>::operator ()(
+    const struct in6_addr &x, const struct in6_addr &y) const
+{
+    return std::memcmp(&x, &y, sizeof (struct in6_addr)) < 0;
+}
 
 interface_manager::interface_manager()
 {

@@ -23,7 +23,22 @@
 #include <netinet/in.h>
 #include <mutex>
 #include <unordered_map>
+#include <set>
 #include <cstddef>
+
+template <>
+struct std::less<struct in_addr>
+{
+    constexpr bool operator ()(
+        const struct in_addr &x, const struct in_addr &y) const;
+};
+
+template <>
+struct std::less<struct in6_addr>
+{
+    constexpr bool operator ()(
+        const struct in6_addr &x, const struct in6_addr &y) const;
+};
 
 namespace xllmnrd
 {
@@ -51,6 +66,8 @@ namespace xllmnrd
     protected:
         struct interface
         {
+            std::set<struct in_addr> in_addrs;
+            std::set<struct in6_addr> in6_addrs;
         };
 
     private:

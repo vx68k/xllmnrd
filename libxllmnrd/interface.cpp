@@ -167,4 +167,9 @@ void interface_manager::remove_interface_address(unsigned int index,
             family, interface_name);
         break;
     }
+
+    auto &&found = _interfaces.find(index);
+    if (found != _interfaces.end() && found->second.empty()) {
+        _interfaces.erase(found);
+    }
 }

@@ -72,6 +72,12 @@ namespace xllmnrd
         {
             std::set<struct in_addr> in_addrs;
             std::set<struct in6_addr> in6_addrs;
+
+            /// Returns true if no address is stored, false otherwise.
+            bool empty() const
+            {
+                return in_addrs.empty() && in6_addrs.empty();
+            }
         };
 
     private:

@@ -22,7 +22,7 @@
 
 #include "rtnetlink.h"
 
-#if HAVE_LINUX_RTNETLINK_H
+#if XLLMNRD_RTNETLINK
 
 #include <linux/rtnetlink.h>
 #include <net/if.h> /* if_indextoname */
@@ -279,4 +279,4 @@ void rtnetlink_interface_manager::stop()
     }
 }
 
-#endif /* HAVE_LINUX_RTNETLINK_H */
+#endif /* XLLMNRD_RTNETLINK */

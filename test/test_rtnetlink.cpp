@@ -22,6 +22,8 @@
 
 #include "rtnetlink.h"
 
+#if XLLMNRD_RTNETLINK
+
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
 
@@ -47,3 +49,5 @@ public:
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);
+
+#endif /* XLLMNRD_RTNETLINK */

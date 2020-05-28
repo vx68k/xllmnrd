@@ -24,6 +24,9 @@
 
 #if HAVE_LINUX_RTNETLINK_H
 
+// Defined to non-zero if libxllmnrd has RTNETLINK support.
+#define XLLMNRD_RTNETLINK 1
+
 #include <linux/netlink.h>
 #include <netinet/in.h>
 #include <condition_variable>

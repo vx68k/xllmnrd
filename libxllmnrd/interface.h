@@ -26,18 +26,20 @@
 #include <set>
 #include <cstddef>
 
+/*
+ * Specializations of 'std::less'.
+ */
+
 template <>
 struct std::less<struct in_addr>
 {
-    constexpr bool operator ()(
-        const struct in_addr &x, const struct in_addr &y) const;
+    bool operator ()(const struct in_addr &x, const struct in_addr &y) const;
 };
 
 template <>
 struct std::less<struct in6_addr>
 {
-    constexpr bool operator ()(
-        const struct in6_addr &x, const struct in6_addr &y) const;
+    bool operator ()(const struct in6_addr &x, const struct in6_addr &y) const;
 };
 
 namespace xllmnrd

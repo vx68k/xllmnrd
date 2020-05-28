@@ -11,7 +11,7 @@ if CPPUNIT
 check_PROGRAMS = test_ifaddr.exec
 check_SCRIPTS = run-test
 
-EXEC_TEST_LOG_COMPILER = $(SHELL) ./run-test
+EXEC_LOG_COMPILER = $(SHELL) ./run-test
 TESTS += $(check_PROGRAMS)
 CLEANFILES += $(check_SCRIPTS)
 endif

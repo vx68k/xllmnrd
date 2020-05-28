@@ -1,6 +1,6 @@
 /*
- * posix - POSIX class (interface)
- * Copyright (C) 2013-2015 Kaz Nishimura
+ * posix.h
+ * Copyright (C) 2013-2020 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -21,15 +21,27 @@
 
 #include <sys/socket.h>
 
-namespace xllmnrd {
-
-    class posix {
+namespace xllmnrd
+{
+    class posix
+    {
     public:
         virtual ~posix();
 
+    public:
         virtual int socket(int domain, int type, int protocol);
         virtual int bind(int fd, const struct sockaddr *addr, socklen_t len);
         virtual int close(int fd);
+
+        /// Receives a message from a socket.
+        ///
+        /// This implementations calls '::recv'.
+        virtual ssize_t recv(int fd, void *buf, ::size_t n, int flags);
+
+        /// Send a message to a socket.
+        ///
+        /// This implementation calls '::send'.
+        virtual ssize_t send(int fd, const void *buf, ::size_t n, int flags);
     };
 }
 

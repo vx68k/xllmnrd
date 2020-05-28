@@ -83,7 +83,7 @@ namespace xllmnrd
     private:
         mutable std::recursive_mutex _mutex;
 
-        ifaddr_change_handler _interface_change = nullptr;
+        interface_change_handler _interface_change = nullptr;
 
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;

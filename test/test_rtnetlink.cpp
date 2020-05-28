@@ -37,6 +37,7 @@ using namespace std;
 class RtnetlinkTests: public TestFixture
 {
     CPPUNIT_TEST_SUITE(RtnetlinkTests);
+    CPPUNIT_TEST(testStart);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -46,6 +47,12 @@ public:
     void setUp() override
     {
         manager.reset(new rtnetlink_interface_manager());
+    }
+
+    void testStart()
+    {
+        manager->start();
+        CPPUNIT_ASSERT(true); // TODO: Add real assertions.
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);

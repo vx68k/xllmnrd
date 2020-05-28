@@ -62,6 +62,8 @@ namespace xllmnrd
     // Pointer to the interface address change handler.
     typedef void (*ifaddr_change_handler)(const ifaddr_change *);
 
+    typedef void (*interface_change_handler)(const ifaddr_change *);
+
     /// Abstract interface manager class.
     class interface_manager
     {
@@ -75,7 +77,7 @@ namespace xllmnrd
     private:
         mutable std::recursive_mutex _mutex;
 
-        ifaddr_change_handler change_handler = nullptr;
+        ifaddr_change_handler _interface_change = nullptr;
 
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;
@@ -95,12 +97,11 @@ namespace xllmnrd
         virtual ~interface_manager();
 
     public:
-        // Set the interface address change handler that is called on each
-        // interface address change.
-        //
-        // This function is thread-safe.
-        void set_change_handler(ifaddr_change_handler change_handler,
-                ifaddr_change_handler *old_change_handler = nullptr);
+        /// Set the interface change handler.
+        ///
+        /// This function is thread-safe.
+        interface_change_handler set_interface_change(
+            interface_change_handler interface_change);
 
         // Refreshes the interface addresses.
         //

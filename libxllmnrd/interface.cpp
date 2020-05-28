@@ -76,19 +76,39 @@ void interface_manager::remove_interfaces()
 void interface_manager::add_interface_address(unsigned int index,
     int family, const void *address, std::size_t address_size)
 {
+    char interface_name[IF_NAMESIZE];
+    if_indextoname(index, interface_name);
+
     std::lock_guard<decltype(mutex())> lock {mutex()};
 
-    // TODO: Implement this function.
-    char interface_name[IF_NAMESIZE];
     switch (family) {
     case AF_INET:
+        if (address_size >= sizeof (struct in_addr)) {
+            auto &addrs = _interfaces[index].in_addrs;
+            addrs.insert(*static_cast<const struct in_addr *>(address));
+
+            syslog(LOG_DEBUG, "Added an IPv4 address on %s", interface_name);
+        }
+        else {
+            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu)",
+                address_size);
+        }
         break;
 
     case AF_INET6:
+        if (address_size >= sizeof (struct in6_addr)) {
+            auto &addrs = _interfaces[index].in6_addrs;
+            addrs.insert(*static_cast<const struct in6_addr *>(address));
+
+            syslog(LOG_DEBUG, "Added an IPv6 address on %s", interface_name);
+        }
+        else {
+            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu)",
+                address_size);
+        }
         break;
 
     default:
-        if_indextoname(index, interface_name);
         syslog(LOG_INFO, "Ignored unknown address family %d on %s",
             family, interface_name);
         break;

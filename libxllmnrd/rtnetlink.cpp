@@ -219,7 +219,7 @@ void rtnetlink_interface_manager::refresh()
     std::unique_lock<std::mutex> lock(refresh_mutex);
 
     if (!refresh_in_progress) {
-        interface_addresses.clear();
+        //interface_addresses.clear();
 
         unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
         nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);

@@ -33,8 +33,6 @@
 #include <mutex>
 #include <thread>
 #include <atomic>
-#include <map>
-#include <forward_list>
 #include <memory>
 #include <cstddef>
 
@@ -87,20 +85,6 @@ namespace xllmnrd
         void handle_ifaddrmsg(const nlmsghdr *nlmsg);
 
     private:
-
-        // Addresses assigned to an interface.
-        struct addresses {
-            std::forward_list<struct in_addr> address_v4;
-            std::forward_list<struct in6_addr> address_v6;
-
-            // Returns true if there are no addresses.
-            bool empty() const noexcept {
-                return address_v4.empty() && address_v6.empty();
-            }
-        };
-
-        // Map from an interface to its addresses.
-        std::map<unsigned int, addresses> interface_addresses;
 
         // Mutex for refresh_in_progress.
         std::mutex refresh_mutex;

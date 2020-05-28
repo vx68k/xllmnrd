@@ -22,6 +22,7 @@
 
 #include "interface.h"
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <syslog.h>
 #include <cstring>
@@ -87,11 +88,14 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &addrs = _interfaces[index].in_addrs;
             addrs.insert(*static_cast<const struct in_addr *>(address));
 
-            syslog(LOG_DEBUG, "Added an IPv4 address on %s", interface_name);
+            char ipv4[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+            syslog(LOG_DEBUG, "Added an IPv4 address %s on %s", ipv4,
+                interface_name);
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu)",
-                address_size);
+            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
+                address_size, interface_name);
         }
         break;
 
@@ -100,16 +104,19 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &addrs = _interfaces[index].in6_addrs;
             addrs.insert(*static_cast<const struct in6_addr *>(address));
 
-            syslog(LOG_DEBUG, "Added an IPv6 address on %s", interface_name);
+            char ipv6[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+            syslog(LOG_DEBUG, "Added an IPv6 address %s on %s", ipv6,
+                interface_name);
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu)",
-                address_size);
+            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",
+                address_size, interface_name);
         }
         break;
 
     default:
-        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
+        syslog(LOG_INFO, "Ignored an address of unknown family %d on %s",
             family, interface_name);
         break;
     }
@@ -129,11 +136,14 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &addrs = _interfaces[index].in_addrs;
             addrs.erase(*static_cast<const struct in_addr *>(address));
 
-            syslog(LOG_DEBUG, "Removed an IPv4 address on %s", interface_name);
+            char ipv4[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+            syslog(LOG_DEBUG, "Removed an IPv4 address %s on %s", ipv4,
+                interface_name);
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu)",
-                address_size);
+            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
+                address_size, interface_name);
         }
         break;
 
@@ -142,16 +152,19 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &addrs = _interfaces[index].in6_addrs;
             addrs.erase(*static_cast<const struct in6_addr *>(address));
 
-            syslog(LOG_DEBUG, "Removed an IPv6 address on %s", interface_name);
+            char ipv6[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+            syslog(LOG_DEBUG, "Removed an IPv6 address %s on %s", ipv6,
+                interface_name);
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu)",
-                address_size);
+            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",
+                address_size, interface_name);
         }
         break;
 
     default:
-        syslog(LOG_INFO, "Ignored unknown address family %d on %s",
+        syslog(LOG_INFO, "Ignored an address of unknown family %d on %s",
             family, interface_name);
         break;
     }

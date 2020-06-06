@@ -69,17 +69,17 @@ namespace xllmnrd
         void start() override;
 
     protected:
+        /// Processes NETLINK messages.
+        void process_messages();
+
+        /// Dispatches NETLINK messages.
+        void dispatch_messages(const void *messages, size_t size);
+
+        /// Handles a NETLINK error message.
+        void handle_error(const struct nlmsghdr *message);
+
         // Finishes the refresh of the interface addresses.
         void finish_refresh();
-
-        // Receives a RTNETLINK message.
-        void receive_netlink(int fd, volatile std::atomic_bool *stopped);
-
-        // Decodes a NETLINK message.
-        void decode_nlmsg(const void *message, size_t size);
-
-        // Handles a NETLINK error message.
-        void handle_nlmsgerr(const nlmsghdr *nlmsg);
 
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *nlmsg);

@@ -99,49 +99,48 @@ void rtnetlink_interface_manager::finish_refresh()
 void rtnetlink_interface_manager::run()
 {
     while (!worker_stopped) {
-        receive_netlink(_rtnetlink, &worker_stopped);
+        process_messages();
     }
 }
 
-void rtnetlink_interface_manager::receive_netlink(int fd,
-        volatile std::atomic_bool *stopped)
+void rtnetlink_interface_manager::process_messages()
 {
     // Gets the required buffer size.
-    ssize_t recv_size = recv(fd, NULL, 0, MSG_PEEK | MSG_TRUNC);
-    if (!stopped || !*stopped) {
-        if (recv_size < 0) {
+    auto &&size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+    if (size != 0 && !worker_stopped) {
+        if (size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
             throw std::system_error(errno, std::generic_category());
         }
 
-        std::vector<unsigned char> buffer(recv_size);
+        std::unique_ptr<char []> buffer {new char [size]};
         // This must not block.
-        recv_size = recv(fd, buffer.data(), recv_size, 0);
-        if (recv_size < 0) {
+        size = _os->recv(_rtnetlink, buffer.get(), size, 0);
+        if (size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
             throw std::system_error(errno, std::generic_category());
         }
 
-        decode_nlmsg(buffer.data(), recv_size);
+        dispatch_messages(buffer.get(), size);
     }
 }
 
-void rtnetlink_interface_manager::decode_nlmsg(const void *data, size_t size)
+void rtnetlink_interface_manager::dispatch_messages(const void *messages,
+    size_t size)
 {
-    auto nlmsg = static_cast<const nlmsghdr *>(data);
-
-    while (NLMSG_OK(nlmsg, size)) {
+    auto &&message = static_cast<const struct nlmsghdr *>(messages);
+    while (NLMSG_OK(message, size)) {
         bool done = false;
 
-        switch (nlmsg->nlmsg_type) {
+        switch (message->nlmsg_type) {
         case NLMSG_NOOP:
             syslog(LOG_INFO, "Got NLMSG_NOOP");
             break;
 
         case NLMSG_ERROR:
-            handle_nlmsgerr(nlmsg);
+            handle_error(message);
             break;
 
         case NLMSG_DONE:
@@ -151,28 +150,28 @@ void rtnetlink_interface_manager::decode_nlmsg(const void *data, size_t size)
 
         case RTM_NEWADDR:
         case RTM_DELADDR:
-            handle_ifaddrmsg(nlmsg);
+            handle_ifaddrmsg(message);
             break;
 
         default:
             syslog(LOG_DEBUG, "Unknown netlink message type: %u",
-                    (unsigned int) nlmsg->nlmsg_type);
+                    (unsigned int) message->nlmsg_type);
             break;
         }
 
-        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
+        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
             // There are no more messages.
             break;
         }
-        nlmsg = NLMSG_NEXT(nlmsg, size);
+        message = NLMSG_NEXT(message, size);
     }
 }
 
-void rtnetlink_interface_manager::handle_nlmsgerr(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
 {
-    auto &&err = static_cast<const struct nlmsgerr *>(NLMSG_DATA(nlmsg));
-    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (struct nlmsgerr))) {
-        syslog(LOG_ERR, "Got RTNETLINK error: %s", strerror(-(err->error)));
+    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (struct nlmsgerr))) {
+        auto &&e = static_cast<const struct nlmsgerr *>(NLMSG_DATA(message));
+        syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
     }
 }
 

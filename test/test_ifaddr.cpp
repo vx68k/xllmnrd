@@ -89,7 +89,7 @@ protected:
     static void handle_signal(int sig) {
     }
 
-    static void handle_change(const struct ifaddr_change *change) {
+    static void handle_change(const struct interface_change_event *change) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrPreTests);
@@ -186,7 +186,7 @@ protected:
     static void handle_signal(int sig) {
     }
 
-    static void handle_change(const struct ifaddr_change *change) {
+    static void handle_change(const struct interface_change_event *change) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTests);

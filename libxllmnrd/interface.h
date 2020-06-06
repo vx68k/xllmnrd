@@ -46,21 +46,21 @@ namespace xllmnrd
 {
     using std::size_t;
 
-    // Interface address change.
-    struct ifaddr_change
+    // Interface change event.
+    struct interface_change_event
     {
-        enum change_type
+        enum event_type
         {
             ADDED,
             REMOVED,
         };
 
-        change_type type;
+        event_type type;
         unsigned int ifindex;
     };
 
     // Pointer to an interface change handler.
-    typedef void (*interface_change_handler)(const ifaddr_change *);
+    typedef void (*interface_change_handler)(const interface_change_event *);
 
     /// Abstract interface manager class.
     class interface_manager

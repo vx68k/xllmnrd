@@ -53,7 +53,7 @@
 #define IFADDR_CPLUSPLUS 0
 #endif
 
-using xllmnrd::ifaddr_change;
+using xllmnrd::interface_change_event;
 using xllmnrd::interface_change_handler;
 using xllmnrd::interface_manager;
 using xllmnrd::rtnetlink_interface_manager;
@@ -582,7 +582,7 @@ void ifaddr_add_addr_v6(unsigned int index,
         }
         if (addr_v6) {
             if (i->addr_v6_size == 0 && if_change_handler) {
-                ifaddr_change change = {ifaddr_change::ADDED, index};
+                interface_change_event change = {interface_change_event::ADDED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -624,7 +624,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
             i->addr_v6_size -= 1;
 
             if (i->addr_v6_size == 0 && if_change_handler) {
-                ifaddr_change change = {ifaddr_change::REMOVED, index};
+                interface_change_event change = {interface_change_event::REMOVED, index};
                 (*if_change_handler)(&change);
             }
 

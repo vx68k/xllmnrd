@@ -59,9 +59,7 @@ namespace xllmnrd
         unsigned int ifindex;
     };
 
-    // Pointer to the interface address change handler.
-    typedef void (*ifaddr_change_handler)(const ifaddr_change *);
-
+    // Pointer to an interface change handler.
     typedef void (*interface_change_handler)(const ifaddr_change *);
 
     /// Abstract interface manager class.

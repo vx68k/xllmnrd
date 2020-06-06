@@ -54,7 +54,7 @@
 #endif
 
 using xllmnrd::ifaddr_change;
-using xllmnrd::ifaddr_change_handler;
+using xllmnrd::interface_change_handler;
 using xllmnrd::interface_manager;
 using xllmnrd::rtnetlink_interface_manager;
 using namespace std;
@@ -165,7 +165,7 @@ static pthread_mutex_t if_mutex;
 /**
  * Pointer to the interface change handler.
  */
-static ifaddr_change_handler if_change_handler;
+static interface_change_handler if_change_handler;
 #endif /* !IFADDR_CPLUSPLUS */
 
 /**
@@ -454,8 +454,8 @@ void ifaddr_finalize(void) {
 #endif
 }
 
-int ifaddr_set_change_handler(ifaddr_change_handler handler,
-        ifaddr_change_handler *old_handler_out) {
+int ifaddr_set_change_handler(interface_change_handler handler,
+        interface_change_handler *old_handler_out) {
     if (!ifaddr_initialized()) {
         return ENXIO;
     }

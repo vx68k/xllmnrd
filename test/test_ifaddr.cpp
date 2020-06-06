@@ -67,7 +67,7 @@ public:
     }
 
     void testFailures() {
-        ifaddr_change_handler handler = &handle_change;
+        interface_change_handler handler = &handle_change;
         // Without initialization, an error MUST be detected.
         CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
                 &handler));
@@ -78,7 +78,7 @@ public:
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
- 
+
         size_t size;
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
@@ -123,7 +123,7 @@ public:
     }
 
     void testSetHandler() {
-        ifaddr_change_handler handler = &handle_change;
+        interface_change_handler handler = &handle_change;
         // The initial handler function MUST be null.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
                 &handler));

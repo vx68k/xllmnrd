@@ -56,7 +56,7 @@ interface_manager::~interface_manager()
 }
 
 interface_change_handler interface_manager::set_interface_change(
-    ifaddr_change_handler interface_change)
+    interface_change_handler interface_change)
 {
     std::lock_guard<decltype(mutex())> lock {mutex()};
 

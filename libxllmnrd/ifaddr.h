@@ -60,8 +60,9 @@ extern void ifaddr_finalize(void);
  * value is null, no output will be retrieved.
  * @return 0 if no error is detected, or any non-zero error number.
  */
-extern int ifaddr_set_change_handler(xllmnrd::ifaddr_change_handler __handler,
-        xllmnrd::ifaddr_change_handler *__old_handler);
+extern int ifaddr_set_change_handler(
+    xllmnrd::interface_change_handler __handler,
+    xllmnrd::interface_change_handler *__old_handler);
 
 /**
  * Starts the internal worker thread.

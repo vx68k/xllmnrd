@@ -37,16 +37,33 @@ using namespace std;
 class RtnetlinkTests: public TestFixture
 {
     CPPUNIT_TEST_SUITE(RtnetlinkTests);
+    CPPUNIT_TEST(testSetInterfaceChange);
     CPPUNIT_TEST(testStart);
     CPPUNIT_TEST_SUITE_END();
 
 private:
     unique_ptr<rtnetlink_interface_manager> manager;
 
+private:
+    static void handle_interface_change(
+        const xllmnrd::interface_change_event *const event)
+    {}
+
 public:
     void setUp() override
     {
         manager.reset(new rtnetlink_interface_manager());
+    }
+
+    void testSetInterfaceChange()
+    {
+        // No handler SHALL be set by default.
+        auto old = manager->set_interface_change(handle_interface_change);
+        CPPUNIT_ASSERT_EQUAL(xllmnrd::interface_change_handler(), old);
+
+        // The handler that was set SHALL be returned.
+        old = manager->set_interface_change(nullptr);
+        CPPUNIT_ASSERT_EQUAL(&handle_interface_change, old);
     }
 
     void testStart()

@@ -11,19 +11,15 @@ AM_INIT_AUTOMAKE([no-define])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_DEFINE([_POSIX_C_SOURCE], [200809L],
+[Define to 200809L to make the symbols required by POSIX.1-2008 visible.])dnl
 gl_EARLY
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_join], [pthread])
 AC_SEARCH_LIBS([atomic_flag_test_and_set], [atomic])
 # Checks for header files.
-AC_DEFINE([_POSIX_C_SOURCE], [200809L],
-[Define to 200809L to make the symbols required by IEEE Std 1003.1-2008 \
-visible if available.])dnl
-AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
-net/if.h syslog.h sys/socket.h])
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.19.3])
+AC_CHECK_HEADERS([arpa/inet.h libgen.h netinet/in.h net/if.h syslog.h sys/socket.h])
+AC_CHECK_HEADERS([linux/rtnetlink.h])
 gl_INIT
 # Checks for typedefs, structures, and compiler characteristics.
 dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.
@@ -34,6 +30,8 @@ AC_TYPE_SSIZE_T
 dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
 dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.3])
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
 AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
 # Configuration actions.

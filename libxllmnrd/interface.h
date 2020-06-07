@@ -50,7 +50,7 @@ namespace xllmnrd
     /// Interface change event class.
     struct interface_change_event
     {
-        enum event_type
+        enum event_type: int
         {
             REMOVED,
             ADDED,
@@ -58,9 +58,14 @@ namespace xllmnrd
 
         event_type type;
         unsigned int interface_index;
+        int address_family;
 
-        constexpr interface_change_event(event_type type, unsigned int index)
-            : type {type}, interface_index {index}
+        constexpr interface_change_event(event_type type,
+            unsigned int interface_index, int address_family = AF_UNSPEC)
+        :
+            type {type},
+            interface_index {interface_index},
+            address_family {address_family}
         {}
     };
 

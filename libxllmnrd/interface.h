@@ -123,14 +123,6 @@ namespace xllmnrd
         // This function is thread safe.
         virtual void refresh() = 0;
 
-        // Starts the worker threads that monitors interface address changes.
-        // This function does nothing if no worker threads are needed.
-        //
-        // This function is thread-safe.
-        virtual void start()
-        {
-        }
-
     protected:
         /// Returns the reference to the mutex object.
         std::recursive_mutex &mutex() const

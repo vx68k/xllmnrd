@@ -63,10 +63,16 @@ namespace xllmnrd
         virtual ~rtnetlink_interface_manager();
 
     public:
+        /**
+         * Starts a thread that monitors interface changes and returns 'this'.
+         *
+         * This function is thread-safe.
+         */
+        rtnetlink_interface_manager *start();
+
         void run();
 
         void refresh() override;
-        void start() override;
 
     protected:
         /// Processes NETLINK messages.

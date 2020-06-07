@@ -245,7 +245,7 @@ void rtnetlink_interface_manager::refresh()
     }
 }
 
-void rtnetlink_interface_manager::start()
+rtnetlink_interface_manager *rtnetlink_interface_manager::start()
 {
     std::lock_guard<std::mutex> lock(worker_mutex);
 
@@ -260,6 +260,8 @@ void rtnetlink_interface_manager::start()
 
         refresh();
     }
+
+    return this;
 }
 
 void rtnetlink_interface_manager::stop()

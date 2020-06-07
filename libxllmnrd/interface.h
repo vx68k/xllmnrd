@@ -24,6 +24,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <set>
+#include <atomic>
 #include <cstddef>
 
 /*
@@ -79,9 +80,10 @@ namespace xllmnrd
         };
 
     private:
-        mutable std::recursive_mutex _mutex;
+        /// Interface change handler.
+        std::atomic<interface_change_handler> _interface_change {nullptr};
 
-        interface_change_handler _interface_change = nullptr;
+        mutable std::recursive_mutex _mutex;
 
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;

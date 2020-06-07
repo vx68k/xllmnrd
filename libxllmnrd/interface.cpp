@@ -56,13 +56,9 @@ interface_manager::~interface_manager()
 }
 
 interface_change_handler interface_manager::set_interface_change(
-    interface_change_handler interface_change)
+    const interface_change_handler interface_change)
 {
-    std::lock_guard<decltype(mutex())> lock {mutex()};
-
-    auto previous_interface_change = _interface_change;
-    _interface_change = interface_change;
-    return previous_interface_change;
+    return this->_interface_change.exchange(interface_change);
 }
 
 void interface_manager::remove_interfaces()

@@ -61,6 +61,15 @@ interface_change_handler interface_manager::set_interface_change(
     return this->_interface_change.exchange(interface_change);
 }
 
+void interface_manager::fire_interface_change(
+    const interface_change_event *const event)
+{
+    auto &&handler = _interface_change.load();
+    if (handler != nullptr) {
+        handler(event);
+    }
+}
+
 void interface_manager::remove_interfaces()
 {
     std::lock_guard<decltype(mutex())> lock {mutex()};

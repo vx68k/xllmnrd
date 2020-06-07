@@ -137,6 +137,10 @@ namespace xllmnrd
 
         void remove_interface_address(unsigned int index, int family,
             const void *address, size_t address_size);
+
+    private:
+        // Fires an interace change event.
+        void fire_interface_change(const interface_change_event *event);
     };
 }
 

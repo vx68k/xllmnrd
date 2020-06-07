@@ -13,8 +13,8 @@ AC_PROG_CC
 AC_PROG_CXX
 gl_EARLY
 # Checks for libraries.
-AC_SEARCH_LIBS([pthread_create], [pthread])
-AC_CHECK_LIB([atomic], [__atomic_is_lock_free])
+AC_SEARCH_LIBS([pthread_join], [pthread])
+AC_SEARCH_LIBS([atomic_flag_test_and_set], [atomic])
 # Checks for header files.
 AC_DEFINE([_POSIX_C_SOURCE], [200809L],
 [Define to 200809L to make the symbols required by IEEE Std 1003.1-2008 \

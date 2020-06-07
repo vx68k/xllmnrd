@@ -329,14 +329,14 @@ void responder_terminate(void) {
 void responder_handle_ifaddr_change(
         const struct interface_change_event *restrict change) {
     if (responder_initialized()) {
-        if (change->ifindex != 0) {
+        if (change->interface_index != 0) {
             const struct ipv6_mreq mr = {
-                in6addr_mc_llmnr, // .ipv6mr_multiaddr
-                change->ifindex,  // .ipv6mr_interface
+                in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+                change->interface_index, // .ipv6mr_interface
             };
 
             char ifname[IF_NAMESIZE];
-            if_indextoname(change->ifindex, ifname);
+            if_indextoname(change->interface_index, ifname);
 
             switch (change->type) {
             case interface_change_event::ADDED:

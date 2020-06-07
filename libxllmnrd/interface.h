@@ -47,17 +47,21 @@ namespace xllmnrd
 {
     using std::size_t;
 
-    // Interface change event.
+    /// Interface change event class.
     struct interface_change_event
     {
         enum event_type
         {
-            ADDED,
             REMOVED,
+            ADDED,
         };
 
         event_type type;
-        unsigned int ifindex;
+        unsigned int interface_index;
+
+        constexpr interface_change_event(event_type type, unsigned int index)
+            : type {type}, interface_index {index}
+        {}
     };
 
     // Pointer to an interface change handler.

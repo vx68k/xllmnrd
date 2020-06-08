@@ -46,6 +46,7 @@ private:
 
 private:
     static void handle_interface_change(
+        [[maybe_unused]]
         const xllmnrd::interface_change_event *const event)
     {}
 

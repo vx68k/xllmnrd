@@ -130,7 +130,14 @@ void interface_manager::add_interface_address(unsigned int index,
     case AF_INET:
         if (address_size >= sizeof (struct in_addr)) {
             auto &addresses = _interfaces[index].in_addresses;
-            addresses.insert(*static_cast<const struct in_addr *>(address));
+            auto &&inserted = addresses.insert(
+                *static_cast<const struct in_addr *>(address));
+
+            if (inserted.second && addresses.size() == 1) {
+                interface_change_event event {
+                    interface_change_event::ADDED, index, AF_INET};
+                fire_interface_change(&event);
+            }
 
             char ipv4[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
@@ -146,7 +153,14 @@ void interface_manager::add_interface_address(unsigned int index,
     case AF_INET6:
         if (address_size >= sizeof (struct in6_addr)) {
             auto &addresses = _interfaces[index].in6_addresses;
-            addresses.insert(*static_cast<const struct in6_addr *>(address));
+            auto &&inserted = addresses.insert(
+                *static_cast<const struct in6_addr *>(address));
+
+            if (inserted.second && addresses.size() == 1) {
+                interface_change_event event {
+                    interface_change_event::ADDED, index, AF_INET6};
+                fire_interface_change(&event);
+            }
 
             char ipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
@@ -178,7 +192,14 @@ void interface_manager::remove_interface_address(unsigned int index,
     case AF_INET:
         if (address_size >= sizeof (struct in_addr)) {
             auto &addresses = _interfaces[index].in_addresses;
-            addresses.erase(*static_cast<const struct in_addr *>(address));
+            auto &&erased = addresses.erase(
+                *static_cast<const struct in_addr *>(address));
+
+            if (erased != 0 && addresses.empty()) {
+                interface_change_event event {
+                    interface_change_event::REMOVED, index, AF_INET};
+                fire_interface_change(&event);
+            }
 
             char ipv4[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
@@ -194,7 +215,14 @@ void interface_manager::remove_interface_address(unsigned int index,
     case AF_INET6:
         if (address_size >= sizeof (struct in6_addr)) {
             auto &addresses = _interfaces[index].in6_addresses;
-            addresses.erase(*static_cast<const struct in6_addr *>(address));
+            auto &&erased = addresses.erase(
+                *static_cast<const struct in6_addr *>(address));
+
+            if (erased != 0 && addresses.empty()) {
+                interface_change_event event {
+                    interface_change_event::REMOVED, index, AF_INET6};
+                fire_interface_change(&event);
+            }
 
             char ipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);

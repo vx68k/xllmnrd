@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <syslog.h>
+#include <algorithm>
 #include <cstring>
 #include <cassert>
 
@@ -100,7 +101,20 @@ void interface_manager::remove_interfaces()
 {
     std::lock_guard<decltype(mutex())> lock {mutex()};
 
-    // TODO: Implement this function.
+    std::for_each(_interfaces.begin(), _interfaces.end(),
+        [this](decltype(_interfaces)::reference i) {
+            if (i.second.in6_addresses.size() != 0) {
+                interface_change_event event {
+                    interface_change_event::REMOVED, i.first, AF_INET6};
+                fire_interface_change(&event);
+            }
+            if (i.second.in_addresses.size() != 0) {
+                interface_change_event event {
+                    interface_change_event::REMOVED, i.first, AF_INET};
+                fire_interface_change(&event);
+            }
+        });
+
     _interfaces.clear();
 }
 

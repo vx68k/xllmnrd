@@ -70,6 +70,32 @@ void interface_manager::fire_interface_change(
     }
 }
 
+std::set<struct in_addr> interface_manager::in_addresses(
+    unsigned int index) const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    auto &&found = _interfaces.find(index);
+    if (found != _interfaces.end()) {
+        return found->second.in_addresses;
+    }
+
+    return std::set<struct in_addr>();
+}
+
+std::set<struct in6_addr> interface_manager::in6_addresses(
+    unsigned int index) const
+{
+    std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+    auto &&found = _interfaces.find(index);
+    if (found != _interfaces.end()) {
+        return found->second.in6_addresses;
+    }
+
+    return std::set<struct in6_addr>();
+}
+
 void interface_manager::remove_interfaces()
 {
     std::lock_guard<decltype(mutex())> lock {mutex()};

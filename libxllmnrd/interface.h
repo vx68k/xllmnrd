@@ -126,17 +126,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv4 addresses of the interface
          */
-        std::set<struct in_addr> in_addresses(unsigned int index) const
-        {
-            std::lock_guard<decltype(_mutex)> lock(_mutex);
-
-            auto &&found = _interfaces.find(index);
-            if (found != _interfaces.end()) {
-                return found->second.in_addresses;
-            }
-
-            return std::set<struct in_addr>();
-        }
+        std::set<struct in_addr> in_addresses(unsigned int index) const;
 
         /**
          * Returns a copy of the IPv6 addresses of an interface.
@@ -146,17 +136,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv6 addresses of the interface
          */
-        std::set<struct in6_addr> in6_addresses(unsigned int index) const
-        {
-            std::lock_guard<decltype(_mutex)> lock(_mutex);
-
-            auto &&found = _interfaces.find(index);
-            if (found != _interfaces.end()) {
-                return found->second.in6_addresses;
-            }
-
-            return std::set<struct in6_addr>();
-        }
+        std::set<struct in6_addr> in6_addresses(unsigned int index) const;
 
         // Refreshes the interface addresses.
         //

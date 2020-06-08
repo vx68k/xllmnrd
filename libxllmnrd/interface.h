@@ -92,7 +92,7 @@ namespace xllmnrd
         /// Interface change handler.
         std::atomic<interface_change_handler> _interface_change {nullptr};
 
-        mutable std::recursive_mutex _mutex;
+        mutable std::recursive_mutex _interfaces_mutex;
 
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;
@@ -147,7 +147,7 @@ namespace xllmnrd
         /// Returns the reference to the mutex object.
         std::recursive_mutex &mutex() const
         {
-            return _mutex;
+            return _interfaces_mutex;
         }
 
         /// Removes all the interfaces.

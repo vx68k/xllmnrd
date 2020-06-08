@@ -73,7 +73,7 @@ void interface_manager::fire_interface_change(
 std::set<struct in_addr> interface_manager::in_addresses(
     unsigned int index) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    std::lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
 
     auto &&found = _interfaces.find(index);
     if (found != _interfaces.end()) {
@@ -86,7 +86,7 @@ std::set<struct in_addr> interface_manager::in_addresses(
 std::set<struct in6_addr> interface_manager::in6_addresses(
     unsigned int index) const
 {
-    std::lock_guard<decltype(_mutex)> lock(_mutex);
+    std::lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
 
     auto &&found = _interfaces.find(index);
     if (found != _interfaces.end()) {

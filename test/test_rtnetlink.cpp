@@ -26,9 +26,12 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
+#include <unistd.h>
+#include <iostream>
 
 using CppUnit::TestFixture;
 using xllmnrd::rtnetlink_interface_manager;
+using xllmnrd::interface_change_event;
 using namespace std;
 
 /*
@@ -42,18 +45,66 @@ class RtnetlinkTests: public TestFixture
     CPPUNIT_TEST_SUITE_END();
 
 private:
+    static unsigned int addInCount;
+    static unsigned int addIn6Count;
+    static unsigned int removeInCount;
+    static unsigned int removeIn6Count;
+
+private:
     unique_ptr<rtnetlink_interface_manager> manager;
 
 private:
     static void handle_interface_change(
-        [[maybe_unused]]
-        const xllmnrd::interface_change_event *const event)
-    {}
+        const interface_change_event *const event)
+    {
+        switch (event->type)
+        {
+        case interface_change_event::ADDED:
+            switch (event->address_family)
+            {
+            case AF_INET:
+                addInCount++;
+                clog << "Add an IPv4 address " << addInCount << endl;
+                break;
+
+            case AF_INET6:
+                addIn6Count++;
+                clog << "Add an IPv6 address " << addIn6Count << endl;
+                break;
+
+            default:
+                break;
+            }
+            break;
+
+        case interface_change_event::REMOVED:
+            switch (event->address_family)
+            {
+            case AF_INET:
+                removeInCount++;
+                clog << "Remove an IPv4 address " << removeInCount << endl;
+                break;
+
+            case AF_INET6:
+                removeIn6Count++;
+                clog << "Remove an IPv6 address " << removeIn6Count << endl;
+                break;
+
+            default:
+                break;
+            }
+            break;
+        }
+    }
 
 public:
     void setUp() override
     {
         manager.reset(new rtnetlink_interface_manager());
+        addInCount = 0;
+        removeInCount = 0;
+        addIn6Count = 0;
+        removeIn6Count = 0;
     }
 
     void testSetInterfaceChange()
@@ -69,10 +120,23 @@ public:
 
     void testStart()
     {
+        manager->set_interface_change(handle_interface_change);
+        CPPUNIT_ASSERT_EQUAL(0U, addInCount);
+        CPPUNIT_ASSERT_EQUAL(0U, addIn6Count);
+        CPPUNIT_ASSERT_EQUAL(0U, removeInCount);
+        CPPUNIT_ASSERT_EQUAL(0U, removeIn6Count);
+
         manager->start();
-        CPPUNIT_ASSERT(true); // TODO: Add real assertions.
+        sleep(1);
+        CPPUNIT_ASSERT(addInCount > removeInCount);
+        CPPUNIT_ASSERT(addIn6Count > removeIn6Count);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);
+
+unsigned int RtnetlinkTests::addInCount;
+unsigned int RtnetlinkTests::addIn6Count;
+unsigned int RtnetlinkTests::removeInCount;
+unsigned int RtnetlinkTests::removeIn6Count;
 
 #endif /* XLLMNRD_RTNETLINK */

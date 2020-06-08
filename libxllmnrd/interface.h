@@ -78,13 +78,13 @@ namespace xllmnrd
     protected:
         struct interface
         {
-            std::set<struct in_addr> in_addrs;
-            std::set<struct in6_addr> in6_addrs;
+            std::set<struct in_addr> in_addresses;
+            std::set<struct in6_addr> in6_addresses;
 
             /// Returns true if no address is stored, false otherwise.
             bool empty() const
             {
-                return in_addrs.empty() && in6_addrs.empty();
+                return in_addresses.empty() && in6_addresses.empty();
             }
         };
 
@@ -117,6 +117,46 @@ namespace xllmnrd
         /// This function is thread-safe.
         interface_change_handler set_interface_change(
             interface_change_handler interface_change);
+
+        /**
+         * Returns a copy of the IPv4 addresses of an interface.
+         *
+         * This function is thread-safe.
+         *
+         * @param {unsigned int} index an interface index
+         * @return a copy of the IPv4 addresses of the interface
+         */
+        std::set<struct in_addr> in_addresses(unsigned int index) const
+        {
+            std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+            auto &&found = _interfaces.find(index);
+            if (found != _interfaces.end()) {
+                return found->second.in_addresses;
+            }
+
+            return std::set<struct in_addr>();
+        }
+
+        /**
+         * Returns a copy of the IPv6 addresses of an interface.
+         *
+         * This function is thread-safe.
+         *
+         * @param {unsigned int} index an interface index
+         * @return a copy of the IPv6 addresses of the interface
+         */
+        std::set<struct in6_addr> in6_addresses(unsigned int index) const
+        {
+            std::lock_guard<decltype(_mutex)> lock(_mutex);
+
+            auto &&found = _interfaces.find(index);
+            if (found != _interfaces.end()) {
+                return found->second.in6_addresses;
+            }
+
+            return std::set<struct in6_addr>();
+        }
 
         // Refreshes the interface addresses.
         //

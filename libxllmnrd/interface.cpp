@@ -89,8 +89,8 @@ void interface_manager::add_interface_address(unsigned int index,
     switch (family) {
     case AF_INET:
         if (address_size >= sizeof (struct in_addr)) {
-            auto &addrs = _interfaces[index].in_addrs;
-            addrs.insert(*static_cast<const struct in_addr *>(address));
+            auto &addresses = _interfaces[index].in_addresses;
+            addresses.insert(*static_cast<const struct in_addr *>(address));
 
             char ipv4[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
@@ -105,8 +105,8 @@ void interface_manager::add_interface_address(unsigned int index,
 
     case AF_INET6:
         if (address_size >= sizeof (struct in6_addr)) {
-            auto &addrs = _interfaces[index].in6_addrs;
-            addrs.insert(*static_cast<const struct in6_addr *>(address));
+            auto &addresses = _interfaces[index].in6_addresses;
+            addresses.insert(*static_cast<const struct in6_addr *>(address));
 
             char ipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
@@ -137,8 +137,8 @@ void interface_manager::remove_interface_address(unsigned int index,
     switch (family) {
     case AF_INET:
         if (address_size >= sizeof (struct in_addr)) {
-            auto &addrs = _interfaces[index].in_addrs;
-            addrs.erase(*static_cast<const struct in_addr *>(address));
+            auto &addresses = _interfaces[index].in_addresses;
+            addresses.erase(*static_cast<const struct in_addr *>(address));
 
             char ipv4[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
@@ -153,8 +153,8 @@ void interface_manager::remove_interface_address(unsigned int index,
 
     case AF_INET6:
         if (address_size >= sizeof (struct in6_addr)) {
-            auto &addrs = _interfaces[index].in6_addrs;
-            addrs.erase(*static_cast<const struct in6_addr *>(address));
+            auto &addresses = _interfaces[index].in6_addresses;
+            addresses.erase(*static_cast<const struct in6_addr *>(address));
 
             char ipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);

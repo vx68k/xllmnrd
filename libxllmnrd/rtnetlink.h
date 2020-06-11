@@ -70,6 +70,14 @@ namespace xllmnrd
          */
         rtnetlink_interface_manager *start();
 
+        /**
+         * Returns true if the worker thread is running; false otherwise.
+         */
+        bool running() const
+        {
+            return worker_thread.joinable();
+        }
+
         void run();
 
         void refresh() override;

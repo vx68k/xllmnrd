@@ -48,10 +48,10 @@ stages:
             condition: succeededOrFailed()
           - bash: |
               make dist || exit $?
-              mkdir -p dist
-              mv -f '$(package.distName)'.* dist/
+              mkdir -p _dist
+              mv -f '$(package.distName)'.* _dist/
             displayName: Make source archive
-          - publish: dist
+          - publish: _dist
             artifact: dist
   - stage: Test
     jobs:

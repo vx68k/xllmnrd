@@ -3,7 +3,7 @@ AC_PREREQ([2.69])
 AC_INIT([XLLMNRD], [3-alpha.3],
 [https://bitbucket.org/kazssym/xllmnrd/issues/new], [xllmnrd],
 [https://www.vx68k.org/xllmnrd])
-AC_CONFIG_SRCDIR([src/responder.cpp])
+AC_CONFIG_SRCDIR([xllmnrd/responder.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_HEADERS([config.h])
@@ -35,6 +35,6 @@ AM_GNU_GETTEXT_VERSION([0.19.3])
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
 AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
 # Configuration actions.
-AC_CONFIG_FILES([Makefile src/Makefile libxllmnrd/Makefile test/Makefile
-lsb/Makefile libgnu/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile xllmnrd/Makefile libxllmnrd/Makefile libgnu/Makefile
+test/Makefile lsb/Makefile po/Makefile.in])
 AC_OUTPUT

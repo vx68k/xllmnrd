@@ -907,7 +907,7 @@ int ifaddr_refresh(void)
 
     return err;
 #else
-    if (!manager) {
+    if (!manager || not(manager->running())) {
         return ENXIO;
     }
 
@@ -954,7 +954,7 @@ int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
 
     return err;
 #else
-    if (!manager) {
+    if (!manager || not(manager->running())) {
         return ENXIO;
     }
 

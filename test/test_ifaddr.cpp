@@ -27,6 +27,7 @@
 #include <cppunit/TestFixture.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <unistd.h>
 #include <vector>
 #include <csignal>
 #include <cerrno>
@@ -151,6 +152,7 @@ public:
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
 
         ifaddr_start();
+        sleep(1); // To make sure the interface table is populated.
 
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
     }
@@ -170,6 +172,7 @@ public:
                 ifaddr_lookup_v6(eth0, 0, NULL, &size)));
 
         ifaddr_start();
+        sleep(1); // To make sure the interface table is populated.
 
         // The loopback interface SHALL be ignored.
         CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(lo, 0, NULL, &size));

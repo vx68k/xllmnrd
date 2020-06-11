@@ -327,7 +327,12 @@ void responder_terminate(void) {
 }
 
 void responder_handle_ifaddr_change(
-        const struct interface_change_event *restrict change) {
+        const struct interface_change_event *restrict change)
+{
+    if (change->address_family != AF_INET6) {
+        return;
+    }
+
     if (responder_initialized()) {
         if (change->interface_index != 0) {
             const struct ipv6_mreq mr = {

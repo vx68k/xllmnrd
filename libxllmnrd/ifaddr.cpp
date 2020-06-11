@@ -50,7 +50,7 @@
 
 // TODO: Remove the original C-based code finally.
 #ifndef IFADDR_CPLUSPLUS
-#define IFADDR_CPLUSPLUS 0
+#define IFADDR_CPLUSPLUS 1
 #endif
 
 using xllmnrd::interface_change_event;

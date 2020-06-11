@@ -907,6 +907,10 @@ int ifaddr_refresh(void)
 
     return err;
 #else
+    if (!manager) {
+        return ENXIO;
+    }
+
     try {
         manager->refresh();
     } catch (const system_error &error) {

@@ -959,6 +959,10 @@ int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
     }
 
     auto &&addresses = manager->in6_addresses(index);
+    if (addresses.empty()) {
+        return ENODEV;
+    }
+
     auto &&addr_end = addr + addr_size;
     for (auto &&i = addresses.begin(); i != addresses.end(); i++) {
         if (addr == addr_end) {

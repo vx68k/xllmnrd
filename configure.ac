@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([XLLMNRD], [3.0],
+AC_INIT([Xenium LLMNR Responder], [3.0],
 [https://bitbucket.org/kazssym/xllmnrd/issues/new], [xllmnrd],
 [https://www.vx68k.org/xllmnrd])
 AC_CONFIG_SRCDIR([xllmnrd/responder.cpp])

@@ -6,12 +6,6 @@ EXTRA_DIST = xllmnrd.in
 
 CLEANFILES = xllmnrd
 
-xllmnrd: $(srcdir)/xllmnrd.in Makefile
-	@rm -f $@-t $@
-	sed -e 's,[@]PACKAGE_NAME[@],$(PACKAGE_NAME),g' \
-	  -e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g' \
-	  -e 's,[@]PACKAGE_STRING[@],$(PACKAGE_STRING),g' \
-	  -e 's,[@]sbindir[@],$(sbindir),g' \
-	  < $(srcdir)/xllmnrd.in > $@-t
-	chmod +x $@-t
-	mv -f $@-t $@
+xllmnrd: $(srcdir)/xllmnrd.in $(top_builddir)/config.status
+	cd $(top_builddir) && $(SHELL) ./config.status --file=$(subdir)/$@
+	chmod +x $@

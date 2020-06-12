@@ -50,6 +50,15 @@ namespace xllmnrd
         /// File descriptor for the RTNETLINK socket.
         int _rtnetlink = -1;
 
+        /// Mutex for refresh.
+        std::mutex _refresh_mutex;
+
+        /// Indicates if a refresh is in progress.
+        bool _refreshing = false;
+
+        // Condition variable for refresh_in_progress.
+        std::condition_variable _refresh_completion;
+
     protected:
         /// Opens the RTNETLINK socket.
         static int open_rtnetlink(const std::shared_ptr<posix> &os);
@@ -99,15 +108,6 @@ namespace xllmnrd
         void handle_ifaddrmsg(const nlmsghdr *nlmsg);
 
     private:
-
-        // Mutex for refresh_in_progress.
-        std::mutex refresh_mutex;
-
-        // Condition variable for refresh_in_progress.
-        std::condition_variable refresh_finished;
-
-        // Indicates if a refresh is in progress.
-        volatile bool refresh_in_progress = false;
 
         // Mutex for worker.
         std::mutex worker_mutex;

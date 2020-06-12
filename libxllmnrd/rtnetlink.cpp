@@ -90,10 +90,10 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::finish_refresh()
 {
-    std::unique_lock<std::mutex> lock(refresh_mutex);
+    std::unique_lock<std::mutex> lock(_refresh_mutex);
 
-    refresh_in_progress = false;
-    refresh_finished.notify_all();
+    _refreshing = false;
+    _refresh_completion.notify_all();
 }
 
 void rtnetlink_interface_manager::run()
@@ -107,7 +107,7 @@ void rtnetlink_interface_manager::process_messages()
 {
     // Gets the required buffer size.
     auto &&size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
-    if (size != 0 && !worker_stopped) {
+    if (size != 0) {
         if (size < 0) {
             syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
                     strerror(errno));
@@ -215,9 +215,9 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
 
 void rtnetlink_interface_manager::refresh()
 {
-    std::unique_lock<std::mutex> lock(refresh_mutex);
+    std::unique_lock<std::mutex> lock(_refresh_mutex);
 
-    if (!refresh_in_progress) {
+    if (not(_refreshing)) {
         remove_interfaces();
 
         unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
@@ -241,7 +241,11 @@ void rtnetlink_interface_manager::refresh()
             throw std::runtime_error("RTNETLINK request truncated");
         }
 
-        refresh_in_progress = true;
+        _refreshing = true;
+    }
+
+    while (not(worker_stopped.load()) && _refreshing) {
+        _refresh_completion.wait(lock);
     }
 }
 

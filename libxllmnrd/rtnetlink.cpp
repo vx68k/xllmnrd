@@ -233,7 +233,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
         *ifa = ifaddrmsg();
         ifa->ifa_family = AF_UNSPEC;
 
-        ssize_t send_size = send(_rtnetlink, nl, nl->nlmsg_len, 0);
+        ssize_t send_size = _os->send(_rtnetlink, nl, nl->nlmsg_len, 0);
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));

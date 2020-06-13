@@ -1,30 +1,41 @@
-# Description
+# Introduction
 
-XLLMNRD is a [LLMNR][RFC 4795] responder daemon (primarily for GNU/Linux operating
-systems).  It allows Microsoft Windows clients to get the IPv6 addresses of a
-server on the same local network _without any DNS configuration_ and
-supplements IPv4-only NetBIOS name resolution typically provided by [Samba][].
+<dfn>Xenium LLMNR Responder</dfn> (xllmnrd) is an IPv6 network daemon that
+responds to name queries from Microsoft Windows computers on the same network
+link so that they can get the IPv6 addresses of the server _without any DNS
+configuration_.  It effectively supplements IPv4-only NetBIOS name resolution
+typically provided by [Samba][].
 
-This program is provided under the terms and conditions of the [GNU General Public License, version 3][GPL-3.0] or any later version.
+This program implements Link-Local Multicast Name Resolution (LLMNR) as
+described in [RFC 4795][] and currently supports Linux-based operating systems
+only.
 
-See <https://www.vx68k.org/xllmnrd> (and the [repository wiki][wiki]) for more information.
+See the [home page][] for more information about this program.
 
-[![(GNU General Public License v3.0 or later)](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)][GPL-3.0]
-[![(Open Issues)](https://img.shields.io/bitbucket/issues/vx68k/xllmnrd.svg)][open issues]
-[![(Build Status)](https://linuxfront-functions.azurewebsites.net/api/bitbucket/build/vx68k/xllmnrd?branch=master)][pipelines]
-
+[Home page]: https://www.vx68k.org/xllmnrd
 [RFC 4795]: https://tools.ietf.org/html/rfc4795 "Link-Local Multicast Name Resolution (LLMNR)"
-[Samba]: <https://www.samba.org/>
-[GPL-3.0]: https://opensource.org/licenses/GPL-3.0
+[Samba]: https://www.samba.org/
 
-[Wiki]: https://bitbucket.org/vx68k/xllmnrd/wiki
-[Open issues]: https://bitbucket.org/vx68k/xllmnrd/issues?status=new&status=open
-[Pipelines]: https://bitbucket.org/vx68k/xllmnrd/addon/pipelines/home
+[![(License)](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)][GPL-3.0]
+[![(Open issues)](https://img.shields.io/bitbucket/issues/kazssym/xllmnrd.svg)][open issues]
+
+[Open issues]: https://bitbucket.org/kazssym/xllmnrd/issues?status=new&status=open
 
 # Installation
 
 See the 'INSTALL' file for installation instructions.  The 'configure' should
-work for most GNU/Linux operating systems (distributions).
+work for most supported operating systems.
 
 If you find any problem while installation, please report it to
-<https://bitbucket.org/vx68k/xllmnrd/issues>.
+<https://bitbucket.org/kazssym/xllmnrd/issues>.
+
+# License
+
+This program is provided under the terms and conditions of the [GNU General
+Public License, version 3][GPL-3.0] or any later version.
+
+[GPL-3.0]: https://opensource.org/licenses/GPL-3.0
+
+# See also
+
+  - [RFC 4795][].

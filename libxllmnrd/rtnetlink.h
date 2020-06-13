@@ -89,7 +89,7 @@ namespace xllmnrd
 
         void run();
 
-        void refresh() override;
+        void refresh(bool maybe_asynchronous = false) override;
 
     protected:
         /// Processes NETLINK messages.

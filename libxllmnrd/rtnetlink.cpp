@@ -213,7 +213,7 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
     }
 }
 
-void rtnetlink_interface_manager::refresh()
+void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
 {
     std::unique_lock<std::mutex> lock(_refresh_mutex);
 
@@ -244,8 +244,10 @@ void rtnetlink_interface_manager::refresh()
         _refreshing = true;
     }
 
-    while (not(worker_stopped.load()) && _refreshing) {
-        _refresh_completion.wait(lock);
+    if (not(maybe_asynchronous)) {
+        while (not(worker_stopped.load()) && _refreshing) {
+            _refresh_completion.wait(lock);
+        }
     }
 }
 
@@ -262,7 +264,7 @@ rtnetlink_interface_manager *rtnetlink_interface_manager::start()
             run();
         });
 
-        refresh();
+        refresh(true);
     }
 
     return this;
@@ -278,7 +280,7 @@ void rtnetlink_interface_manager::stop()
     worker_stopped.store(true);
     if (worker_thread.joinable()) {
         // This should make a blocking recv call return.
-        refresh();
+        refresh(true);
 
         worker_thread.join();
     }

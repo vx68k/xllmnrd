@@ -141,7 +141,7 @@ namespace xllmnrd
         // Refreshes the interface addresses.
         //
         // This function is thread safe.
-        virtual void refresh() = 0;
+        virtual void refresh(bool maybe_asynchronous = false) = 0;
 
     protected:
         /// Returns the reference to the mutex object.

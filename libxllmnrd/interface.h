@@ -92,10 +92,12 @@ namespace xllmnrd
         /// Interface change handler.
         std::atomic<interface_change_handler> _interface_change {nullptr};
 
-        mutable std::recursive_mutex _interfaces_mutex;
-
+    private:
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;
+
+    private:
+        mutable std::recursive_mutex _interfaces_mutex;
 
     protected:
         /// Constructs an interface manager.

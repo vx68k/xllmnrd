@@ -47,17 +47,21 @@ namespace xllmnrd
         /// Operating system interface.
         std::shared_ptr<posix> _os;
 
+    private:
         /// File descriptor for the RTNETLINK socket.
         int _rtnetlink = -1;
 
-        /// Mutex for refresh.
-        std::mutex _refresh_mutex;
-
+    private:
         /// Indicates if a refresh is in progress.
         bool _refreshing = false;
 
-        // Condition variable for refresh_in_progress.
-        std::condition_variable _refresh_completion;
+    private:
+        /// Mutex for the refresh task.
+        mutable std::mutex _refresh_mutex;
+
+    private:
+        // Condition variable for the refresh task.
+        mutable std::condition_variable _refresh_completion;
 
     protected:
         /// Opens the RTNETLINK socket.

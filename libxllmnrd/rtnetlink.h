@@ -105,7 +105,7 @@ namespace xllmnrd
         void finish_refresh();
 
         // Handles a RTNETLINK message for an interface address change.
-        void handle_ifaddrmsg(const nlmsghdr *nlmsg);
+        void handle_ifaddrmsg(const nlmsghdr *message);
 
     private:
 

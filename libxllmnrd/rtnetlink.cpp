@@ -177,26 +177,26 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
     }
 }
 
-void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 {
     // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
     // aligned.
     auto &&rtattr_offset = NLMSG_SPACE(sizeof (struct ifaddrmsg));
-    if (nlmsg->nlmsg_len >= rtattr_offset) {
+    if (message->nlmsg_len >= rtattr_offset) {
         auto &&ifaddrmsg = static_cast<const struct ifaddrmsg *>(
-            NLMSG_DATA(nlmsg));
+            NLMSG_DATA(message));
         // Only handles non-temporary and at least link-local addresses.
         if ((ifaddrmsg->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
             && ifaddrmsg->ifa_scope <= RT_SCOPE_LINK) {
             auto &&rtattr = reinterpret_cast<const struct rtattr *>(
-                    reinterpret_cast<const char *>(nlmsg) + rtattr_offset);
-            std::size_t rtattr_size = nlmsg->nlmsg_len - rtattr_offset;
+                    reinterpret_cast<const char *>(message) + rtattr_offset);
+            std::size_t rtattr_size = message->nlmsg_len - rtattr_offset;
 
             while (RTA_OK(rtattr, rtattr_size)) {
                 if (rtattr->rta_type == IFA_ADDRESS
                     && rtattr->rta_len >= RTA_LENGTH(0)) {
                     auto &&addr = RTA_DATA(rtattr);
-                    switch (nlmsg->nlmsg_type) {
+                    switch (message->nlmsg_type) {
                     case RTM_NEWADDR:
                         add_interface_address(ifaddrmsg->ifa_index,
                             ifaddrmsg->ifa_family, addr, RTA_PAYLOAD(rtattr));

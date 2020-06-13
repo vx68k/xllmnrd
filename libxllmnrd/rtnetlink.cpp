@@ -67,13 +67,15 @@ int rtnetlink_interface_manager::open_rtnetlink(
 }
 
 rtnetlink_interface_manager::rtnetlink_interface_manager()
-    : rtnetlink_interface_manager(std::make_shared<posix>())
+:
+    rtnetlink_interface_manager(std::make_shared<posix>())
 {
 }
 
 rtnetlink_interface_manager::rtnetlink_interface_manager(
     const std::shared_ptr<posix> &os)
-    : _os {os}, _rtnetlink {open_rtnetlink(_os)}
+:
+    _os {os}, _rtnetlink {open_rtnetlink(_os)}
 {
 }
 

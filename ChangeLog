@@ -1,3 +1,150 @@
+2020-06-14  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* NEWS: Update the news
+	[79ab3faad280]
+
+	* AUTHORS: Update the email
+	[7c320c255690]
+
+	* libxllmnrd/rtnetlink.cpp: Use '_os->send'
+	[d24e29d21b56]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Clean up members
+	[b507a6fd309b]
+
+	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.h: Modify data member
+	declarations
+	[43a37102e00d]
+
+2020-06-13  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Rename
+	'finish_refresh'
+	[bcc72e994368]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Rename a parameter
+	[0c78d51715b1]
+
+	* libxllmnrd/rtnetlink.cpp: Modify code formatting
+	[438b5bb6ddb8]
+
+	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.cpp,
+	libxllmnrd/rtnetlink.h: Implement asynchronous refresh
+	[2241fe31fe55]
+
+	* README.md: Update the README file
+	[e13f66b5e570]
+
+	* configure.ac: Add 'foreign' to the Automake options
+	[a0f481147f88]
+
+	* README: Remove the 'README' file
+	[c73d50934ecf]
+
+	* configure.ac: Change the package name
+	[5e5137a568fb]
+
+	* lsb/Makefile.am, lsb/xllmnrd.in: Use the 'config.status' script to
+	produce the LSB init script
+	[402d8ff67153]
+
+	* po/ja.po, po/xllmnrd.pot: Update the message catalogue files
+	[ff2ec3e11804]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to 3.0
+	[7c6ef6758cab]
+
+2020-06-12  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Make 'refresh'
+	wait for completion
+	[619aaae6d063]
+
+2020-06-11  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* po/ja.po, po/xllmnrd.pot: Regenerate files
+	[b5e83eb1fdf2]
+
+	* po/POTFILES.in: Fix file locations
+	[2a3789249eec]
+
+	* test/test_ifaddr.cpp: Add 'sleep' calls after 'ifaddr_start'
+	[2341a377072c]
+
+	* libxllmnrd/ifaddr.cpp: Add a check for interfaces with no addresses
+	[6b779d2d5314]
+
+	* libxllmnrd/ifaddr.cpp: Restore tests for the running state
+	[993ee2731093]
+
+	* libxllmnrd/rtnetlink.h: Add new method 'running'
+	[560a08ccc1e0]
+
+	* libxllmnrd/ifaddr.cpp: Add a test for the internal state
+	[0cab725861db]
+
+	* .vscode/launch.json: Update the debugging configuration
+	[691e3fda70f0]
+
+	* Makefile.am, configure.ac, src/Makefile.am, src/llmnr.c,
+	src/llmnr.h, src/llmnr_packet.h, src/main.cpp, src/responder.cpp,
+	src/responder.h, src/xllmnrd.8.in, xllmnrd/Makefile.am,
+	xllmnrd/llmnr.c, xllmnrd/llmnr.h, xllmnrd/llmnr_packet.h,
+	xllmnrd/main.cpp, xllmnrd/responder.cpp, xllmnrd/responder.h,
+	xllmnrd/xllmnrd.8.in: Rename the 'src' directory to 'xllmnrd'
+	[4fbe35335e7c]
+
+	* libxllmnrd/ifaddr.cpp: Enabled the class-based interface manager
+	[80b1feff96e0]
+
+	* src/responder.cpp: Add a test to ignore non-IPv6 addresses
+	[f11f517ab911]
+
+	* libxllmnrd/ifaddr.cpp: Revise conditionally compiled code for
+	IFADDR_CPLUSPLUS != 0
+	[ce71193b3f7a]
+
+	* azure-pipelines.yml: Change the directory for publishing artifacts
+	[4a590ee2b57e]
+
+2020-06-08  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* test/test_rtnetlink.cpp: Add test assertions to compare events
+	counts
+	[4d787e82e8fe]
+
+	* libxllmnrd/interface.cpp: Add code to fire interface change events
+	on address changes
+	[d00ebbe2edc0]
+
+	* libxllmnrd/interface.cpp: Remove code to erase an empty interface
+	[4f6b3ccbf0bf]
+
+	* libxllmnrd/interface.cpp: Add code to fire interface change events
+	in 'remove_interfaces'
+	[fb665c0b9895]
+
+	* test/test_rtnetlink.cpp: Add '' to a method parameter
+	[78d445a94c9a]
+
+	* libxllmnrd/interface.cpp: Change method parameters to const
+	[b022240152a7]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Rename '_mutex' to
+	'_interfaces_mutex'
+	[30e8cb6cc668]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Change the new
+	methods to out-of-line
+	[138b91324218]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add new methods
+	'in_addresses' and 'in6_addresses'
+	[f2b8c9ff33ba]
+
+	* ChangeLog: Update the change log
+	[b7cfd786a862]
+
 2020-06-07  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* test/test_rtnetlink.cpp: Add a test for 'set_interface_change'
@@ -157,11 +304,17 @@
 	'autoreconf' invocation
 	[4155d568dc09]
 
+	* Merge back release/3
+	[ae0afb4c400b]
+
 	* .hgtags: Added tag release/3-alpha.2 for changeset 4e2a9683b6ca
 	[1ecc6defc21b]
 
 	* azure-pipelines.yml, configure.ac: Change the package version
 	[e090701b5076]
+
+	* Merge master into release/3
+	[4e2a9683b6ca] <release>
 
 	* libxllmnrd/Makefile.am, libxllmnrd/ifaddr.cpp, libxllmnrd/ifaddr.h,
 	libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Move
@@ -295,6 +448,9 @@
 
 2020-03-30  Kaz Nishimura  <kazssym@linuxfront.com>
 
+	* Merge back release/3
+	[0d99d7c5b742]
+
 	* .hgtags: Added tag release/3-alpha.1 for changeset 6c957b4c920f
 	[c703a59b21b0]
 
@@ -410,6 +566,9 @@
 
 2019-12-11  Kaz Nishimura  <kazssym@linuxfront.com>
 
+	* Merge feature/vscode-tasks-update
+	[e1217be1d160]
+
 	* .vscode/tasks.json: Update VSCode tasks
 	[e793034d964d]
 
@@ -420,6 +579,9 @@
 	[8026f8645135]
 
 2019-12-09  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* Merge master
+	[073b6abbf58d]
 
 	* libxllmnrd/ifaddr.c: Update copyright years
 	[32512b583859]
@@ -437,6 +599,14 @@
 	* .github/FUNDING.yml: Add 'FUNDING.yml' for GitHub
 	[43fc94bdab5d]
 
+2019-11-29  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* Merge branch feature/pipelines-git (pull request #7)
+	[23dd2f72bfc7]
+
+	* Merge branch feature/conditional-cppunit (pull request #6)
+	[82fb45823c76]
+
 2019-11-30  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* configure.ac, src/Makefile.am: Skip tests if CppUnit is not
@@ -447,6 +617,9 @@
 
 	* bitbucket-pipelines.yml: Build in a subdirectory
 	[62545c1f9561]
+
+	* Merge branch feature/pipelines-git (pull request #5)
+	[692e15293651]
 
 2019-11-28  Kaz Nishimura  <kazssym@linuxfront.com>
 
@@ -624,16 +797,19 @@
 
 2017-07-10  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Merge with master.
+	[dc8d3ece304b]
+
 	* etc/builder/Dockerfile: Revert indentation changes.
 	[31fffe3e0bd0]
 
 2017-07-08  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* etc/builder/Dockerfile: Install `libcppunit-dev` in the builder
+	* etc/builder/Dockerfile: Install 'libcppunit-dev' in the builder
 	image.
 	[9f82c6ac449e]
 
-	* Makefile.am, README.md: Include `README.md` in the package, closing
+	* Makefile.am, README.md: Include 'README.md' in the package, closing
 	issue #59.
 	[51014b697e4a]
 
@@ -720,6 +896,9 @@
 	* configure.ac, src/ifaddr.c, src/main.c, src/responder.c: Merge.
 	[885c4de214d3]
 
+	* Close this branch.
+	[4208bc5ec352] <feature/rewrite-into-c++11>
+
 	* README, README.md: Updated the package name in documents (see issue
 	#56).
 	[dd6e24e1fbde]
@@ -766,7 +945,18 @@
 	* Makefile.am: Updated the execution of pgpsign.
 	[66229b0ea5cb]
 
+2015-07-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Close branch feature/finer-tests
+	[497bc0ec956a] <feature/finer-tests>
+
+	* Merge branch feature/finer-tests (pull request #16)
+	[2494be3e1d1e]
+
 2015-07-17  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Changed not to run 'make check' by default.
+	[09a0d19fd7d9] <feature/finer-tests>
 
 	* src/Makefile.am, src/testmain.cpp: Changed the XML output file name
 	from unit tests.
@@ -830,6 +1020,9 @@
 	* po/Makefile.in.in: Added po/Makefile.in.in.
 	[129040b741d2]
 
+	* Made the 'configure' target depend on 'force'.
+	[8501a4035f91]
+
 	* ABOUT-NLS: Added the 'ABOUT-NLS' file.
 	[3ecff6391407]
 
@@ -841,6 +1034,14 @@
 
 	* INSTALL: Updated the 'INSTALL' file.
 	[4e4c63012c33]
+
+	* Removed the '--install' option from autoreconf invocation.
+	[236e4078a647]
+
+2015-04-09  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merge with default.
+	[09bfe86ac6b2] <feature/rewrite-into-c++11>
 
 2015-04-07  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -931,9 +1132,18 @@
 
 2015-04-03  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Modified to make check by default.
+	[4f375171b4f3]
+
 	* src/ifaddr.h: Added a map to the interface addresses to
 	ifaddr_manager.
 	[28b07bdb8640] <feature/rewrite-into-c++11>
+
+	* Merge with default.
+	[6b6d6465460a] <feature/rewrite-into-c++11>
+
+	* Updated build rules.
+	[bd4305129dfb]
 
 	* src/ifaddr.cpp, src/ifaddr.h: Added a new member function to
 	ifaddr_manager.
@@ -1116,6 +1326,9 @@
 
 2014-08-02  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Added 'srcdir' for the source files.
+	[565e9605b143]
+
 	* test/Makefile.am: Changed to build the 'runtest' driver with the new
 	local library.
 	[8c7747a60c72]
@@ -1129,6 +1342,9 @@
 	* configure.ac: Updated the version number for the next release.
 	[298264ed54e9]
 
+	* Modified build rules to test basic installation.
+	[0e3c1dd979a0]
+
 2014-07-25  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* README.md: Corrected marking down.
@@ -1136,6 +1352,12 @@
 
 	* README.md: Removed an extra line.
 	[10d34467c41f]
+
+	* Merge with release.
+	[ff534f17517a]
+
+	* Changed the build rule.
+	[f91078c77de3]
 
 	* .hgtags: Added tag release/2.0 for changeset 31e1a7cd0dfd
 	[e2a829a43918]
@@ -1149,6 +1371,21 @@
 	* po/Makevars, po/xllmnrd.pot: Changed 'MSGID_BUGS_ADDRESS' and
 	regenerated the pot file.
 	[396ef711efc0] <release>
+
+	* Merge default into release.
+	[024ca1ea2037] <release>
+
+	* Added minor substitution in ChangeLog generation.
+	[ac0bc1a6c5ce]
+
+	* Excluded files that are not distributed from ChangeLog.
+	[1fdc4f46025e]
+
+	* Removed an extra semicolon.
+	[226860de41a0]
+
+	* Added a rule to update the ChangeLog file.
+	[f92ca3ef4fdb]
 
 	* po/xllmnrd.pot: Updated the pot file.
 	[e48fda81b724]
@@ -1173,6 +1410,10 @@
 
 2014-07-03  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Merge feature/responder-ipv6-dontfrag into default (pull request
+	#14).
+	[ac32fedfd688]
+
 	* src/responder.c: Added code to disable packet fragmentation to fix
 	issue #49.
 	[62ba26aa013d] <feature/responder-ipv6-dontfrag>
@@ -1185,9 +1426,18 @@
 
 2014-06-30  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Removed default values for CC and CXX.
+	[f03fd4f468d5]
+
 	* configure.ac: Moved gl_EARLY before XX_PROG_CXX_STD11 to suppress a
 	false warning.
 	[e732cbef4748]
+
+2014-06-27  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged in feature/testifaddr-split (pull request #13): split tests
+	for ifaddr into two test fixtures.
+	[d9d6d3069ea0]
 
 2014-06-26  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -1203,6 +1453,14 @@
 	'AC_EGREP_CPP'.
 	[087717018c48]
 
+2014-06-24  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Changed the rule again to retain tests.
+	[e463aac6a635]
+
+	* Changed the default rule not to make a binary image.
+	[7d7a5b6d381f]
+
 2014-06-22  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Modified a parameter to suppress an error on CLang.
@@ -1214,6 +1472,11 @@
 
 	* README.md: Recommit a file.
 	[f94d8a717bee]
+
+2014-06-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merge in feature/ifaddr-v6 (pull request #12) to close issue #22.
+	[df362bbea699]
 
 2014-06-18  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -1235,6 +1498,12 @@
 
 	* acinclude.m4: Added a missing comma in an autoconf macro.
 	[db6cc72dcf5e]
+
+	* Merge with default.
+	[6642f501dd8b] <feature/ifaddr-v6>
+
+	* Merge feature/configure-c++11 into default.
+	[77736d3b4494]
 
 	* acinclude.m4, configure.ac: Modified the configure macro to enable
 	C++11 on recent GCC versions, closing issue #17.
@@ -1382,6 +1651,9 @@
 	* NEWS, configure.ac: Merged release into default.
 	[f85018531d82]
 
+	* Modified a maintainer build rule.
+	[0a265d19e704]
+
 	* .hgtags: Added tag release-1.2.1 for changeset 6ff4c41cdf0d
 	[7f8bc9e78ae7] <release>
 
@@ -1417,6 +1689,9 @@
 	cycle.
 	[f8962ff94761]
 
+	* Merge release into default.
+	[e9a28afd1bee]
+
 	* .hgtags: Added tag release-1.2.0 for changeset e479c8a6598e
 	[b4f541c6568d] <release>
 
@@ -1439,10 +1714,16 @@
 	* configure.ac: Updated the version number for a new release.
 	[34263571a36a] <release>
 
+	* Merge with default.
+	[94a563775b2a] <release>
+
 2014-01-18  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Removed some of the 'restricted' keywords.
 	[8de85aa163b6] <feature/ifaddr-v6>
+
+	* Merge with default.
+	[1749fadb353b] <feature/ifaddr-v6>
 
 	* README.md: Modified the text.
 	[2280dc5c27d2]
@@ -1491,6 +1772,10 @@
 	* po/ja.po: Updated the Japanese translations.
 	[1b8b21d5457d]
 
+	* Run hg status after each successful build to detect unexpected file
+	changes.
+	[78a1bad00160]
+
 2014-01-09  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Added a workaround for undefined s6_addr32.
@@ -1525,6 +1810,9 @@
 	* po/ja.po: Updated translation years.
 	[a6527abebe5c]
 
+	* Merge feature/l10n-ja into default (pull request #8).
+	[bd32a9388b95]
+
 	* po/ja.po: Imported new translations.
 	[85ca13228747] <feature/l10n-ja>
 
@@ -1537,6 +1825,18 @@
 
 	* po/ja.po: Updated the po file.
 	[ca018990b057] <feature/l10n-ja>
+
+	* Merge with default.
+	[cf9d01387ec0] <feature/l10n-ja>
+
+	* Changed to clean the build directory first.
+	[64eb7d0da59e]
+
+	* Modified the build rules.
+	[66f46c4cebcc]
+
+	* Reorganized the rules.
+	[dfe7dc612f4b]
 
 	* po/xllmnrd.pot: Updated the pot file.
 	[80e6cf03fedb]
@@ -1597,8 +1897,20 @@
 	* configure.ac: Merge with default.
 	[124e69825673] <feature/init-script>
 
+	* Added another dependency.
+	[248d850211f8]
+
+	* Backed out changeset: 99c66b88480e
+	[afb99b2ad814]
+
+	* Added a dependency.
+	[99c66b88480e]
+
 	* configure.ac: Changed the version number for snapshots.
 	[7917af6a1805]
+
+	* Merge release back into default.
+	[e13da346cd3c]
 
 2013-12-23  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -1616,6 +1928,9 @@
 	* configure.ac: Changed the version number to 1.1.0 (see issue #36).
 	[3e2e9b9958a2] <release>
 
+	* Merge with default.
+	[cfa995aef7e6] <release>
+
 	* README: Updated the README text with the project location (see issue
 	#34).
 	[571f5284bafd]
@@ -1632,6 +1947,21 @@
 	[10436f8116e3]
 
 2013-12-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Correct the DESTDIR value again.
+	[bdbc772eb133]
+
+	* Correct the DESTDIR value.
+	[9525c099f9fb]
+
+	* Added commands to make a binary image.
+	[33497d6b4acb]
+
+	* Added 'prefix' for test installation.
+	[363962f79bf7]
+
+	* Merge feature/pid-file into default.
+	[e75567cff958]
 
 	* src/main.c: Updated the help text for the new option, and closes
 	issue #7.
@@ -1719,6 +2049,9 @@
 	* configure.ac: Merge with default.
 	[dc4bf2721795] <feature/init-script>
 
+	* Merge release back into default.
+	[a63bd5ffdbeb]
+
 	* .hgtags: Added tag release-1.0.0 for changeset fab9f6db574c
 	[94dd58f75330] <release>
 
@@ -1735,6 +2068,9 @@
 	* NEWS: Updated the news (see issue #29).
 	[3d152484e0f7] <release>
 
+	* Merge default into release.
+	[c885d2e48230] <release>
+
 	* README: Updated the package description.
 	[5a9700d7190a]
 
@@ -1748,6 +2084,9 @@
 	milestone 1.0y3.
 	[35267c8b17ab]
 
+	* Merge feature/responder into default.
+	[3b46055a1cfb]
+
 	* src/llmnr_packet.h, src/responder.c: Added new inline function to
 	read or write data in a LLMNR packet.
 	[39d587d89418] <feature/responder>
@@ -1757,7 +2096,16 @@
 	* src/responder.c: Added an answer section.
 	[5b25ad2cc855] <feature/responder>
 
+	* Revised the last change.
+	[ffa6a2eaddc5]
+
+	* Modified the 'all' target.
+	[fe1ef7e13318]
+
 2013-12-05  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merge feature/responder into default.
+	[fcce1c55d1b5]
 
 	* configure.ac: Removed unnecessary checks for C90 headers and
 	symbols.
@@ -1775,6 +2123,9 @@
 
 2013-12-04  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Merge with default.
+	[32dfe11da555] <feature/responder>
+
 	* src/ifaddr.c: Removed a volatile qualifier from
 	'refresh_not_in_progress'.
 	[b91dec8e85dd]
@@ -1784,6 +2135,9 @@
 
 	* src/ifaddr.c: Replaced 'abort_if_error'.
 	[e83af104a1fd]
+
+	* Merged feature/ifaddr-v4 into default.
+	[3a2773583d32]
 
 	* src/ifaddr.c: Made IPv4 address arrays dynamically allocated to fix
 	issue #25.
@@ -1816,6 +2170,9 @@
 
 	* NEWS: Corrected gramatical number in the news.
 	[66d57134aeef]
+
+	* Merged release into default, closing issue #26.
+	[68a2934a70af]
 
 	* .hgtags: Added tag release-1.0y2 for changeset ecf618ed0e61
 	[e5d9c48e320d] <release>
@@ -1858,6 +2215,9 @@
 
 	* src/main.c: Changed message strings.
 	[2877a84b1116]
+
+	* Merged feature/gettext into default, closing issue #19.
+	[f13770612a81]
 
 	* src/Makefile.am: Added gettext.h into the distribution.
 	[b384bccc37c6] <feature/gettext>
@@ -1903,6 +2263,9 @@
 	code with commenting and reordering.
 	[2046e79e508a] <feature/responder>
 
+	* Merged with default.
+	[bc3a34806f88] <feature/responder>
+
 2013-11-26  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Renamed functions and added comments (see issue #22).
@@ -1929,6 +2292,12 @@
 
 	* test/Makefile.am: Moved the deletion of XML result files to 'clean'.
 	[5b67527c5e21]
+
+	* Added mostlyclean.
+	[985668c8703d]
+
+	* Merged with default.
+	[b17443eba6ba] <feature/responder>
 
 	* src/ifaddr.c: Removed unnecessary assertions.
 	[29c661a0c922]
@@ -1967,6 +2336,9 @@
 	* src/llmnr_packet.h: Changed to use uint8_t for octets with a macro
 	addtion.
 	[548a371010b1] <feature/responder>
+
+	* Merged with default.
+	[1ae0c6b669c6] <feature/responder>
 
 	* configure.ac, src/main.c: Merged in feature/config-revision (pull
 	request #6).
@@ -2016,10 +2388,16 @@
 	* src/main.c: Modified a message string.
 	[9817d0a388f8]
 
+	* Merged with default.
+	[5638224bfa64] <feature/responder>
+
 	* configure.ac, src/main.c: Corrected minor text formatting problems.
 	[4cfaac47e5e5]
 
 2013-11-18  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged release into default.
+	[3a7ebd090d9c]
 
 	* .hgtags: Added tag release-1.0y1 for changeset efcb7238dabf
 	[857418a3e7db] <release>
@@ -2057,12 +2435,18 @@
 	* src/ifaddr.c: Reduced verbose logs and cleaned up code.
 	[9e2f2a4865f2] <release>
 
+	* Merged feature/responder into default.
+	[32ca1bfacac4]
+
 	* src/main.c: Removed no-op code added to suppress a warning.
 	[1e340a6b1c26]
 
 	* src/llmnr_responder.c, src/llmnr_responder.h: Added an ifaddr_change
 	handler, and fixed issue #8.
 	[f5b1a788e501] <feature/responder>
+
+	* Merged with default.
+	[de33feb50c00] <feature/responder>
 
 	* src/main.c: Changed the syslog settings.
 	[2aa1fd5aaa4f]
@@ -2094,6 +2478,9 @@
 	* src/llmnr_packet.h: Added new function 'llmnr_data'.
 	[c15c88bed435] <feature/responder>
 
+	* Merged with default.
+	[da0321cf3880] <feature/responder>
+
 	* src/ifaddr.c: Modified error handling.
 	[fb6f61bcd8bc]
 
@@ -2101,6 +2488,9 @@
 	[a484cba1d309]
 
 2013-11-13  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged feature/ifaddr into default.
+	[12fa4d528323]
 
 	* src/ifaddr.c, src/ifaddr.h, test/testifaddr.cpp: Implemented
 	interface change notification.
@@ -2173,6 +2563,9 @@
 
 2013-11-11  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Merged feature/ifaddr into default.
+	[e17e0f01eb4c]
+
 	* .hgignore: Modified the Mercurial ignore patterns.
 	[24161f0df942]
 
@@ -2190,6 +2583,11 @@
 	actually removed.
 	[5c337d7cd754] <feature/ifaddr>
 
+2013-11-10  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged with default.
+	[0092e412a06a] <feature/ifaddr>
+
 2013-11-09  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Made the interface table.
@@ -2203,6 +2601,9 @@
 	[dad36b1c8a75]
 
 2013-11-08  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged feature/ifaddr into default.
+	[9d81d3d60187]
 
 	* src/ifaddr.c: Added a restrict qualifier to the second argument of
 	'abort_if_error'.
@@ -2237,6 +2638,9 @@
 
 2013-11-06  Kaz Nishimura  <kazssym@vx68k.org>
 
+	* Merged with default.
+	[1400398c71e9] <feature/ifaddr>
+
 	* configure.ac: Changed the version number for upcoming milestone
 	1.0y1.
 	[f5f6e09e08fc]
@@ -2246,8 +2650,11 @@
 	* ChangeLog: Updated from the revision history.
 	[33e30aaae9e3]
 
-	* src/ifaddr.c: Moved `open_rtnetlink` to make it inline.
+	* src/ifaddr.c: Moved 'open_rtnetlink' to make it inline.
 	[584180bff739] <feature/ifaddr>
+
+	* Merged feature/ifaddr into default.
+	[b2d1cf7e05e7]
 
 	* src/ifaddr.c: Excluded <limits.h>.
 	[674df1e4eb6e] <feature/ifaddr>
@@ -2260,7 +2667,7 @@
 	[5a9dce72160c] <feature/ifaddr>
 
 	* src/ifaddr.c: Added a const qualifier to the first argument of
-	`ifaddr_decode_nlmsg`.
+	'ifaddr_decode_nlmsg'.
 	[78687b032cb3] <feature/ifaddr>
 
 	* test/Makefile.am, test/testifaddr.cpp: Added a test fixture for
@@ -2270,10 +2677,21 @@
 	* src/ifaddr.c: Changed ifaddr back to single-initialization.
 	[9c21afe7386a] <feature/ifaddr>
 
+	* Merged with default.
+	[a02ebb05c023] <feature/ifaddr>
+
+2013-11-04  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Added the CXX definition for the test driver.
+	[849b2bc82ea4]
+
 2013-11-03  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* test/testmain.cpp: Removed extra blank lines.
 	[603ba2e04280]
+
+	* Merged feature/unittest into default.
+	[f2373c054132]
 
 	* test/Makefile.am, test/testmain.cpp: Added a unit test driver.
 	[feb10d25656b] <feature/unittest>
@@ -2284,7 +2702,21 @@
 	ifaddr_handle_ifadddrmsg().
 	[0218e801bfd7] <feature/ifaddr>
 
+2013-10-23  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged default into feature/ifaddr.
+	[f46e7c96d6db] <feature/ifaddr>
+
 2013-10-22  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Changed to pass CFLAGS to make check only.
+	[b2a4d468f342]
+
+	* Changed to pass CC as an environment variable.
+	[37d0620bee36]
+
+	* Set CC explicitly.
+	[db7b24508292]
 
 	* configure.ac: Added configure checks for CppUnit.
 	[6306a401bb56] <feature/unittest>
@@ -2292,11 +2724,33 @@
 	* configure.ac: Changed the URL.
 	[836674ab33c2]
 
+	* Changed the default rule.
+	[b7c7c3435f88]
+
+	* Merged default into feature/ifaddr.
+	[10466a66d9c3] <feature/ifaddr>
+
 	* src/ifaddr.c: Modified comment text.
 	[1f9e70a6d20d] <feature/ifaddr>
 
 	* src/ifaddr.c: Added RTM_NEWADDR handling.
 	[11a86b102ac5] <feature/ifaddr>
+
+2013-10-21  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Set custom CFLAGS.
+	[804fb6398201]
+
+	* Renamed the stamp file.
+	[92e2de2414aa]
+
+2013-10-20  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Added a missing mkdir command in build.makefile.
+	[ada64e04dbe7]
+
+	* Added build.makefile for maintenance jobs.
+	[1c276db4d324]
 
 2013-10-13  Kaz Nishimura  <kazssym@vx68k.org>
 
@@ -2395,6 +2849,11 @@
 	* configure.ac: Updated the HEADERS and FUNCS lists.
 	[2191f6bc54da]
 
+2013-06-19  Kaz Nishimura  <kazssym@vx68k.org>
+
+	* Merged ifaddr into default.
+	[56f62164df7a]
+
 2013-06-09  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c, src/llmnr_responder.c: Changed the code spacing
@@ -2439,6 +2898,11 @@
 	* xllmnrd.8.in: Added a missing backslash in the NAME section.
 	[11ea089f23f2]
 
+2013-05-17  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Merged default into ifaddr.
+	[4a1d5fc4d470] <ifaddr>
+
 2013-05-16  Kaz Sasa  <kazssym@vx68k.org>
 
 	* .hgignore: Added final output files to .hgignore
@@ -2481,6 +2945,11 @@
 	* Makefile.am: Added a hook to sign the SHA1SUM file for distribution.
 	[f1c430f86cdf]
 
+2013-03-24  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Merge with unfinished.
+	[1f7319154a82]
+
 2013-03-23  Kaz Sasa  <kazssym@vx68k.org>
 
 	* README: Modified the README file.
@@ -2488,6 +2957,9 @@
 
 	* src/main.c: Modified the signal handling code to fix issue #4.
 	[e704a599f93c] <unfinished>
+
+	* Merge with default.
+	[15ec9056850d] <unfinished>
 
 	* configure.ac: Merge with default.
 	[13b096e877d7] <unfinished>
@@ -2503,8 +2975,16 @@
 
 2013-03-22  Kaz Sasa  <kazssym@vx68k.org>
 
+	* Merge with default.
+	[6ab6b45892be] <unfinished>
+
 	* src/ifaddr.c: Added code for the ifaddr unit (see issue #1).
 	[587ad14b27cb] <unfinished>
+
+2013-03-21  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Merge with another branch.
+	[6a2822f736e8]
 
 2013-03-15  Kaz Sasa  <kazssym@vx68k.org>
 
@@ -2564,6 +3044,9 @@
 	[208f26b6668a] <unfinished>
 
 2013-03-09  Kaz Sasa  <kazssym@vx68k.org>
+
+	* Merged another head.
+	[7fa5d2d8a0fa]
 
 	* INSTALL: Added an INSTALL file.
 	[e4627bac8c5e]

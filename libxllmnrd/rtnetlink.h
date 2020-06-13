@@ -101,8 +101,12 @@ namespace xllmnrd
         /// Handles a NETLINK error message.
         void handle_error(const struct nlmsghdr *message);
 
-        // Finishes the refresh of the interface addresses.
-        void finish_refresh();
+        /**
+         * Handles a NETLINK done message.
+         *
+         * This function completes the running refresh task.
+         */
+        void handle_done();
 
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *message);

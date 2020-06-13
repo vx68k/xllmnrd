@@ -90,14 +90,6 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
     }
 }
 
-void rtnetlink_interface_manager::finish_refresh()
-{
-    std::unique_lock<std::mutex> lock(_refresh_mutex);
-
-    _refreshing = false;
-    _refresh_completion.notify_all();
-}
-
 void rtnetlink_interface_manager::run()
 {
     while (!worker_stopped) {
@@ -146,7 +138,7 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
 
         case NLMSG_DONE:
-            finish_refresh();
+            handle_done();
             done = true;
             break;
 
@@ -175,6 +167,14 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
         auto &&e = static_cast<const struct nlmsgerr *>(NLMSG_DATA(message));
         syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
     }
+}
+
+void rtnetlink_interface_manager::handle_done()
+{
+    std::lock_guard<std::mutex> lock(_refresh_mutex);
+
+    _refreshing = false;
+    _refresh_completion.notify_all();
 }
 
 void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)

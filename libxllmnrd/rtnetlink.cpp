@@ -92,7 +92,7 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::run()
 {
-    while (!worker_stopped) {
+    while (_worker_running) {
         process_messages();
     }
 }
@@ -247,7 +247,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     }
 
     if (not(maybe_asynchronous)) {
-        while (not(worker_stopped.load()) && _refreshing) {
+        while (_worker_running && _refreshing) {
             _refresh_completion.wait(lock);
         }
     }
@@ -255,16 +255,11 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
 
 rtnetlink_interface_manager *rtnetlink_interface_manager::start()
 {
-    std::lock_guard<std::mutex> lock(worker_mutex);
+    std::lock_guard<std::mutex> lock(_worker_mutex);
 
-    if (!worker_thread.joinable()) {
-        // Implementation note:
-        // <code>operator=</code> of volatile atomic classes are somehow
-        // deleted on GCC 4.7.
-        worker_stopped.store(false);
-        worker_thread = std::thread([this]() {
-            run();
-        });
+    if (!_worker_thread.joinable()) {
+        _worker_running = true;
+        _worker_thread = std::thread(&rtnetlink_interface_manager::run, this);
 
         refresh(true);
     }
@@ -274,17 +269,14 @@ rtnetlink_interface_manager *rtnetlink_interface_manager::start()
 
 void rtnetlink_interface_manager::stop()
 {
-    std::lock_guard<std::mutex> lock(worker_mutex);
+    std::lock_guard<std::mutex> lock(_worker_mutex);
 
-    // Implementation note:
-    // <code>operator=</code> of volatile atomic classes are somehow deleted
-    // on GCC 4.7.
-    worker_stopped.store(true);
-    if (worker_thread.joinable()) {
+    _worker_running = false;
+    if (_worker_thread.joinable()) {
         // This should make a blocking recv call return.
         refresh(true);
 
-        worker_thread.join();
+        _worker_thread.join();
     }
 }
 

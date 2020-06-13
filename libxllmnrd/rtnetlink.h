@@ -32,7 +32,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
-#include <atomic>
 #include <memory>
 #include <cstddef>
 
@@ -49,11 +48,11 @@ namespace xllmnrd
 
     private:
         /// File descriptor for the RTNETLINK socket.
-        int _rtnetlink = -1;
+        int _rtnetlink {-1};
 
     private:
         /// Indicates if a refresh is in progress.
-        bool _refreshing = false;
+        bool _refreshing {false};
 
     private:
         /// Mutex for the refresh task.
@@ -62,6 +61,18 @@ namespace xllmnrd
     private:
         // Condition variable for the refresh task.
         mutable std::condition_variable _refresh_completion;
+
+    private:
+        // Indicates if the worker thread is terminated.
+        bool _worker_running {false};
+
+    private:
+        // Worker thread.
+        std::thread _worker_thread;
+
+    private:
+        // Mutex for the worker.
+        std::mutex _worker_mutex;
 
     protected:
         /// Opens the RTNETLINK socket.
@@ -88,14 +99,19 @@ namespace xllmnrd
          */
         bool running() const
         {
-            return worker_thread.joinable();
+            return _worker_running;
         }
-
-        void run();
 
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:
+        /**
+         * Stops the worker if running.
+         */
+        void stop();
+
+        void run();
+
         /// Processes NETLINK messages.
         void process_messages();
 
@@ -114,20 +130,6 @@ namespace xllmnrd
 
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *message);
-
-    private:
-
-        // Mutex for worker.
-        std::mutex worker_mutex;
-
-        // Worker thread.
-        std::thread worker_thread;
-
-        // Indicates if the worker thread is terminated.
-        volatile std::atomic_bool worker_stopped;
-
-        // Stops the worker thread if started.
-        void stop();
     };
 }
 

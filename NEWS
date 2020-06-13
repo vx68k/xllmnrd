@@ -1,5 +1,12 @@
 This file describes major changes and important notes for each release.
 
+# Version 3.0
+
+  - This program has a new package name: Xenium LLMNR Responder.
+
+  - The interface monitoring code has been re-implemented using C++ threads
+    and no longer has fixed limits in size of the internal tables.
+
 # Version 2.0
 
 This release adds a new feature and contains the source code of the GNU getopt

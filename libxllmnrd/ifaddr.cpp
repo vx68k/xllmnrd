@@ -28,6 +28,7 @@
 
 #include "ifaddr.h"
 
+#include "rtnetlink.h"
 #if HAVE_LINUX_RTNETLINK_H
 #include <linux/rtnetlink.h>
 #endif
@@ -49,10 +50,13 @@
 
 // TODO: Remove the original C-based code finally.
 #ifndef IFADDR_CPLUSPLUS
-#define IFADDR_CPLUSPLUS 0
+#define IFADDR_CPLUSPLUS 1
 #endif
 
-using namespace xllmnrd;
+using xllmnrd::interface_change_event;
+using xllmnrd::interface_change_handler;
+using xllmnrd::rtnetlink_interface_manager;
+using namespace std;
 
 /**
  * Terminates the program abnormally if an error is detected.
@@ -110,7 +114,6 @@ static inline int open_rtnetlink(int *restrict fd_out) {
     }
     return err;
 }
-#endif
 
 /**
  * Interface record.
@@ -130,10 +133,6 @@ struct ifaddr_interface {
     }
 };
 
-#if IFADDR_CPLUSPLUS
-// Pointer to the static interface address manager if initialized.
-static shared_ptr<ifaddr_manager> manager;
-#else
 /**
  * True if this module has been initialized.
  */
@@ -149,7 +148,6 @@ static int interrupt_signo;
  * File descriptor for the rtnetlink socket.
  */
 static int rtnetlink_fd;
-#endif
 
 /**
  * Mutex for the interface table.
@@ -159,7 +157,7 @@ static pthread_mutex_t if_mutex;
 /**
  * Pointer to the interface change handler.
  */
-static ifaddr_change_handler if_change_handler;
+static interface_change_handler if_change_handler;
 
 /**
  * Table of interfaces.
@@ -189,15 +187,22 @@ static bool refresh_not_in_progress;
  */
 static bool started;
 
-#if !IFADDR_CPLUSPLUS
 /**
  * Identifier for the worker thread.
  */
 static pthread_t worker_thread;
 
 static volatile sig_atomic_t terminated;
-#endif
+#else
+// Pointer to the static interface address manager if initialized.
+static shared_ptr<rtnetlink_interface_manager> manager;
+#endif /* IFADDR_CPLUSPLUS */
 
+/*
+ * Declarations for static functions.
+ */
+
+#if !IFADDR_CPLUSPLUS
 /**
  * Adds an IPv4 address to an interface.
  * @param __index interface index.
@@ -230,11 +235,6 @@ static void ifaddr_add_addr_v6(unsigned int __index,
 static void ifaddr_remove_addr_v6(unsigned int __index,
         const struct in6_addr *__addr);
 
-/*
- * Declarations for static functions.
- */
-
-#if !IFADDR_CPLUSPLUS
 static void *ifaddr_run(void *__data);
 
 /**
@@ -249,7 +249,6 @@ static void ifaddr_decode_nlmsg(const struct nlmsghdr *__nlmsg, size_t __len);
  * @param __nlmsg pointer to the netlink message
  */
 static void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *__nlmsg);
-#endif
 
 /**
  * Handles a sequence of RTNETLINK attributes for an IPv4 ifaddrmsg.
@@ -270,20 +269,18 @@ static void ifaddr_v4_handle_rtattrs(unsigned int __nlmsg_type,
  */
 static void ifaddr_v6_handle_rtattrs(unsigned int __nlmsg_type,
         unsigned int __index, const struct rtattr *__rta, size_t __rta_size);
+#endif
 
 /*
  * Definitions for in-line functions.
  */
 
+#if !IFADDR_CPLUSPLUS
 /**
  * Returns non-zero if this module has been initialized.
  */
 static inline bool ifaddr_initialized(void) {
-#if IFADDR_CPLUSPLUS
-    return bool(manager);
-#else
     return initialized;
-#endif
 }
 
 /**
@@ -365,42 +362,19 @@ static inline void ifaddr_complete_refresh(void) {
 
     unlock_mutex(&refresh_mutex);
 }
-
-ifaddr_manager::ifaddr_manager(shared_ptr<posix> os)
-        : os(os) {
-}
-
-ifaddr_manager::~ifaddr_manager() noexcept {
-}
-
-void ifaddr_manager::set_change_handler(ifaddr_change_handler change_handler,
-        ifaddr_change_handler *old_change_handler) {
-    lock_guard<decltype(object_mutex)> lock(object_mutex);
-
-    if (old_change_handler) {
-        *old_change_handler = this->change_handler;
-    }
-    this->change_handler = change_handler;
-}
+#endif /* !IFADDR_CPLUSPLUS */
 
 /*
  * Definitions for out-of-line functions.
  */
 
-int ifaddr_initialize(int sig) {
+int ifaddr_initialize(int sig)
+{
+#if !IFADDR_CPLUSPLUS
     if (ifaddr_initialized()) {
         return EBUSY;
     }
 
-#if IFADDR_CPLUSPLUS
-    try {
-        manager = make_shared<rtnetlink_ifaddr_manager>();
-    } catch (const system_error &error) {
-        return error.code().value();
-    }
-
-    return 0;
-#else
     interrupt_signo = sig;
     if_change_handler = NULL;
     interfaces_size = 0;
@@ -431,13 +405,25 @@ int ifaddr_initialize(int sig) {
         }
     }
     return err;
+#else
+    if (manager) {
+        return EBUSY;
+    }
+
+    try {
+        manager = make_shared<rtnetlink_interface_manager>();
+    }
+    catch (const system_error &error) {
+        return error.code().value();
+    }
+
+    return 0;
 #endif
 }
 
-void ifaddr_finalize(void) {
-#if IFADDR_CPLUSPLUS
-    manager.reset();
-#else
+void ifaddr_finalize(void)
+{
+#if !IFADDR_CPLUSPLUS
     if (ifaddr_initialized()) {
         initialized = false;
 
@@ -461,18 +447,19 @@ void ifaddr_finalize(void) {
                     strerror(errno));
         }
     }
+#else
+    manager.reset();
 #endif
 }
 
-int ifaddr_set_change_handler(ifaddr_change_handler handler,
-        ifaddr_change_handler *old_handler_out) {
+int ifaddr_set_change_handler(interface_change_handler handler,
+        interface_change_handler *old_handler_out)
+{
+#if !IFADDR_CPLUSPLUS
     if (!ifaddr_initialized()) {
         return ENXIO;
     }
 
-#if IFADDR_CPLUSPLUS
-    manager->set_change_handler(handler, old_handler_out);
-#else
     lock_mutex(&if_mutex);
 
     if (old_handler_out) {
@@ -481,11 +468,21 @@ int ifaddr_set_change_handler(ifaddr_change_handler handler,
     if_change_handler = handler;
 
     unlock_mutex(&if_mutex);
+#else
+    if (!manager) {
+        return ENXIO;
+    }
+
+    auto &&old_handler = manager->set_interface_change(handler);
+    if (old_handler_out) {
+        *old_handler_out = old_handler;
+    }
 #endif
 
     return 0;
 }
 
+#if !IFADDR_CPLUSPLUS
 void ifaddr_add_addr_v4(unsigned int index,
         const struct in_addr *restrict addr) {
     lock_mutex(&if_mutex);
@@ -591,7 +588,7 @@ void ifaddr_add_addr_v6(unsigned int index,
         }
         if (addr_v6) {
             if (i->addr_v6_size == 0 && if_change_handler) {
-                ifaddr_change change = {ifaddr_change::ADDED, index};
+                interface_change_event change = {interface_change_event::ADDED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -633,7 +630,7 @@ void ifaddr_remove_addr_v6(unsigned int index,
             i->addr_v6_size -= 1;
 
             if (i->addr_v6_size == 0 && if_change_handler) {
-                ifaddr_change change = {ifaddr_change::REMOVED, index};
+                interface_change_event change = {interface_change_event::REMOVED, index};
                 (*if_change_handler)(&change);
             }
 
@@ -652,21 +649,15 @@ void ifaddr_remove_addr_v6(unsigned int index,
 
     unlock_mutex(&if_mutex);
 }
+#endif /* !IFADDR_CPLUSPLUS */
 
-int ifaddr_start(void) {
+int ifaddr_start(void)
+{
+#if !IFADDR_CPLUSPLUS
     if (!ifaddr_initialized()) {
         return ENXIO;
     }
 
-#if IFADDR_CPLUSPLUS
-    try {
-        manager->start();
-    } catch (const system_error &error) {
-        return error.code().value();
-    }
-
-    return 0;
-#else
     int err = 0;
     if (!ifaddr_started()) {
         terminated = false;
@@ -691,6 +682,18 @@ int ifaddr_start(void) {
         }
     }
     return err;
+#else
+    if (!manager) {
+        return ENXIO;
+    }
+
+    try {
+        manager->start();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+
+    return 0;
 #endif
 }
 
@@ -711,7 +714,7 @@ void *ifaddr_run(void *data) {
                 return data;
             }
         } else {
-            std::vector<unsigned char> buf(recv_size);
+            vector<unsigned char> buf(recv_size);
             ssize_t recv_len = recv(rtnetlink_fd, buf.data(), recv_size, 0);
             if (recv_len >= 0) {
                 const struct nlmsghdr *nlmsg = (struct nlmsghdr *) buf.data();
@@ -802,7 +805,6 @@ void ifaddr_handle_ifaddrmsg(const struct nlmsghdr *const nlmsg) {
         }
     }
 }
-#endif
 
 void ifaddr_v4_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         const struct rtattr *restrict rta, size_t rta_size) {
@@ -849,21 +851,12 @@ void ifaddr_v6_handle_rtattrs(unsigned int nlmsg_type, unsigned int index,
         rta = RTA_NEXT(rta, rta_size);
     }
 }
+#endif
 
-int ifaddr_refresh(void) {
-    if (!ifaddr_initialized()) {
-        return ENXIO;
-    }
-
-#if IFADDR_CPLUSPLUS
-    try {
-        manager->refresh();
-    } catch (const system_error &error) {
-        return error.code().value();
-    }
-    return 0;
-#else
-    if (!ifaddr_started()) {
+int ifaddr_refresh(void)
+{
+#if !IFADDR_CPLUSPLUS
+    if (!ifaddr_initialized() || !ifaddr_started()) {
         return ENXIO;
     }
 
@@ -913,12 +906,26 @@ int ifaddr_refresh(void) {
     unlock_mutex(&refresh_mutex);
 
     return err;
+#else
+    if (!manager || not(manager->running())) {
+        return ENXIO;
+    }
+
+    try {
+        manager->refresh();
+    } catch (const system_error &error) {
+        return error.code().value();
+    }
+
+    return 0;
 #endif
 }
 
 int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
         // Using 'struct in6_addr addr[restrict]' caused an error on CLang.
-        struct in6_addr *restrict addr, size_t *number_of_addresses) {
+        struct in6_addr *restrict addr, size_t *number_of_addresses)
+{
+#if !IFADDR_CPLUSPLUS
     if (!ifaddr_initialized() || !ifaddr_started()) {
         return ENXIO;
     }
@@ -946,4 +953,25 @@ int ifaddr_lookup_v6(unsigned int index, size_t addr_size,
     unlock_mutex(&if_mutex);
 
     return err;
+#else
+    if (!manager || not(manager->running())) {
+        return ENXIO;
+    }
+
+    auto &&addresses = manager->in6_addresses(index);
+    if (addresses.empty()) {
+        return ENODEV;
+    }
+
+    auto &&addr_end = addr + addr_size;
+    for (auto &&i = addresses.begin(); i != addresses.end(); i++) {
+        if (addr == addr_end) {
+            break;
+        }
+        *addr++ = *i;
+    }
+    *number_of_addresses = addresses.size();
+
+    return 0;
+#endif
 }

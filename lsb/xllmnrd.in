@@ -20,8 +20,11 @@
 #  NetBIOS name resolution provided by Samba.
 ### END INIT INFO
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+sbindir=@sbindir@
 NAME=xllmnrd
-DAEMON=@sbindir@/$NAME
+DAEMON=${sbindir}/$NAME
 PIDDIR=/var/run/$NAME
 USER=xllmnrd
 

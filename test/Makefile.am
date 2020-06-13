@@ -8,15 +8,19 @@ TESTS =
 CLEANFILES =
 
 if CPPUNIT
-check_PROGRAMS = test_ifaddr.exec
+check_PROGRAMS = test_rtnetlink.exec test_ifaddr.exec
 check_SCRIPTS = run-test
 
-EXEC_TEST_LOG_COMPILER = $(SHELL) ./run-test
+EXEC_LOG_COMPILER = $(SHELL) ./run-test
 TESTS += $(check_PROGRAMS)
 CLEANFILES += $(check_SCRIPTS)
 endif
 
 noinst_HEADERS = xmlreport.h
+
+test_rtnetlink_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \
+$(CPPUNIT_LIBS)
+test_rtnetlink_exec_SOURCES = main.cpp xmlreport.cpp test_rtnetlink.cpp
 
 test_ifaddr_exec_SOURCES = main.cpp xmlreport.cpp test_ifaddr.cpp
 test_ifaddr_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \

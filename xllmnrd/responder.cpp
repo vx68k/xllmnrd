@@ -176,7 +176,7 @@ static volatile sig_atomic_t responder_terminated;
  * @param __change [in] change notification.
  */
 static void responder_handle_ifaddr_change(
-        const struct ifaddr_change *__change);
+        const struct interface_change_event *__change);
 
 static ssize_t responder_receive_udp(int, void *, size_t,
         struct sockaddr_in6 *, struct in6_pktinfo *);
@@ -327,19 +327,24 @@ void responder_terminate(void) {
 }
 
 void responder_handle_ifaddr_change(
-        const struct ifaddr_change *restrict change) {
+        const struct interface_change_event *restrict change)
+{
+    if (change->address_family != AF_INET6) {
+        return;
+    }
+
     if (responder_initialized()) {
-        if (change->ifindex != 0) {
+        if (change->interface_index != 0) {
             const struct ipv6_mreq mr = {
-                in6addr_mc_llmnr, // .ipv6mr_multiaddr
-                change->ifindex,  // .ipv6mr_interface
+                in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+                change->interface_index, // .ipv6mr_interface
             };
 
             char ifname[IF_NAMESIZE];
-            if_indextoname(change->ifindex, ifname);
+            if_indextoname(change->interface_index, ifname);
 
             switch (change->type) {
-            case ifaddr_change::ADDED:
+            case interface_change_event::ADDED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
@@ -351,7 +356,7 @@ void responder_handle_ifaddr_change(
                 }
                 break;
 
-            case ifaddr_change::REMOVED:
+            case interface_change_event::REMOVED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
                         &mr, sizeof (struct ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,

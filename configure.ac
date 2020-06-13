@@ -1,44 +1,40 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.69])
-AC_INIT([XLLMNRD], [3-alpha.2],
+AC_INIT([Xenium LLMNR Responder], [3.0],
 [https://bitbucket.org/kazssym/xllmnrd/issues/new], [xllmnrd],
 [https://www.vx68k.org/xllmnrd])
-AC_CONFIG_SRCDIR([src/responder.cpp])
+AC_CONFIG_SRCDIR([xllmnrd/responder.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([no-define])
+AM_INIT_AUTOMAKE([foreign no-define])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
+AC_DEFINE([_POSIX_C_SOURCE], [200809L],
+[Define to 200809L to make the symbols required by POSIX.1-2008 visible.])dnl
 gl_EARLY
 # Checks for libraries.
-AC_SEARCH_LIBS([pthread_create], [pthread])
+AC_SEARCH_LIBS([pthread_join], [pthread])
+AC_SEARCH_LIBS([atomic_flag_test_and_set], [atomic])
 # Checks for header files.
-AC_DEFINE([_POSIX_C_SOURCE], [200809L],
-[Define to 200809L to make the symbols required by IEEE Std 1003.1-2008 \
-visible if available.])dnl
-AC_HEADER_STDBOOL
-AC_CHECK_HEADERS([arpa/inet.h libgen.h linux/rtnetlink.h netinet/in.h \
-net/if.h syslog.h sys/socket.h])
-AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.19.3])
+AC_CHECK_HEADERS([arpa/inet.h libgen.h netinet/in.h net/if.h syslog.h sys/socket.h])
+AC_CHECK_HEADERS([linux/rtnetlink.h])
 gl_INIT
 # Checks for typedefs, structures, and compiler characteristics.
 dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.
 dnl Note: on the other hand, 'restrict' is not standard in C++ yet.
 AC_C_RESTRICT
 AC_TYPE_SSIZE_T
-AC_TYPE_UINT8_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
 # Checks for library functions.
 dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
 dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.3])
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
 AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
 # Configuration actions.
-AC_CONFIG_FILES([Makefile src/Makefile libxllmnrd/Makefile test/Makefile
-lsb/Makefile libgnu/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile xllmnrd/Makefile libxllmnrd/Makefile libgnu/Makefile
+test/Makefile lsb/Makefile po/Makefile.in])
 AC_OUTPUT

@@ -1,6 +1,6 @@
 /*
- * posix - POSIX class (implementation)
- * Copyright (C) 2013-2015 Kaz Nishimura
+ * posix.cpp
+ * Copyright (C) 2013-2020 Kaz Nishimura
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,26 +18,38 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#undef _GNU_SOURCE
 
 #include "posix.h"
 
-#include "sys/socket.h"
-#include "unistd.h"
+#include <unistd.h>
 
 using namespace xllmnrd;
 
-posix::~posix() {
+posix::~posix()
+{
 }
 
-int posix::socket(int domain, int type, int protocol) {
+int posix::socket(int domain, int type, int protocol)
+{
     return ::socket(domain, type, protocol);
 }
 
-int posix::bind(int fd, const sockaddr *addr, socklen_t len) {
+int posix::bind(int fd, const sockaddr *addr, socklen_t len)
+{
     return ::bind(fd, addr, len);
 }
 
-int posix::close(int fd) {
+int posix::close(int fd)
+{
     return ::close(fd);
+}
+
+ssize_t posix::recv(int fd, void *buf, ::size_t n, int flags)
+{
+    return ::recv(fd, buf, n, flags);
+}
+
+ssize_t posix::send(int fd, const void *buf, ::size_t n, int flags)
+{
+    return ::send(fd, buf, n, flags);
 }

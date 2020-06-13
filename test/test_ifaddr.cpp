@@ -27,6 +27,7 @@
 #include <cppunit/TestFixture.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <unistd.h>
 #include <vector>
 #include <csignal>
 #include <cerrno>
@@ -67,7 +68,7 @@ public:
     }
 
     void testFailures() {
-        ifaddr_change_handler handler = &handle_change;
+        interface_change_handler handler = &handle_change;
         // Without initialization, an error MUST be detected.
         CPPUNIT_ASSERT_EQUAL(ENXIO, ifaddr_set_change_handler(&handle_change,
                 &handler));
@@ -78,7 +79,7 @@ public:
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
- 
+
         size_t size;
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This MUST fail.
@@ -89,7 +90,7 @@ protected:
     static void handle_signal(int sig) {
     }
 
-    static void handle_change(const struct ifaddr_change *change) {
+    static void handle_change(const struct interface_change_event *change) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrPreTests);
@@ -123,7 +124,7 @@ public:
     }
 
     void testSetHandler() {
-        ifaddr_change_handler handler = &handle_change;
+        interface_change_handler handler = &handle_change;
         // The initial handler function MUST be null.
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_set_change_handler(&handle_change,
                 &handler));
@@ -151,6 +152,7 @@ public:
                 CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh()));
 
         ifaddr_start();
+        sleep(1); // To make sure the interface table is populated.
 
         CPPUNIT_ASSERT_EQUAL(0, ifaddr_refresh());
     }
@@ -170,6 +172,7 @@ public:
                 ifaddr_lookup_v6(eth0, 0, NULL, &size)));
 
         ifaddr_start();
+        sleep(1); // To make sure the interface table is populated.
 
         // The loopback interface SHALL be ignored.
         CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(lo, 0, NULL, &size));
@@ -186,7 +189,7 @@ protected:
     static void handle_signal(int sig) {
     }
 
-    static void handle_change(const struct ifaddr_change *change) {
+    static void handle_change(const struct interface_change_event *change) {
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(IfaddrTests);

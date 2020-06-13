@@ -6,12 +6,12 @@
             "request": "launch",
             "name": "(gdb) Launch",
             "preLaunchTask": "Build",
-            "program": "${workspaceFolder}/src/xllmnrd",
+            "program": "${workspaceFolder}/xllmnrd/xllmnrd",
             "args": [
                 "--foreground"
             ],
             "environment": [],
-            "cwd": "${workspaceFolder}/src",
+            "cwd": "${workspaceFolder}/xllmnrd",
             "MIMode": "gdb",
             "setupCommands": [
                 {

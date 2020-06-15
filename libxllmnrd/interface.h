@@ -120,6 +120,7 @@ namespace xllmnrd
         interface_change_handler set_interface_change(
             interface_change_handler interface_change);
 
+    public:
         /**
          * Returns a copy of the IPv4 addresses of an interface.
          *
@@ -130,6 +131,7 @@ namespace xllmnrd
          */
         std::set<struct in_addr> in_addresses(unsigned int index) const;
 
+    public:
         /**
          * Returns a copy of the IPv6 addresses of an interface.
          *
@@ -140,6 +142,7 @@ namespace xllmnrd
          */
         std::set<struct in6_addr> in6_addresses(unsigned int index) const;
 
+    public:
         // Refreshes the interface addresses.
         //
         // This function is thread safe.
@@ -152,12 +155,15 @@ namespace xllmnrd
             return _interfaces_mutex;
         }
 
+    protected:
         /// Removes all the interfaces.
         void remove_interfaces();
 
+    protected:
         void add_interface_address(unsigned int index, int family,
             const void *address, size_t address_size);
 
+    protected:
         void remove_interface_address(unsigned int index, int family,
             const void *address, size_t address_size);
 

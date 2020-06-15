@@ -94,6 +94,7 @@ namespace xllmnrd
          */
         rtnetlink_interface_manager *start();
 
+    public:
         /**
          * Returns true if the worker thread is running; false otherwise.
          */
@@ -102,6 +103,7 @@ namespace xllmnrd
             return _worker_running;
         }
 
+    public:
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:
@@ -110,17 +112,22 @@ namespace xllmnrd
          */
         void stop();
 
+    protected:
         void run();
 
+    protected:
         /// Processes NETLINK messages.
         void process_messages();
 
+    protected:
         /// Dispatches NETLINK messages.
         void dispatch_messages(const void *messages, size_t size);
 
+    protected:
         /// Handles a NETLINK error message.
         void handle_error(const struct nlmsghdr *message);
 
+    protected:
         /**
          * Handles a NETLINK done message.
          *
@@ -128,6 +135,7 @@ namespace xllmnrd
          */
         void handle_done();
 
+    protected:
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *message);
     };

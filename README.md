@@ -1,10 +1,10 @@
 # Introduction
 
-<dfn>Xenium LLMNR Responder</dfn> (xllmnrd) is an IPv6 network daemon that
-responds to name queries from Microsoft Windows computers on the same network
-link so that they can get the IPv6 addresses of the server _without any DNS
-configuration_.  It effectively supplements IPv4-only NetBIOS name resolution
-typically provided by [Samba][].
+<dfn>Xenium LLMNR Responder</dfn> (xllmnrd) is an IPv6 network service daemon
+that responds to name queries from Microsoft Windows computers on the same
+network link so that you can get the IPv6 addresses of the server *without
+any DNS configuration*.  It effectively supplements IPv4-only NetBIOS name
+resolution typically provided by [Samba][].
 
 This program implements Link-Local Multicast Name Resolution (LLMNR) as
 described in [RFC 4795][] and currently supports Linux-based operating systems

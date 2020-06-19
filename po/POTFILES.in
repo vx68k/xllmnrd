@@ -1,2 +1,2 @@
 # List of source files which contain translatable strings.
-xllmnrd/main.cpp
+xllmnrd/xllmnrd.cpp

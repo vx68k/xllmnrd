@@ -26,6 +26,7 @@
 
 #include "responder.h"
 
+#include "rtnetlink.h"
 #include "ifaddr.h"
 #include "ascii.h"
 #include "llmnr_packet.h"
@@ -153,6 +154,9 @@ static inline void log_discarded(const char *restrict message,
  */
 static bool initialized;
 
+// Interface manager.
+static std::unique_ptr<interface_manager> if_manager;
+
 /**
  * File descriptor of the UDP socket.
  * This value is valid only if this module is initialized.
@@ -246,6 +250,8 @@ int responder_initialize(in_port_t port) {
         return EBUSY;
     }
 
+    if_manager.reset((new rtnetlink_interface_manager())->start());
+
     // If the specified port number is 0, we use the default port number.
     if (port == htons(0)) {
         port = htons(LLMNR_PORT);
@@ -264,6 +270,8 @@ int responder_initialize(in_port_t port) {
                     strerror(errno));
         }
     }
+
+    if_manager.reset();
     return err;
 }
 
@@ -272,6 +280,7 @@ void responder_finalize(void) {
         initialized = false;
 
         close(udp_fd);
+        if_manager.reset();
     }
 }
 

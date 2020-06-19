@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 4.0\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-06-19 15:02+0900\n"
+"POT-Creation-Date: 2020-06-19 16:18+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,66 +17,66 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: xllmnrd/main.cpp:317
+#: xllmnrd/xllmnrd.cpp:317
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:324
+#: xllmnrd/xllmnrd.cpp:324
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:325
+#: xllmnrd/xllmnrd.cpp:325
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:327
+#: xllmnrd/xllmnrd.cpp:327
 #, c-format
 msgid "  -f, --foreground      run in foreground\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:329
+#: xllmnrd/xllmnrd.cpp:329
 #, c-format
 msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:331
+#: xllmnrd/xllmnrd.cpp:331
 #, c-format
 msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:333
+#: xllmnrd/xllmnrd.cpp:333
 #, c-format
 msgid "      --help            display this help and exit\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:335
+#: xllmnrd/xllmnrd.cpp:335
 #, c-format
 msgid "      --version         output version information and exit\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:338
+#: xllmnrd/xllmnrd.cpp:338
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:342
+#: xllmnrd/xllmnrd.cpp:342
 #, c-format
 msgid "%s %s\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:344
+#: xllmnrd/xllmnrd.cpp:344
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:346
+#: xllmnrd/xllmnrd.cpp:346
 msgid "(C)"
 msgstr ""
 
-#: xllmnrd/main.cpp:347
+#: xllmnrd/xllmnrd.cpp:347
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

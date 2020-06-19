@@ -163,13 +163,6 @@ namespace xllmnrd
         virtual void refresh(bool maybe_asynchronous = false) = 0;
 
     protected:
-        /// Returns the reference to the mutex object.
-        std::recursive_mutex &mutex() const
-        {
-            return _interfaces_mutex;
-        }
-
-    protected:
         /// Removes all the interfaces.
         void remove_interfaces();
 

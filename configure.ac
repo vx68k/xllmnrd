@@ -36,5 +36,5 @@ PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])
 AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
 # Configuration actions.
 AC_CONFIG_FILES([Makefile xllmnrd/Makefile libxllmnrd/Makefile libgnu/Makefile
-test/Makefile lsb/Makefile po/Makefile.in])
+test/Makefile po/Makefile.in])
 AC_OUTPUT

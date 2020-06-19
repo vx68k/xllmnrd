@@ -9,7 +9,7 @@ man_MANS = xllmnrd.8
 noinst_SCRIPTS = xllmnrd.init
 noinst_HEADERS = responder.h llmnr.h llmnr_packet.h
 
-xllmnrd_SOURCES = main.cpp responder.cpp llmnr.c
+xllmnrd_SOURCES = xllmnrd.cpp responder.cpp llmnr.c
 xllmnrd_LDADD = ../libxllmnrd/libxllmnrd.a ../libgnu/libgnu.a
 
 EXTRA_DIST = xllmnrd.8.in xllmnrd.init.in

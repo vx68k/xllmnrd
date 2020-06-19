@@ -89,6 +89,9 @@ namespace xllmnrd
         };
 
     private:
+        int _debug_level {0};
+
+    private:
         /// Interface change handler.
         std::atomic<interface_change_handler> _interface_change {nullptr};
 
@@ -112,6 +115,17 @@ namespace xllmnrd
     public:
         /// Destructs an interface manager.
         virtual ~interface_manager();
+
+    public:
+        int debug_level() const
+        {
+            return _debug_level;
+        }
+
+        void set_debug_level(const int debug_level)
+        {
+            _debug_level = debug_level;
+        }
 
     public:
         /// Set the interface change handler.

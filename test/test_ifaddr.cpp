@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <vector>
 #include <csignal>
+#include <cstring>
 #include <cerrno>
 
 using CppUnit::TestFixture;
@@ -106,17 +107,25 @@ class IfaddrTests : public TestFixture {
     CPPUNIT_TEST(testLookup);
     CPPUNIT_TEST_SUITE_END();
 
+private:
+    struct if_nameindex *nameindex = NULL;
+
 public:
     virtual void setUp() override {
         struct sigaction sa = {};
         sa.sa_handler = &handle_signal;
         sigaction(SIGUSR2, &sa, NULL);
 
+        nameindex = if_nameindex();
+
         ifaddr_initialize(SIGUSR2);
     }
 
     virtual void tearDown() override {
         ifaddr_finalize();
+
+        if_freenameindex(nameindex);
+        nameindex = NULL;
 
         struct sigaction sa = {};
         sa.sa_handler = SIG_DFL;
@@ -158,31 +167,41 @@ public:
     }
 
     void testLookup() {
-        // TODO: These values may be missing.
-        auto lo = if_nametoindex("lo");
-        auto eth0 = if_nametoindex("eth0");
-        if (eth0 == 0) {
-            CPPUNIT_FAIL("eth0 not found");
+        unsigned int loopback = 0;
+        unsigned int ether = 0;
+        int i = 0;
+        while (nameindex[i].if_name != 0 && (loopback == 0 || ether == 0)) {
+            if (std::strncmp(nameindex[i].if_name, "lo", 2) == 0) {
+                if (loopback == 0) {
+                    loopback = nameindex[i].if_index;
+                }
+            }
+            else {
+                if (ether == 0) {
+                    ether = nameindex[i].if_index;
+                }
+            }
+            i++;
         }
 
         size_t size;
         CPPUNIT_ASSERT_ASSERTION_FAIL(
                 // This still MUST fail.
                 CPPUNIT_ASSERT_EQUAL(0,
-                ifaddr_lookup_v6(eth0, 0, NULL, &size)));
+                ifaddr_lookup_v6(ether, 0, NULL, &size)));
 
         ifaddr_start();
         sleep(1); // To make sure the interface table is populated.
 
         // The loopback interface SHALL be ignored.
-        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(lo, 0, NULL, &size));
+        CPPUNIT_ASSERT_EQUAL(ENODEV, ifaddr_lookup_v6(loopback, 0, NULL, &size));
 
-        CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(eth0, 0, NULL, &size));
+        CPPUNIT_ASSERT_EQUAL(0, ifaddr_lookup_v6(ether, 0, NULL, &size));
         CPPUNIT_ASSERT(size >= 0);
 
         std::vector<struct in6_addr> addr(size);
         CPPUNIT_ASSERT_EQUAL(0,
-                ifaddr_lookup_v6(eth0, size, &addr[0], &size));
+                ifaddr_lookup_v6(ether, size, &addr[0], &size));
     }
 
 protected:

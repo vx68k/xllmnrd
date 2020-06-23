@@ -42,9 +42,9 @@ using namespace std;
 /*
  * Tests for rtnetlink_interface_manager.
  */
-class RtnetlinkTests: public TestFixture
+class RtnetlinkTest: public TestFixture
 {
-    CPPUNIT_TEST_SUITE(RtnetlinkTests);
+    CPPUNIT_TEST_SUITE(RtnetlinkTest);
     CPPUNIT_TEST(testSetInterfaceChange1);
     CPPUNIT_TEST(testSetInterfaceChange2);
     CPPUNIT_TEST(testStart1);
@@ -105,13 +105,13 @@ private:
     }
 
 public:
-    RtnetlinkTests()
+    RtnetlinkTest()
     {
         openlog(NULL, LOG_PERROR, LOG_USER);
     }
 
 public:
-    ~RtnetlinkTests()
+    ~RtnetlinkTest()
     {
         closelog();
     }
@@ -173,11 +173,11 @@ private:
         clog << "End testStart2\n";
     }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTest);
 
-unsigned int RtnetlinkTests::addInCount;
-unsigned int RtnetlinkTests::addIn6Count;
-unsigned int RtnetlinkTests::removeInCount;
-unsigned int RtnetlinkTests::removeIn6Count;
+unsigned int RtnetlinkTest::addInCount;
+unsigned int RtnetlinkTest::addIn6Count;
+unsigned int RtnetlinkTest::removeInCount;
+unsigned int RtnetlinkTest::removeIn6Count;
 
 #endif /* XLLMNRD_RTNETLINK */

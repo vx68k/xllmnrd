@@ -99,7 +99,7 @@ std::set<struct in6_addr> interface_manager::in6_addresses(
 
 void interface_manager::remove_interfaces()
 {
-    std::lock_guard<decltype(mutex())> lock {mutex()};
+    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     std::for_each(_interfaces.begin(), _interfaces.end(),
         [this](decltype(_interfaces)::reference i) {
@@ -124,7 +124,7 @@ void interface_manager::add_interface_address(unsigned int index,
     char interface_name[IF_NAMESIZE];
     if_indextoname(index, interface_name);
 
-    std::lock_guard<decltype(mutex())> lock {mutex()};
+    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     switch (family) {
     case AF_INET:
@@ -186,7 +186,7 @@ void interface_manager::remove_interface_address(unsigned int index,
     char interface_name[IF_NAMESIZE];
     if_indextoname(index, interface_name);
 
-    std::lock_guard<decltype(mutex())> lock {mutex()};
+    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     switch (family) {
     case AF_INET:

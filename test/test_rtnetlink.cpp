@@ -45,8 +45,10 @@ using namespace std;
 class RtnetlinkTests: public TestFixture
 {
     CPPUNIT_TEST_SUITE(RtnetlinkTests);
-    CPPUNIT_TEST(testSetInterfaceChange);
-    CPPUNIT_TEST(testStart);
+    CPPUNIT_TEST(testSetInterfaceChange1);
+    CPPUNIT_TEST(testSetInterfaceChange2);
+    CPPUNIT_TEST(testStart1);
+    CPPUNIT_TEST(testStart2);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -132,30 +134,43 @@ public:
     }
 
 private:
-    void testSetInterfaceChange()
+    void testSetInterfaceChange1()
     {
         // No handler SHALL be set by default.
         auto old = manager->set_interface_change(handle_interface_change);
         CPPUNIT_ASSERT_EQUAL(xllmnrd::interface_change_handler(), old);
+    }
+
+private:
+    void testSetInterfaceChange2()
+    {
+        manager->set_interface_change(handle_interface_change);
 
         // The handler that was set SHALL be returned.
-        old = manager->set_interface_change(nullptr);
+        auto old = manager->set_interface_change(nullptr);
         CPPUNIT_ASSERT_EQUAL(&handle_interface_change, old);
     }
 
 private:
-    void testStart()
+    void testStart1()
     {
         manager->set_interface_change(handle_interface_change);
         CPPUNIT_ASSERT_EQUAL(0U, addInCount);
         CPPUNIT_ASSERT_EQUAL(0U, addIn6Count);
         CPPUNIT_ASSERT_EQUAL(0U, removeInCount);
         CPPUNIT_ASSERT_EQUAL(0U, removeIn6Count);
+    }
 
+private:
+    void testStart2()
+    {
+        manager->set_interface_change(handle_interface_change);
         manager->start();
         sleep(1);
         CPPUNIT_ASSERT(addInCount > removeInCount);
         CPPUNIT_ASSERT(addIn6Count > removeIn6Count);
+
+        clog << "End testStart2\n";
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);

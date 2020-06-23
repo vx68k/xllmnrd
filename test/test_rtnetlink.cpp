@@ -128,6 +128,7 @@ public:
     void tearDown() override
     {
         manager.reset();
+        sleep(1);
     }
 
 private:

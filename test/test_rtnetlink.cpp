@@ -26,8 +26,13 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <iostream>
+
+#ifndef LOG_PERROR
+#define LOG_PERROR 0
+#endif
 
 using CppUnit::TestFixture;
 using xllmnrd::rtnetlink_interface_manager;
@@ -98,6 +103,18 @@ private:
     }
 
 public:
+    RtnetlinkTests()
+    {
+        openlog(NULL, LOG_PERROR, LOG_USER);
+    }
+
+public:
+    ~RtnetlinkTests()
+    {
+        closelog();
+    }
+
+public:
     void setUp() override
     {
         manager.reset(new rtnetlink_interface_manager());
@@ -107,6 +124,13 @@ public:
         removeIn6Count = 0;
     }
 
+public:
+    void tearDown() override
+    {
+        manager.reset();
+    }
+
+private:
     void testSetInterfaceChange()
     {
         // No handler SHALL be set by default.
@@ -118,6 +142,7 @@ public:
         CPPUNIT_ASSERT_EQUAL(&handle_interface_change, old);
     }
 
+private:
     void testStart()
     {
         manager->set_interface_change(handle_interface_change);

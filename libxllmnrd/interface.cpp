@@ -133,16 +133,18 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const struct in_addr *>(address));
 
+            if (debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address %s added on %s", ipv4,
+                    interface_name);
+            }
+
             if (inserted.second && addresses.size() == 1) {
                 interface_change_event event {
                     interface_change_event::ADDED, index, AF_INET};
                 fire_interface_change(&event);
             }
-
-            char ipv4[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Added an IPv4 address %s on %s", ipv4,
-                interface_name);
         }
         else {
             syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
@@ -156,16 +158,18 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const struct in6_addr *>(address));
 
+            if (debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address %s added on %s", ipv6,
+                    interface_name);
+            }
+
             if (inserted.second && addresses.size() == 1) {
                 interface_change_event event {
                     interface_change_event::ADDED, index, AF_INET6};
                 fire_interface_change(&event);
             }
-
-            char ipv6[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Added an IPv6 address %s on %s", ipv6,
-                interface_name);
         }
         else {
             syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",
@@ -195,16 +199,18 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const struct in_addr *>(address));
 
+            if (debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address %s removed on %s", ipv4,
+                    interface_name);
+            }
+
             if (erased != 0 && addresses.empty()) {
                 interface_change_event event {
                     interface_change_event::REMOVED, index, AF_INET};
                 fire_interface_change(&event);
             }
-
-            char ipv4[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Removed an IPv4 address %s on %s", ipv4,
-                interface_name);
         }
         else {
             syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
@@ -218,16 +224,18 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const struct in6_addr *>(address));
 
+            if (debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address %s removed on %s", ipv6,
+                    interface_name);
+            }
+
             if (erased != 0 && addresses.empty()) {
                 interface_change_event event {
                     interface_change_event::REMOVED, index, AF_INET6};
                 fire_interface_change(&event);
             }
-
-            char ipv6[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-            syslog(LOG_DEBUG, "Removed an IPv6 address %s on %s", ipv6,
-                interface_name);
         }
         else {
             syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",

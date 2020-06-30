@@ -130,7 +130,9 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
         switch (message->nlmsg_type) {
 
         case NLMSG_NOOP:
-            syslog(LOG_INFO, "Got NLMSG_NOOP");
+            if (debug_level() >= 1) {
+                syslog(LOG_DEBUG, "Got NLMSG_NOOP");
+            }
             break;
 
         case NLMSG_DONE:
@@ -150,8 +152,8 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
 
         default:
-            syslog(LOG_DEBUG, "Unknown netlink message type: %u",
-                    (unsigned int) message->nlmsg_type);
+            syslog(LOG_DEBUG, "Unknown NETLINK message type: %u",
+                static_cast<unsigned int>(message->nlmsg_type));
             break;
         }
 

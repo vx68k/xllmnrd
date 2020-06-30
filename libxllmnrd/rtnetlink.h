@@ -108,6 +108,12 @@ namespace xllmnrd
 
     protected:
         /**
+         * Completes the current refresh task if one is running.
+         */
+        void end_refresh();
+
+    protected:
+        /**
          * Stops the worker if running.
          */
         void stop();
@@ -126,14 +132,6 @@ namespace xllmnrd
     protected:
         /// Handles a NETLINK error message.
         void handle_error(const struct nlmsghdr *message);
-
-    protected:
-        /**
-         * Handles a NETLINK done message.
-         *
-         * This function completes the running refresh task.
-         */
-        void handle_done();
 
     protected:
         // Handles a RTNETLINK message for an interface address change.

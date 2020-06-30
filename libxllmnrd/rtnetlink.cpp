@@ -124,22 +124,24 @@ void rtnetlink_interface_manager::process_messages()
 void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     size_t size)
 {
+    bool done = false;
     auto &&message = static_cast<const struct nlmsghdr *>(messages);
     while (NLMSG_OK(message, size)) {
-        bool done = false;
-
         switch (message->nlmsg_type) {
+
         case NLMSG_NOOP:
             syslog(LOG_INFO, "Got NLMSG_NOOP");
             break;
 
-        case NLMSG_ERROR:
-            handle_error(message);
+        case NLMSG_DONE:
+            if (!done) {
+                done = true;
+                end_refresh();
+            }
             break;
 
-        case NLMSG_DONE:
-            handle_done();
-            done = true;
+        case NLMSG_ERROR:
+            handle_error(message);
             break;
 
         case RTM_NEWADDR:
@@ -153,9 +155,10 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
         }
 
-        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
-            // There are no more messages.
-            break;
+        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 && !done) {
+            // There should be no more messages.
+            done = true;
+            end_refresh();
         }
         message = NLMSG_NEXT(message, size);
     }
@@ -167,14 +170,6 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
         auto &&e = static_cast<const struct nlmsgerr *>(NLMSG_DATA(message));
         syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
     }
-}
-
-void rtnetlink_interface_manager::handle_done()
-{
-    std::lock_guard<std::mutex> lock(_refresh_mutex);
-
-    _refreshing = false;
-    _refresh_completion.notify_all();
 }
 
 void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
@@ -250,6 +245,16 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
         while (_worker_running && _refreshing) {
             _refresh_completion.wait(lock);
         }
+    }
+}
+
+void rtnetlink_interface_manager::end_refresh()
+{
+    std::lock_guard<std::mutex> lock(_refresh_mutex);
+
+    if (_refreshing) {
+        _refreshing = false;
+        _refresh_completion.notify_all();
     }
 }
 

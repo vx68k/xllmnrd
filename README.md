@@ -29,6 +29,12 @@ work for most supported operating systems.
 If you find any problem while installation, please report it to
 <https://bitbucket.org/kazssym/xllmnrd/issues>.
 
+## Sample init script
+
+This package produces a sample init script for use on LSB-conforming operating
+systems.  But its existence does not imply any level of conformance to the LSB
+specifications.
+
 # License
 
 This program is provided under the terms and conditions of the [GNU General

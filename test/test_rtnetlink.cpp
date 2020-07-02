@@ -26,8 +26,13 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/TestFixture.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <iostream>
+
+#ifndef LOG_PERROR
+#define LOG_PERROR 0
+#endif
 
 using CppUnit::TestFixture;
 using xllmnrd::rtnetlink_interface_manager;
@@ -37,11 +42,13 @@ using namespace std;
 /*
  * Tests for rtnetlink_interface_manager.
  */
-class RtnetlinkTests: public TestFixture
+class RtnetlinkTest: public TestFixture
 {
-    CPPUNIT_TEST_SUITE(RtnetlinkTests);
-    CPPUNIT_TEST(testSetInterfaceChange);
-    CPPUNIT_TEST(testStart);
+    CPPUNIT_TEST_SUITE(RtnetlinkTest);
+    CPPUNIT_TEST(testSetInterfaceChange1);
+    CPPUNIT_TEST(testSetInterfaceChange2);
+    CPPUNIT_TEST(testStart1);
+    CPPUNIT_TEST(testStart2);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -98,6 +105,18 @@ private:
     }
 
 public:
+    RtnetlinkTest()
+    {
+        openlog(NULL, LOG_PERROR, LOG_USER);
+    }
+
+public:
+    ~RtnetlinkTest()
+    {
+        closelog();
+    }
+
+public:
     void setUp() override
     {
         manager.reset(new rtnetlink_interface_manager());
@@ -107,36 +126,58 @@ public:
         removeIn6Count = 0;
     }
 
-    void testSetInterfaceChange()
+public:
+    void tearDown() override
+    {
+        manager.reset();
+        sleep(1);
+    }
+
+private:
+    void testSetInterfaceChange1()
     {
         // No handler SHALL be set by default.
         auto old = manager->set_interface_change(handle_interface_change);
         CPPUNIT_ASSERT_EQUAL(xllmnrd::interface_change_handler(), old);
+    }
+
+private:
+    void testSetInterfaceChange2()
+    {
+        manager->set_interface_change(handle_interface_change);
 
         // The handler that was set SHALL be returned.
-        old = manager->set_interface_change(nullptr);
+        auto old = manager->set_interface_change(nullptr);
         CPPUNIT_ASSERT_EQUAL(&handle_interface_change, old);
     }
 
-    void testStart()
+private:
+    void testStart1()
     {
         manager->set_interface_change(handle_interface_change);
         CPPUNIT_ASSERT_EQUAL(0U, addInCount);
         CPPUNIT_ASSERT_EQUAL(0U, addIn6Count);
         CPPUNIT_ASSERT_EQUAL(0U, removeInCount);
         CPPUNIT_ASSERT_EQUAL(0U, removeIn6Count);
+    }
 
+private:
+    void testStart2()
+    {
+        manager->set_interface_change(handle_interface_change);
         manager->start();
         sleep(1);
         CPPUNIT_ASSERT(addInCount > removeInCount);
         CPPUNIT_ASSERT(addIn6Count > removeIn6Count);
+
+        clog << "End testStart2\n";
     }
 };
-CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTest);
 
-unsigned int RtnetlinkTests::addInCount;
-unsigned int RtnetlinkTests::addIn6Count;
-unsigned int RtnetlinkTests::removeInCount;
-unsigned int RtnetlinkTests::removeIn6Count;
+unsigned int RtnetlinkTest::addInCount;
+unsigned int RtnetlinkTest::addIn6Count;
+unsigned int RtnetlinkTest::removeInCount;
+unsigned int RtnetlinkTest::removeIn6Count;
 
 #endif /* XLLMNRD_RTNETLINK */

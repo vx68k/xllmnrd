@@ -26,7 +26,7 @@
 
 #include "responder.h"
 
-#include "ifaddr.h"
+#include "rtnetlink.h"
 #include "ascii.h"
 #include "llmnr_packet.h"
 #include "llmnr.h"
@@ -153,6 +153,9 @@ static inline void log_discarded(const char *restrict message,
  */
 static bool initialized;
 
+// Interface manager.
+static std::unique_ptr<interface_manager> if_manager;
+
 /**
  * File descriptor of the UDP socket.
  * This value is valid only if this module is initialized.
@@ -246,6 +249,8 @@ int responder_initialize(in_port_t port) {
         return EBUSY;
     }
 
+    if_manager.reset((new rtnetlink_interface_manager())->start());
+
     // If the specified port number is 0, we use the default port number.
     if (port == htons(0)) {
         port = htons(LLMNR_PORT);
@@ -253,17 +258,23 @@ int responder_initialize(in_port_t port) {
 
     int err = open_udp(port, &udp_fd);
     if (err == 0) {
-        err = ifaddr_set_change_handler(&responder_handle_ifaddr_change, NULL);
-        if (err == 0) {
-            initialized = true;
-            return 0;
+        try {
+            if_manager->set_interface_change(&responder_handle_ifaddr_change);
+        }
+        catch (...) {
+            if (close(udp_fd) != 0) {
+                syslog(LOG_ERR, "Failed to close a socket: %s",
+                        strerror(errno));
+            }
+            if_manager.reset();
+            throw;
         }
 
-        if (close(udp_fd) != 0) {
-            syslog(LOG_ERR, "Failed to close a socket: %s",
-                    strerror(errno));
-        }
+        initialized = true;
+        return 0;
     }
+
+    if_manager.reset();
     return err;
 }
 
@@ -272,6 +283,7 @@ void responder_finalize(void) {
         initialized = false;
 
         close(udp_fd);
+        if_manager.reset();
     }
 }
 
@@ -447,16 +459,16 @@ int responder_respond_for_name(unsigned int index,
     size_t packet_size = query_size;
     size_t number_of_addr_v6 = 0;
 
+    auto &&in6_addresses = if_manager->in6_addresses(index);
+
     uint_fast16_t qtype = llmnr_get_uint16(query_qname_end);
     uint_fast16_t qclass = llmnr_get_uint16(query_qname_end + 2);
     if (qclass == LLMNR_QCLASS_IN) {
         switch (qtype) {
-            int err;
-
         case LLMNR_QTYPE_AAAA:
         case LLMNR_QTYPE_ANY:
-            err = ifaddr_lookup_v6(index, 0, NULL, &number_of_addr_v6);
-            if (err == 0 && number_of_addr_v6 != 0) {
+            number_of_addr_v6 = in6_addresses.size();
+            if (number_of_addr_v6 != 0) {
                 packet_size += 1 + host_name[0];
                 packet_size -= 2;
                 packet_size += number_of_addr_v6 * (2 + 10
@@ -482,15 +494,7 @@ int responder_respond_for_name(unsigned int index,
 
     uint8_t *packet_end = packet.data() + query_size;
     if (number_of_addr_v6 != 0) {
-        std::vector<struct in6_addr> addr_v6(number_of_addr_v6);
-        size_t n = 0;
-        int e = ifaddr_lookup_v6(index, number_of_addr_v6, addr_v6.data(), &n);
-        if (e == 0 && n < number_of_addr_v6) {
-            // The number of interface addresses changed.
-            // TODO: We should log it.
-            number_of_addr_v6 = n;
-        }
-
+        auto &&addr = in6_addresses.begin();
         for (size_t i = 0; i != number_of_addr_v6; ++i) {
             // TODO: Clean up the following code.
             if (packet_end == packet.data() + query_size) {
@@ -516,7 +520,7 @@ int responder_respond_for_name(unsigned int index,
             llmnr_put_uint16(sizeof (struct in6_addr), packet_end);
             packet_end += 2;
             // RDATA
-            memcpy(packet_end, &addr_v6[i], sizeof (struct in6_addr));
+            *reinterpret_cast<struct in6_addr *>(packet_end) = *addr++;
             packet_end += sizeof (struct in6_addr);
         }
 

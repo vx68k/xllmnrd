@@ -20,7 +20,11 @@
 #define RESPONDER_H 1
 
 #include "llmnr.h"
+#include "interface.h"
 #include <netinet/in.h> /* in_port_t */
+#include <memory>
+
+using namespace xllmnrd;
 
 #if __cplusplus
 #define BEGIN_C_LINKAGE extern "C" {
@@ -29,6 +33,32 @@
 #define BEGIN_C_LINKAGE
 #define END_C_LINKAGE
 #endif
+
+/**
+ * LLMNR responders.
+ */
+class responder
+{
+private:
+    std::unique_ptr<interface_manager> iface_manager;
+
+private:
+    int udp = -1;
+
+public:
+    responder();
+
+    responder(const responder &) = delete;
+
+public:
+    void operator =(const responder &) = delete;
+
+public:
+    virtual ~responder();
+
+public:
+    void run();
+};
 
 BEGIN_C_LINKAGE
 

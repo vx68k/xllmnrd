@@ -249,7 +249,10 @@ int responder_initialize(in_port_t port) {
         return EBUSY;
     }
 
-    if_manager.reset((new rtnetlink_interface_manager())->start());
+    std::unique_ptr<rtnetlink_interface_manager> m{new rtnetlink_interface_manager()};
+    m->set_interface_change(&responder_handle_ifaddr_change);
+    m->start();
+    if_manager = std::move(m);
 
     // If the specified port number is 0, we use the default port number.
     if (port == htons(0)) {
@@ -258,18 +261,6 @@ int responder_initialize(in_port_t port) {
 
     int err = open_udp(port, &udp_fd);
     if (err == 0) {
-        try {
-            if_manager->set_interface_change(&responder_handle_ifaddr_change);
-        }
-        catch (...) {
-            if (close(udp_fd) != 0) {
-                syslog(LOG_ERR, "Failed to close a socket: %s",
-                        strerror(errno));
-            }
-            if_manager.reset();
-            throw;
-        }
-
         initialized = true;
         return 0;
     }

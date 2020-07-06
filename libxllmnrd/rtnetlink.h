@@ -88,14 +88,6 @@ namespace xllmnrd
 
     public:
         /**
-         * Starts a thread that monitors interface changes and returns 'this'.
-         *
-         * This function is thread-safe.
-         */
-        rtnetlink_interface_manager *start();
-
-    public:
-        /**
          * Returns true if the worker thread is running; false otherwise.
          */
         bool running() const
@@ -108,15 +100,29 @@ namespace xllmnrd
 
     protected:
         /**
-         * Completes the current refresh task if one is running.
+         * Begins a refresh task if not running.
+         */
+        void begin_refresh();
+
+    protected:
+        /**
+         * Ends the current refresh task if running.
          */
         void end_refresh();
 
     protected:
         /**
-         * Stops the worker if running.
+         * Starts a worker thread that monitors interface changes.
+         *
+         * This function is thread-safe.
          */
-        void stop();
+        void start_worker();
+
+    protected:
+        /**
+         * Stops the worker thread if running.
+         */
+        void stop_worker();
 
     protected:
         void run();

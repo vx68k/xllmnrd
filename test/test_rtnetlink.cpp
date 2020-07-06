@@ -47,8 +47,8 @@ class RtnetlinkTest: public TestFixture
     CPPUNIT_TEST_SUITE(RtnetlinkTest);
     CPPUNIT_TEST(testSetInterfaceChange1);
     CPPUNIT_TEST(testSetInterfaceChange2);
-    CPPUNIT_TEST(testStart1);
-    CPPUNIT_TEST(testStart2);
+    CPPUNIT_TEST(testRefresh1);
+    CPPUNIT_TEST(testRefresh2);
     CPPUNIT_TEST_SUITE_END();
 
 private:
@@ -152,7 +152,7 @@ private:
     }
 
 private:
-    void testStart1()
+    void testRefresh1()
     {
         manager->set_interface_change(handle_interface_change);
         CPPUNIT_ASSERT_EQUAL(0U, addInCount);
@@ -162,11 +162,10 @@ private:
     }
 
 private:
-    void testStart2()
+    void testRefresh2()
     {
         manager->set_interface_change(handle_interface_change);
-        manager->start();
-        sleep(1);
+        manager->refresh();
         CPPUNIT_ASSERT(addInCount > removeInCount);
         CPPUNIT_ASSERT(addIn6Count > removeIn6Count);
 

@@ -249,10 +249,9 @@ int responder_initialize(in_port_t port) {
         return EBUSY;
     }
 
-    std::unique_ptr<rtnetlink_interface_manager> m{new rtnetlink_interface_manager()};
-    m->set_interface_change(&responder_handle_ifaddr_change);
-    m->start();
-    if_manager = std::move(m);
+    if_manager.reset(new rtnetlink_interface_manager());
+    if_manager->set_interface_change(&responder_handle_ifaddr_change);
+    if_manager->refresh(true);
 
     // If the specified port number is 0, we use the default port number.
     if (port == htons(0)) {

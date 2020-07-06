@@ -81,7 +81,7 @@ rtnetlink_interface_manager::rtnetlink_interface_manager(
 
 rtnetlink_interface_manager::~rtnetlink_interface_manager()
 {
-    stop();
+    stop_worker();
 
     auto result = _os->close(_rtnetlink);
     if (result < 0) {
@@ -214,9 +214,25 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 
 void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
 {
-    std::unique_lock<std::mutex> lock(_refresh_mutex);
+    start_worker();
+    begin_refresh();
+
+    if (not(maybe_asynchronous)) {
+        std::unique_lock<std::mutex> lock(_refresh_mutex);
+
+        while (_worker_running && _refreshing) {
+            _refresh_completion.wait(lock);
+        }
+    }
+}
+
+void rtnetlink_interface_manager::begin_refresh()
+{
+    std::lock_guard<std::mutex> lock(_refresh_mutex);
 
     if (not(_refreshing)) {
+        _refreshing = true;
+
         remove_interfaces();
 
         unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
@@ -239,14 +255,6 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
             syslog(LOG_CRIT, "RTNETLINK request truncated");
             throw std::runtime_error("RTNETLINK request truncated");
         }
-
-        _refreshing = true;
-    }
-
-    if (not(maybe_asynchronous)) {
-        while (_worker_running && _refreshing) {
-            _refresh_completion.wait(lock);
-        }
     }
 }
 
@@ -260,28 +268,24 @@ void rtnetlink_interface_manager::end_refresh()
     }
 }
 
-rtnetlink_interface_manager *rtnetlink_interface_manager::start()
+void rtnetlink_interface_manager::start_worker()
 {
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
         _worker_running = true;
         _worker_thread = std::thread(&rtnetlink_interface_manager::run, this);
-
-        refresh(true);
     }
-
-    return this;
 }
 
-void rtnetlink_interface_manager::stop()
+void rtnetlink_interface_manager::stop_worker()
 {
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
     _worker_running = false;
     if (_worker_thread.joinable()) {
         // This should make a blocking recv call return.
-        refresh(true);
+        begin_refresh();
 
         _worker_thread.join();
     }

@@ -51,7 +51,82 @@
 #endif
 #endif /* !defined IPV6_DONTFRAG */
 
+using std::error_code;
+using std::swap;
+using std::system_error;
 using namespace xllmnrd;
+
+int responder::open_llmnr_udp6(const in_port_t port)
+{
+    int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    if (udp6 == -1) {
+        throw system_error(error_code(), "could not open a UDP socket");
+    }
+
+    try {
+        [[maybe_unused]]
+        static const int ON = 1;
+
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON, sizeof ON) == -1) {
+            throw system_error(error_code(), "could not set IPV6_V6ONLY");
+        }
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ON, sizeof ON) == -1) {
+            throw system_error(error_code(), "could not set IPV6_RECVPKTINFO");
+        }
+
+        // The unicast hop limit SHOULD be 1.
+        static const int UNICAST_HOPS = 1;
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &UNICAST_HOPS,
+                sizeof UNICAST_HOPS) == -1) {
+            syslog(LOG_WARNING, "could not set IPV6_UNICAST_HOPS to %d: %s",
+                UNICAST_HOPS, strerror(errno));
+        }
+
+#ifdef IPV6_DONTFRAG
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_DONTFRAG, &ON, sizeof ON) == -1) {
+            syslog(LOG_WARNING, "could not set IPV6_DONTFRAG to %d: %s",
+                ON, strerror(errno));
+        }
+#else
+        syslog(LOG_WARNING, "socket option IPV6_DONTFRAG not defined");
+#endif
+
+        const struct sockaddr_in6 addr = {
+            AF_INET6,    // .sin6_family
+            port,        // .sin6_port
+            0,           // .sin6_flowinfo
+            in6addr_any, // .sin6_addr
+            0,           // .sin6_scode_id
+        };
+        if (bind(udp6, reinterpret_cast<const struct sockaddr *>(&addr),
+                sizeof addr) == -1) {
+            throw system_error(error_code(), "could not bind");
+        }
+    }
+    catch (...) {
+        close(udp6);
+        throw;
+    }
+
+    return udp6;
+}
+
+responder::responder()
+:
+    _interface_manager {new rtnetlink_interface_manager()},
+    _udp6 {open_llmnr_udp6(htons(LLMNR_PORT))}
+{
+    _interface_manager->refresh(true);
+}
+
+responder::~responder()
+{
+    int udp6 = -1;
+    swap(_udp6, udp6);
+    if (udp6 != -1) {
+        close(udp6);
+    }
+}
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.

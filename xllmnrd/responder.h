@@ -43,7 +43,11 @@ private:
     std::unique_ptr<interface_manager> _interface_manager;
 
 private:
-    int _udp = -1;
+    int _udp6 = -1;
+
+protected:
+    [[nodiscard]]
+    int open_llmnr_udp6(in_port_t port);
 
 public:
     responder();

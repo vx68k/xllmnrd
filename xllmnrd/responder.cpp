@@ -56,6 +56,12 @@ using std::swap;
 using std::system_error;
 using namespace xllmnrd;
 
+template<class T>
+inline int setsockopt(int fd, int level, int option, T *value)
+{
+    return setsockopt(fd, level, option, value, sizeof *value);
+}
+
 int responder::open_llmnr_udp6(const in_port_t port)
 {
     int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
@@ -67,23 +73,22 @@ int responder::open_llmnr_udp6(const in_port_t port)
         [[maybe_unused]]
         static const int ON = 1;
 
-        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON, sizeof ON) == -1) {
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON) == -1) {
             throw system_error(error_code(), "could not set IPV6_V6ONLY");
         }
-        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ON, sizeof ON) == -1) {
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ON) == -1) {
             throw system_error(error_code(), "could not set IPV6_RECVPKTINFO");
         }
 
         // The unicast hop limit SHOULD be 1.
-        static const int UNICAST_HOPS = 1;
-        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &UNICAST_HOPS,
-                sizeof UNICAST_HOPS) == -1) {
+        static const int HOP_1 = 1;
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &HOP_1) == -1) {
             syslog(LOG_WARNING, "could not set IPV6_UNICAST_HOPS to %d: %s",
-                UNICAST_HOPS, strerror(errno));
+                HOP_1, strerror(errno));
         }
 
 #ifdef IPV6_DONTFRAG
-        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_DONTFRAG, &ON, sizeof ON) == -1) {
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_DONTFRAG, &ON) == -1) {
             syslog(LOG_WARNING, "could not set IPV6_DONTFRAG to %d: %s",
                 ON, strerror(errno));
         }

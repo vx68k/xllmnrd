@@ -40,10 +40,10 @@ using namespace xllmnrd;
 class responder
 {
 private:
-    std::unique_ptr<interface_manager> iface_manager;
+    std::unique_ptr<interface_manager> _interface_manager;
 
 private:
-    int udp = -1;
+    int _udp = -1;
 
 public:
     responder();

@@ -35,7 +35,7 @@ using namespace xllmnrd;
 #endif
 
 /**
- * LLMNR responders.
+ * LLMNR responder objects.
  */
 class responder
 {

@@ -155,6 +155,7 @@ int main(int argc, char *argv[])
         // In background mode, uses the daemon facility by default.
         openlog(program_name, 0, LOG_DAEMON);
     }
+    syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
     auto &&err = responder_initialize(0);
     if (err != 0) {

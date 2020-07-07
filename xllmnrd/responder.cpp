@@ -67,7 +67,7 @@ static const uint32_t TTL = 30;
  * Logs a message with the sender address.
  */
 static inline void log(const int priority, const char *const message,
-    const struct sockaddr_in6 *const sender)
+    const sockaddr_in6 *const sender)
 {
     if (sender && sender->sin6_family == AF_INET6) {
         char addrstr[INET6_ADDRSTRLEN];
@@ -113,7 +113,7 @@ int responder::open_llmnr_udp6(const in_port_t port)
         syslog(LOG_WARNING, "socket option IPV6_DONTFRAG not defined");
 #endif
 
-        const struct sockaddr_in6 addr = {
+        const sockaddr_in6 addr = {
             AF_INET6,    // .sin6_family
             port,        // .sin6_port
             0,           // .sin6_flowinfo
@@ -172,8 +172,8 @@ void responder::process_udp6()
         }
 
         unique_ptr<char []> packet {new char[packet_size]};
-        struct sockaddr_in6 sender {};
-        struct in6_pktinfo pktinfo {
+        sockaddr_in6 sender {};
+        in6_pktinfo pktinfo {
             in6addr_any, // .ipi6_addr
             0,           // .ipi6_ifindex
         };
@@ -188,13 +188,13 @@ void responder::process_udp6()
             log(LOG_INFO, "packet from a multicast address", &sender);
             return;
         }
-        if (size_t(packet_size) < sizeof (struct llmnr_header)) {
+        if (size_t(packet_size) < sizeof (llmnr_header)) {
             log(LOG_INFO, "short packet", &sender);
             return;
         }
 
-        const struct llmnr_header *header =
-            reinterpret_cast<const struct llmnr_header *>(&packet[0]);
+        const llmnr_header *header =
+            reinterpret_cast<const llmnr_header *>(&packet[0]);
         if (llmnr_query_is_valid(header)) {
             handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
@@ -205,16 +205,16 @@ void responder::process_udp6()
 }
 
 ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
-    struct sockaddr_in6 &sender, struct in6_pktinfo &pktinfo)
+    sockaddr_in6 &sender, in6_pktinfo &pktinfo)
 {
-    struct iovec iov[] = {
+    iovec iov[] = {
         {
             buffer,      // .iov_base
             buffer_size, // .iov_len
         },
     };
     unsigned char control[128];
-    struct msghdr msg = {
+    msghdr msg = {
         &sender,         // .msg_name
         sizeof sender, // .msg_namelen
         iov,            // .msg_iov
@@ -230,14 +230,14 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
             return -1;
         }
 
-        struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+        cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
         while (cmsg) {
             switch (cmsg->cmsg_level) {
             case IPPROTO_IPV6:
                 switch (cmsg->cmsg_type) {
                 case IPV6_PKTINFO:
                     if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {
-                        pktinfo = *reinterpret_cast<struct in6_pktinfo *>
+                        pktinfo = *reinterpret_cast<in6_pktinfo *>
                             (CMSG_DATA(cmsg));
                     }
                     break;
@@ -250,8 +250,8 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
     return received;
 }
 
-void responder::handle_udp6_query(const struct llmnr_header *const query,
-    const size_t query_size, const struct sockaddr_in6 &sender,
+void responder::handle_udp6_query(const llmnr_header *const query,
+    const size_t query_size, const sockaddr_in6 &sender,
     const unsigned int interface_index)
 {
     // These must be checked before.
@@ -416,7 +416,7 @@ static inline int open_udp(in_port_t port, int *fd_out) {
     if (fd >= 0) {
         err = set_udp_options(fd);
         if (err == 0) {
-            const struct sockaddr_in6 addr = {
+            const sockaddr_in6 addr = {
                 AF_INET6,    // .sin6_family
                 port,        // .sin6_port
                 0,           // .sin6_flowinfo
@@ -469,11 +469,11 @@ static volatile sig_atomic_t responder_terminated;
  * @param __change [in] change notification.
  */
 static void responder_handle_ifaddr_change(
-        const struct interface_change_event *__change);
+        const interface_change_event *__change);
 
 static ssize_t responder_receive_udp(int, void *, size_t,
-        struct sockaddr_in6 *, struct in6_pktinfo *);
-static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
+        sockaddr_in6 *, in6_pktinfo *);
+static int decode_cmsg(msghdr *, in6_pktinfo *);
 
 /**
  * Handles a LLMNR query.
@@ -484,8 +484,8 @@ static int decode_cmsg(struct msghdr *, struct in6_pktinfo *);
  * @return 0 if no error is detected, or non-zero error number.
  */
 static int responder_handle_query(unsigned int __index,
-        const struct llmnr_header *__header, size_t __packet_size,
-        const struct sockaddr_in6 *__sender);
+        const llmnr_header *__header, size_t __packet_size,
+        const sockaddr_in6 *__sender);
 
 /**
  * Responds to a query for the host name.
@@ -495,8 +495,8 @@ static int responder_handle_query(unsigned int __index,
  * @param __sender [in] socket address of the sender.
  */
 static int responder_respond_for_name(unsigned int __index,
-        const struct llmnr_header *__query, const uint8_t *__query_qname_end,
-        const struct sockaddr_in6 *__sender);
+        const llmnr_header *__query, const uint8_t *__query_qname_end,
+        const sockaddr_in6 *__sender);
 
 /*
  * Inline functions.
@@ -582,8 +582,8 @@ void responder_set_host_name(const char *restrict name) {
 int responder_run(void) {
     while (!responder_terminated) {
         unsigned char packet[1500]; // TODO: Handle jumbo packet.
-        struct sockaddr_in6 sender;
-        struct in6_pktinfo pktinfo = {
+        sockaddr_in6 sender;
+        in6_pktinfo pktinfo = {
             IN6ADDR_ANY_INIT, // .ipi6_addr
             0,                // .ipi6_ifindex
         };
@@ -592,9 +592,9 @@ int responder_run(void) {
         if (packet_size >= 0) {
             // The sender address must not be multicast.
             if (!IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-                if ((size_t) packet_size >= sizeof (struct llmnr_header)) {
-                    const struct llmnr_header *header =
-                            (const struct llmnr_header *) packet;
+                if ((size_t) packet_size >= sizeof (llmnr_header)) {
+                    const llmnr_header *header =
+                            (const llmnr_header *) packet;
                     if (llmnr_query_is_valid(header)) {
                         responder_handle_query(pktinfo.ipi6_ifindex, header,
                                 packet_size, &sender);
@@ -619,7 +619,7 @@ void responder_terminate(void) {
 }
 
 void responder_handle_ifaddr_change(
-        const struct interface_change_event *restrict change)
+        const interface_change_event *restrict change)
 {
     if (change->address_family != AF_INET6) {
         return;
@@ -627,7 +627,7 @@ void responder_handle_ifaddr_change(
 
     if (responder_initialized()) {
         if (change->interface_index != 0) {
-            const struct ipv6_mreq mr = {
+            const ipv6_mreq mr = {
                 in6addr_mc_llmnr,        // .ipv6mr_multiaddr
                 change->interface_index, // .ipv6mr_interface
             };
@@ -638,7 +638,7 @@ void responder_handle_ifaddr_change(
             switch (change->type) {
             case interface_change_event::ADDED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-                        &mr, sizeof (struct ipv6_mreq)) == 0) {
+                        &mr, sizeof (ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Joined the LLMNR multicast group on %s", ifname);
                 } else {
@@ -650,7 +650,7 @@ void responder_handle_ifaddr_change(
 
             case interface_change_event::REMOVED:
                 if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-                        &mr, sizeof (struct ipv6_mreq)) == 0) {
+                        &mr, sizeof (ipv6_mreq)) == 0) {
                     syslog(LOG_NOTICE,
                             "Left the LLMNR multicast group on %s", ifname);
                 } else {
@@ -665,16 +665,16 @@ void responder_handle_ifaddr_change(
 }
 
 ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,
-        struct sockaddr_in6 *restrict sender,
-        struct in6_pktinfo *restrict pktinfo) {
-    struct iovec iov[1] = {
+        sockaddr_in6 *restrict sender,
+        in6_pktinfo *restrict pktinfo) {
+    iovec iov[1] = {
         {
             buf,     // .iov_base
             bufsize, // .iov_len
         },
     };
     unsigned char cmsgbuf[128];
-    struct msghdr msg = {
+    msghdr msg = {
         sender,         // msg_name
         sizeof *sender, // msg_namelen
         iov,            // msg_iov
@@ -694,9 +694,9 @@ ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,
     return recv_size;
 }
 
-int decode_cmsg(struct msghdr *restrict msg,
-        struct in6_pktinfo *restrict pktinfo) {
-    for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg;
+int decode_cmsg(msghdr *restrict msg,
+        in6_pktinfo *restrict pktinfo) {
+    for (cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg;
             cmsg = CMSG_NXTHDR(msg, cmsg)) {
         if (cmsg->cmsg_level == IPPROTO_IPV6) {
             if (cmsg->cmsg_type == IPV6_PKTINFO &&
@@ -710,8 +710,8 @@ int decode_cmsg(struct msghdr *restrict msg,
 }
 
 int responder_handle_query(unsigned int index,
-        const struct llmnr_header *restrict header, size_t packet_size,
-        const struct sockaddr_in6 *restrict sender) {
+        const llmnr_header *restrict header, size_t packet_size,
+        const sockaddr_in6 *restrict sender) {
     assert(packet_size >= LLMNR_HEADER_SIZE);
     assert(sender->sin6_family == AF_INET6);
 
@@ -733,8 +733,8 @@ int responder_handle_query(unsigned int index,
 }
 
 int responder_respond_for_name(unsigned int index,
-        const struct llmnr_header *query, const uint8_t *query_qname_end,
-        const struct sockaddr_in6 *restrict sender) {
+        const llmnr_header *query, const uint8_t *query_qname_end,
+        const sockaddr_in6 *restrict sender) {
     size_t query_size = query_qname_end + 4 - (const uint8_t *) query;
     size_t packet_size = query_size;
     size_t number_of_addr_v6 = 0;
@@ -752,7 +752,7 @@ int responder_respond_for_name(unsigned int index,
                 packet_size += 1 + host_name[0];
                 packet_size -= 2;
                 packet_size += number_of_addr_v6 * (2 + 10
-                        + sizeof (struct in6_addr));
+                        + sizeof (in6_addr));
             } else {
                 char ifname[IF_NAMESIZE];
                 if_indextoname(index, ifname);
@@ -766,7 +766,7 @@ int responder_respond_for_name(unsigned int index,
     std::vector<uint8_t> packet(packet_size);
     memcpy(packet.data(), query, query_size);
 
-    struct llmnr_header *response = (struct llmnr_header *) packet.data();
+    llmnr_header *response = (llmnr_header *) packet.data();
     response->flags = htons(LLMNR_HEADER_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
@@ -797,11 +797,11 @@ int responder_respond_for_name(unsigned int index,
             llmnr_put_uint32(30, packet_end);
             packet_end += 4;
             // RDLENGTH
-            llmnr_put_uint16(sizeof (struct in6_addr), packet_end);
+            llmnr_put_uint16(sizeof (in6_addr), packet_end);
             packet_end += 2;
             // RDATA
-            *reinterpret_cast<struct in6_addr *>(packet_end) = *addr++;
-            packet_end += sizeof (struct in6_addr);
+            *reinterpret_cast<in6_addr *>(packet_end) = *addr++;
+            packet_end += sizeof (in6_addr);
         }
 
         response->ancount = htons(ntohs(response->ancount)
@@ -810,8 +810,8 @@ int responder_respond_for_name(unsigned int index,
 
     // Sends the response.
     if (sendto(udp_fd, packet.data(), packet_end - packet.data(), 0,
-            reinterpret_cast<const struct sockaddr *>(sender),
-            sizeof (struct sockaddr_in6)) >= 0) {
+            reinterpret_cast<const sockaddr *>(sender),
+            sizeof (sockaddr_in6)) >= 0) {
         return 0;
     }
 
@@ -820,8 +820,8 @@ int responder_respond_for_name(unsigned int index,
         // Resends with truncation.
         response->flags |= htons(LLMNR_HEADER_TC);
         if (sendto(udp_fd, response, 512, 0,
-                reinterpret_cast<const struct sockaddr *>(sender),
-                sizeof (struct sockaddr_in6)) >= 0) {
+                reinterpret_cast<const sockaddr *>(sender),
+                sizeof (sockaddr_in6)) >= 0) {
             return 0;
         }
     }

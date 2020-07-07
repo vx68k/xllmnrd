@@ -91,8 +91,7 @@ int responder::open_llmnr_udp6(const in_port_t port)
             in6addr_any, // .sin6_addr
             0,           // .sin6_scode_id
         };
-        if (bind(udp6, reinterpret_cast<const struct sockaddr *>(&addr),
-                sizeof addr) == -1) {
+        if (bind(udp6, &addr) == -1) {
             throw system_error(error_code(), "could not bind");
         }
     }

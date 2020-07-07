@@ -87,6 +87,12 @@ protected:
     void handle_udp6_query(const struct llmnr_header *packet,
         size_t packet_size, const struct sockaddr_in6 &sender,
         unsigned int interface_index);
+
+protected:
+    /**
+     * Returns true if, and only if, a question matches the host name.
+     */
+    bool matches_host_name(const void *question) const;
 };
 
 BEGIN_C_LINKAGE

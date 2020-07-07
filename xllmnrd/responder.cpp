@@ -44,6 +44,8 @@
 
 using std::error_code;
 using std::swap;
+using std::strchr;
+using std::strlen;
 using std::strerror;
 using std::system_error;
 using std::unique_ptr;
@@ -245,16 +247,44 @@ void responder::handle_udp6_query(const struct llmnr_header *const packet,
 
     const uint8_t *question = llmnr_data(packet);
     size_t remains = packet_size - sizeof (struct llmnr_header);
+
     const uint8_t *name_end = llmnr_skip_name(question, &remains);
     if (name_end && remains >= 4) {
-        // TODO: Implement this function.
-        // if (responder_name_matches(question)) {
-        //     responder_respond_for_name(index, header, qname_end, sender);
-        // }
+        if (matches_host_name(question)) {
+            // TODO: Implement this block.
+            // responder_respond_for_name(index, header, qname_end, sender);
+        }
     }
     else {
         log(LOG_INFO, "invalid question", &sender);
     }
+}
+
+bool responder::matches_host_name(const void *const question) const
+{
+    // TODO: Implement this function.
+    char host_name[LLMNR_LABEL_MAX + 1] = {};
+    gethostname(host_name, LLMNR_LABEL_MAX);
+    auto &&dot = strchr(host_name, '.');
+    if (dot != nullptr) {
+        *dot = '\0';
+    }
+
+    const uint8_t *i = static_cast<const uint8_t *>(question);
+    const unsigned char *j = reinterpret_cast<unsigned char *>(host_name);
+    size_t length = *i++;
+    if (length == strlen(host_name)) {
+        // This comparison must be case-insensitive in ASCII.
+        while (length--) {
+            if (ascii_to_upper(*i++) != ascii_to_upper(*j++)) {
+                return false;
+            }
+        }
+        if (*i++ == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 

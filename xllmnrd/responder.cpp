@@ -121,10 +121,10 @@ int responder::open_llmnr_udp6(const in_port_t port)
     return udp6;
 }
 
-responder::responder()
+responder::responder(const in_port_t port)
 :
     _interface_manager {new rtnetlink_interface_manager()},
-    _udp6 {open_llmnr_udp6(htons(LLMNR_PORT))}
+    _udp6 {open_llmnr_udp6(port)}
 {
     _interface_manager->refresh(true);
 }

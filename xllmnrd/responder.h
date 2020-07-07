@@ -54,7 +54,7 @@ protected:
     int open_llmnr_udp6(in_port_t port);
 
 public:
-    responder();
+    explicit responder(in_port_t port = htons(LLMNR_PORT));
 
     responder(const responder &) = delete;
 

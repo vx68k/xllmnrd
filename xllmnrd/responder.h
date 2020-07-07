@@ -57,7 +57,7 @@ protected:
      * @param port a port to bind the socket, in network byte order.
      */
     [[nodiscard]]
-    int open_udp6(in_port_t port);
+    static int open_udp6(in_port_t port);
 
 public:
     explicit responder(in_port_t port = htons(LLMNR_PORT));

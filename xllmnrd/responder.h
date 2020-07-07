@@ -67,6 +67,14 @@ public:
 public:
     void run();
 
+public:
+    /**
+     * Requests termination of the responder loop.
+     *
+     * This function is to be called by signal handlers.
+     */
+    void terminate();
+
 protected:
     void process_udp6();
 };

@@ -128,9 +128,16 @@ void responder::run()
     }
 }
 
+void responder::terminate()
+{
+    _running.store(false);
+}
+
 void responder::process_udp6()
 {
-    // TODO: Implemente this function.
+    if (_running) {
+        // TODO: Implemente this function.
+    }
 }
 
 /**

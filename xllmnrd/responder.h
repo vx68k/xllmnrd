@@ -60,7 +60,9 @@ protected:
     static int open_udp6(in_port_t port);
 
 public:
-    explicit responder(in_port_t port = htons(LLMNR_PORT));
+    responder();
+
+    explicit responder(in_port_t port);
 
     // This class is not copy-constructible.
     responder(const responder &) = delete;

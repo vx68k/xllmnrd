@@ -145,6 +145,13 @@ int responder::open_udp6(const in_port_t port)
     return udp6;
 }
 
+responder::responder()
+:
+    responder(htons(LLMNR_PORT))
+{
+    // Nothing to do.
+}
+
 responder::responder(const in_port_t port)
 :
     _interface_manager {new rtnetlink_interface_manager()},

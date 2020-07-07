@@ -33,6 +33,8 @@
 #include <cerrno>
 #include <cassert>
 
+using std::error_code;
+using std::system_error;
 using namespace xllmnrd;
 
 int rtnetlink_interface_manager::open_rtnetlink(
@@ -50,12 +52,8 @@ int rtnetlink_interface_manager::open_rtnetlink(
             0,          // .nl_pid
             RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
-
-        auto &&result = os->bind(rtnetlink,
-            reinterpret_cast<const struct sockaddr *>(&address),
-            sizeof (struct sockaddr_nl));
-        if (result < 0) {
-            throw std::runtime_error(std::strerror(errno));
+        if (os->bind(rtnetlink, &address) == -1) {
+            throw system_error(error_code(), "could not bind a RTNETLINK socket");
         }
     }
     catch (...) {

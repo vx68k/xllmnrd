@@ -52,15 +52,15 @@ using namespace xllmnrd;
 /*
  * Logs a message with the sender address.
  */
-static inline void log_in6_sender(const char *const message,
-    const struct sockaddr_in6 *const sender)
+static inline void log_in6_sender(const int priority,
+    const char *const message, const struct sockaddr_in6 *const sender)
 {
     if (sender && sender->sin6_family == AF_INET6) {
         char addrstr[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
-        syslog(LOG_INFO, "%s from %s%%%" PRIu32, message, addrstr, sender->sin6_scope_id);
+        syslog(priority, "%s from %s%%%" PRIu32, message, addrstr, sender->sin6_scope_id);
     } else {
-        syslog(LOG_INFO, "%s", message);
+        syslog(priority, "%s", message);
     }
 }
 
@@ -170,11 +170,11 @@ void responder::process_udp6()
 
         // The sender address must not be multicast.
         if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-            log_in6_sender("packet from a multicast address", &sender);
+            log_in6_sender(LOG_INFO, "packet from a multicast address", &sender);
             return;
         }
         if (size_t(packet_size) < sizeof (struct llmnr_header)) {
-            log_in6_sender("short packet", &sender);
+            log_in6_sender(LOG_INFO, "short packet", &sender);
             return;
         }
 
@@ -184,7 +184,7 @@ void responder::process_udp6()
             handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
         else {
-            log_in6_sender("non-query packet", &sender);
+            log_in6_sender(LOG_INFO, "non-query packet", &sender);
         }
     }
 }
@@ -252,7 +252,7 @@ void responder::handle_udp6_query(const struct llmnr_header *const packet,
         // }
     }
     else {
-        log_in6_sender("invalid question", &sender);
+        log_in6_sender(LOG_INFO, "invalid question", &sender);
     }
 }
 
@@ -491,13 +491,13 @@ int responder_run(void) {
                         responder_handle_query(pktinfo.ipi6_ifindex, header,
                                 packet_size, &sender);
                     } else {
-                        log_in6_sender("Non-query packet", &sender);
+                        log_in6_sender(LOG_INFO, "Non-query packet", &sender);
                     }
                 } else {
-                    log_in6_sender("Short packet", &sender);
+                    log_in6_sender(LOG_INFO, "Short packet", &sender);
                 }
             } else {
-                log_in6_sender("Packet from multicast address", &sender);
+                log_in6_sender(LOG_INFO, "Packet from multicast address", &sender);
             }
         }
     }
@@ -618,7 +618,7 @@ int responder_handle_query(unsigned int index,
             responder_respond_for_name(index, header, qname_end, sender);
         }
     } else {
-        log_in6_sender("Invalid question", sender);
+        log_in6_sender(LOG_INFO, "Invalid question", sender);
     }
 
     return 0;

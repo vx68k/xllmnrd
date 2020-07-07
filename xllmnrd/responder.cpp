@@ -47,8 +47,26 @@
 
 using std::error_code;
 using std::swap;
+using std::size_t;
+using std::strerror;
 using std::system_error;
+using std::unique_ptr;
 using namespace xllmnrd;
+
+/*
+ * Logs a message with the sender address.
+ */
+static inline void log_in6_sender(const char *const message,
+    const struct sockaddr_in6 *const sender)
+{
+    if (sender && sender->sin6_family == AF_INET6) {
+        char addrstr[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
+        syslog(LOG_INFO, "%s from %s%%%" PRIu32, message, addrstr, sender->sin6_scope_id);
+    } else {
+        syslog(LOG_INFO, "%s", message);
+    }
+}
 
 int responder::open_llmnr_udp6(const in_port_t port)
 {
@@ -136,7 +154,46 @@ void responder::terminate()
 void responder::process_udp6()
 {
     if (_running) {
-        // TODO: Implemente this function.
+        ssize_t packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+        if (packet_size < 0) {
+            syslog(LOG_ERR, "could not receive a packet: %s", strerror(errno));
+            return;
+        }
+
+        unique_ptr<char []> packet {new char[packet_size]};
+        struct sockaddr_in6 sender {};
+        struct in6_pktinfo pktinfo {
+            in6addr_any, // .ipi6_addr
+            0,           // .ipi6_ifindex
+        };
+        // TODO: Receive a packet.
+        // packet_size = responder_receive_udp(_udp6, &packet[0], packet_size,
+        //     &sender, &pktinfo);
+        if (packet_size < 0) {
+            syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
+            return;
+        }
+
+        // The sender address must not be multicast.
+        if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
+            log_in6_sender("packet from a multicast address", &sender);
+            return;
+        }
+        if (size_t(packet_size) < sizeof (struct llmnr_header)) {
+            log_in6_sender("short packet", &sender);
+            return;
+        }
+
+        const struct llmnr_header *header =
+            reinterpret_cast<const struct llmnr_header *>(&packet[0]);
+        if (llmnr_query_is_valid(header)) {
+            // TODO: Handle the query.
+            // responder_handle_query(pktinfo.ipi6_ifindex, header,
+            //         packet_size, &sender);
+        }
+        else {
+            log_in6_sender("non-query packet", &sender);
+        }
     }
 }
 
@@ -207,23 +264,6 @@ static inline int open_udp(in_port_t port, int *fd_out) {
         close(fd);
     }
     return err;
-}
-
-/*
- * Logs a discarded packet with the sender address.
- */
-static inline void log_discarded(const char *restrict message,
-        const struct sockaddr_in6 *restrict sender) {
-    if (sender && sender->sin6_family == AF_INET6) {
-        char addrstr[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, &sender->sin6_addr, addrstr,
-                INET6_ADDRSTRLEN);
-        syslog(LOG_INFO,
-                "%s from %s%%%" PRIu32 " (discarded)", message, addrstr,
-                sender->sin6_scope_id);
-    } else {
-        syslog(LOG_INFO, "%s (discarded)", message);
-    }
 }
 
 /*
@@ -391,13 +431,13 @@ int responder_run(void) {
                         responder_handle_query(pktinfo.ipi6_ifindex, header,
                                 packet_size, &sender);
                     } else {
-                        log_discarded("Non-query packet", &sender);
+                        log_in6_sender("Non-query packet", &sender);
                     }
                 } else {
-                    log_discarded("Short packet", &sender);
+                    log_in6_sender("Short packet", &sender);
                 }
             } else {
-                log_discarded("Packet from multicast address", &sender);
+                log_in6_sender("Packet from multicast address", &sender);
             }
         }
     }
@@ -518,7 +558,7 @@ int responder_handle_query(unsigned int index,
             responder_respond_for_name(index, header, qname_end, sender);
         }
     } else {
-        log_discarded("Invalid question", sender);
+        log_in6_sender("Invalid question", sender);
     }
 
     return 0;

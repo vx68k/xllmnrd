@@ -83,7 +83,7 @@ static inline void log_with_sender(const int pri, const char *const message,
             }
             break;
         default:
-            syslog(pri, "%s from an address of family %d", family);
+            syslog(pri, "%s from an address of family %d", message, family);
             break;
         }
     }

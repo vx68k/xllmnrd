@@ -30,6 +30,7 @@
 #include "ascii.h"
 #include "llmnr_packet.h"
 #include "llmnr.h"
+#include "socket_utility.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
 #include <netinet/in.h>
@@ -55,12 +56,6 @@ using std::error_code;
 using std::swap;
 using std::system_error;
 using namespace xllmnrd;
-
-template<class T>
-inline int setsockopt(int fd, int level, int option, T *value)
-{
-    return setsockopt(fd, level, option, value, sizeof *value);
-}
 
 int responder::open_llmnr_udp6(const in_port_t port)
 {

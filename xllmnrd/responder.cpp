@@ -45,13 +45,6 @@
 #include <cinttypes>
 #include <cassert>
 
-#ifndef IPV6_DONTFRAG
-// Workaround for undefined 'IPV6_DONTFRAG' on Linux-based systems.
-#if __linux__
-#define IPV6_DONTFRAG 62
-#endif
-#endif /* !defined IPV6_DONTFRAG */
-
 using std::error_code;
 using std::swap;
 using std::system_error;

@@ -8,6 +8,7 @@ noinst_HEADERS = \
 interface.h \
 rtnetlink.h \
 posix.h \
+socket_utility.h \
 ascii.h
 
 libxllmnrd_a_SOURCES = \

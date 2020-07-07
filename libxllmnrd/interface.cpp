@@ -58,21 +58,19 @@ interface_manager::~interface_manager()
 
 void interface_manager::add_interface_listener(interface_listener *listener)
 {
-    if (_interface_listener == nullptr) {
-        _interface_listener = listener;
-    }
+    interface_listener *expected = nullptr;
+    _interface_listener.compare_exchange_weak(expected, listener);
 }
 
 void interface_manager::remove_interface_listener(interface_listener *listener)
 {
-    if (_interface_listener == listener) {
-        _interface_listener = nullptr;
-    }
+    interface_listener *expected = listener;
+    _interface_listener.compare_exchange_weak(expected, nullptr);
 }
 
 void interface_manager::fire_interface_added(const interface_event &event)
 {
-    auto &&listener = _interface_listener;
+    auto &&listener = _interface_listener.load();
     if (listener != nullptr) {
         listener->interface_added(event);
     }
@@ -80,7 +78,7 @@ void interface_manager::fire_interface_added(const interface_event &event)
 
 void interface_manager::fire_interface_removed(const interface_event &event)
 {
-    auto &&listener = _interface_listener;
+    auto &&listener = _interface_listener.load();
     if (listener != nullptr) {
         listener->interface_removed(event);
     }

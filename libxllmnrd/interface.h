@@ -103,7 +103,7 @@ namespace xllmnrd
         int _debug_level {0};
 
     private:
-        interface_listener *_interface_listener = nullptr;
+        std::atomic<interface_listener *> _interface_listener {nullptr};
 
     private:
         /// Map from interface indices to interfaces.

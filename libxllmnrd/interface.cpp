@@ -56,18 +56,33 @@ interface_manager::~interface_manager()
     remove_interfaces();
 }
 
-interface_change_handler interface_manager::set_interface_change(
-    const interface_change_handler interface_change)
+void interface_manager::add_interface_listener(interface_listener *listener)
 {
-    return this->_interface_change.exchange(interface_change);
+    if (_interface_listener == nullptr) {
+        _interface_listener = listener;
+    }
 }
 
-void interface_manager::fire_interface_change(
-    const interface_change_event *const event)
+void interface_manager::remove_interface_listener(interface_listener *listener)
 {
-    auto &&handler = _interface_change.load();
-    if (handler != nullptr) {
-        handler(event);
+    if (_interface_listener == listener) {
+        _interface_listener = nullptr;
+    }
+}
+
+void interface_manager::fire_interface_added(const interface_event &event)
+{
+    auto &&listener = _interface_listener;
+    if (listener != nullptr) {
+        listener->interface_added(event);
+    }
+}
+
+void interface_manager::fire_interface_removed(const interface_event &event)
+{
+    auto &&listener = _interface_listener;
+    if (listener != nullptr) {
+        listener->interface_removed(event);
     }
 }
 
@@ -104,14 +119,10 @@ void interface_manager::remove_interfaces()
     std::for_each(_interfaces.begin(), _interfaces.end(),
         [this](decltype(_interfaces)::reference i) {
             if (i.second.in6_addresses.size() != 0) {
-                interface_change_event event {
-                    interface_change_event::REMOVED, i.first, AF_INET6};
-                fire_interface_change(&event);
+                fire_interface_removed({i.first, AF_INET6});
             }
             if (i.second.in_addresses.size() != 0) {
-                interface_change_event event {
-                    interface_change_event::REMOVED, i.first, AF_INET};
-                fire_interface_change(&event);
+                fire_interface_removed({i.first, AF_INET});
             }
         });
 
@@ -142,9 +153,7 @@ void interface_manager::add_interface_address(unsigned int index,
                 }
 
                 if (addresses.size() == 1) {
-                    interface_change_event event
-                        {interface_change_event::ADDED, index, AF_INET};
-                    fire_interface_change(&event);
+                    fire_interface_added({index, AF_INET});
                 }
             }
         }
@@ -169,9 +178,7 @@ void interface_manager::add_interface_address(unsigned int index,
                 }
 
                 if (addresses.size() == 1) {
-                    interface_change_event event
-                        {interface_change_event::ADDED, index, AF_INET6};
-                    fire_interface_change(&event);
+                    fire_interface_added({index, AF_INET6});
                 }
             }
         }
@@ -212,9 +219,7 @@ void interface_manager::remove_interface_address(unsigned int index,
                 }
 
                 if (addresses.empty()) {
-                    interface_change_event event
-                        {interface_change_event::REMOVED, index, AF_INET};
-                    fire_interface_change(&event);
+                    fire_interface_removed({index, AF_INET});
                 }
             }
         }
@@ -239,9 +244,7 @@ void interface_manager::remove_interface_address(unsigned int index,
                 }
 
                 if (addresses.empty()) {
-                    interface_change_event event
-                        {interface_change_event::REMOVED, index, AF_INET6};
-                    fire_interface_change(&event);
+                    fire_interface_removed({index, AF_INET6});
                 }
             }
         }

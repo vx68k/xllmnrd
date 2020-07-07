@@ -477,13 +477,6 @@ static volatile sig_atomic_t responder_terminated;
  * Declarations for static functions.
  */
 
-/**
- * Handles a change notification for a network interface.
- * @param __change [in] change notification.
- */
-static void responder_handle_ifaddr_change(
-        const interface_change_event *__change);
-
 static ssize_t responder_receive_udp(int, void *, size_t,
         sockaddr_in6 *, in6_pktinfo *);
 static int decode_cmsg(msghdr *, in6_pktinfo *);
@@ -547,13 +540,73 @@ static inline int responder_name_matches(const uint8_t *restrict question) {
  * Out-of-line functions.
  */
 
+namespace
+{
+    class responder_listener: public interface_listener
+    {
+    public:
+        void interface_added(const interface_event &event) override
+        {
+            if (event.address_family != AF_INET6) {
+                return;
+            }
+            if (event.interface_index != 0) {
+                const ipv6_mreq mr = {
+                    in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+                    event.interface_index, // .ipv6mr_interface
+                };
+
+                char ifname[IF_NAMESIZE];
+                if_indextoname(event.interface_index, ifname);
+
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
+                    syslog(LOG_NOTICE,
+                            "Joined the LLMNR multicast group on %s", ifname);
+                } else {
+                    syslog(LOG_ERR,
+                            "Failed to join the LLMNR multicast group on %s",
+                            ifname);
+                }
+            }
+        }
+
+    public:
+        void interface_removed(const interface_event &event) override
+        {
+            if (event.address_family != AF_INET6) {
+                return;
+            }
+            if (event.interface_index != 0) {
+                const ipv6_mreq mr = {
+                    in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+                    event.interface_index, // .ipv6mr_interface
+                };
+
+                char ifname[IF_NAMESIZE];
+                if_indextoname(event.interface_index, ifname);
+
+                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {
+                    syslog(LOG_NOTICE,
+                            "Left the LLMNR multicast group on %s", ifname);
+                } else {
+                    syslog(LOG_ERR,
+                            "Failed to leave the LLMNR multicast group on %s",
+                            ifname);
+                }
+            }
+        }
+    };
+}
+
+static responder_listener listener;
+
 int responder_initialize(in_port_t port) {
     if (responder_initialized()) {
         return EBUSY;
     }
 
     if_manager.reset(new rtnetlink_interface_manager());
-    if_manager->set_interface_change(&responder_handle_ifaddr_change);
+    if_manager->add_interface_listener(&listener);
     if_manager->refresh(true);
 
     // If the specified port number is 0, we use the default port number.
@@ -629,52 +682,6 @@ int responder_run(void) {
 
 void responder_terminate(void) {
     responder_terminated = true;
-}
-
-void responder_handle_ifaddr_change(
-        const interface_change_event *restrict change)
-{
-    if (change->address_family != AF_INET6) {
-        return;
-    }
-
-    if (responder_initialized()) {
-        if (change->interface_index != 0) {
-            const ipv6_mreq mr = {
-                in6addr_mc_llmnr,        // .ipv6mr_multiaddr
-                change->interface_index, // .ipv6mr_interface
-            };
-
-            char ifname[IF_NAMESIZE];
-            if_indextoname(change->interface_index, ifname);
-
-            switch (change->type) {
-            case interface_change_event::ADDED:
-                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-                        &mr, sizeof (ipv6_mreq)) == 0) {
-                    syslog(LOG_NOTICE,
-                            "Joined the LLMNR multicast group on %s", ifname);
-                } else {
-                    syslog(LOG_ERR,
-                            "Failed to join the LLMNR multicast group on %s",
-                            ifname);
-                }
-                break;
-
-            case interface_change_event::REMOVED:
-                if (setsockopt(udp_fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-                        &mr, sizeof (ipv6_mreq)) == 0) {
-                    syslog(LOG_NOTICE,
-                            "Left the LLMNR multicast group on %s", ifname);
-                } else {
-                    syslog(LOG_ERR,
-                            "Failed to leave the LLMNR multicast group on %s",
-                            ifname);
-                }
-                break;
-            }
-        }
-    }
 }
 
 ssize_t responder_receive_udp(int sock, void *restrict buf, size_t bufsize,

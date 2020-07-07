@@ -47,30 +47,41 @@ namespace xllmnrd
 {
     using std::size_t;
 
-    /// Interface change event class.
-    struct interface_change_event
+    /**
+     * Event objects about interfaces.
+     */
+    struct interface_event
     {
-        enum event_type: int
-        {
-            REMOVED,
-            ADDED,
-        };
-
-        event_type type;
         unsigned int interface_index;
         int address_family;
 
-        constexpr interface_change_event(event_type type,
-            unsigned int interface_index, int address_family = AF_UNSPEC)
+        constexpr interface_event(const unsigned int interface_index,
+            const int address_family)
         :
-            type {type},
             interface_index {interface_index},
             address_family {address_family}
-        {}
+        {
+            // Nothing to do.
+        }
     };
 
-    // Pointer to an interface change handler.
-    typedef void (*interface_change_handler)(const interface_change_event *);
+    /**
+     * Listener objects for interface events.
+     */
+    class interface_listener
+    {
+    protected:
+        interface_listener() = default;
+
+    protected:
+        ~interface_listener() = default;
+
+    public:
+        virtual void interface_added(const interface_event &event) = 0;
+
+    public:
+        virtual void interface_removed(const interface_event &event) = 0;
+    };
 
     /// Abstract interface manager class.
     class interface_manager
@@ -92,8 +103,7 @@ namespace xllmnrd
         int _debug_level {0};
 
     private:
-        /// Interface change handler.
-        std::atomic<interface_change_handler> _interface_change {nullptr};
+        interface_listener *_interface_listener = nullptr;
 
     private:
         /// Map from interface indices to interfaces.
@@ -122,17 +132,31 @@ namespace xllmnrd
             return _debug_level;
         }
 
+    public:
         void set_debug_level(const int debug_level)
         {
             _debug_level = debug_level;
         }
 
     public:
-        /// Set the interface change handler.
-        ///
-        /// This function is thread-safe.
-        interface_change_handler set_interface_change(
-            interface_change_handler interface_change);
+        /**
+         * Adds a listener object for interface change events.
+         */
+        void add_interface_listener(interface_listener *listener);
+
+    public:
+        /**
+         * Removes a listener object for interface change events.
+         */
+        void remove_interface_listener(interface_listener *listener);
+
+    private:
+        // Fires an event for an added interface.
+        void fire_interface_added(const interface_event &event);
+
+    private:
+        // Fires an event for a removed interface.
+        void fire_interface_removed(const interface_event &event);
 
     public:
         /**
@@ -173,10 +197,6 @@ namespace xllmnrd
     protected:
         void remove_interface_address(unsigned int index, int family,
             const void *address, size_t address_size);
-
-    private:
-        // Fires an interace change event.
-        void fire_interface_change(const interface_change_event *event);
     };
 }
 

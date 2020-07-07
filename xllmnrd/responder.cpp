@@ -57,6 +57,7 @@ using std::swap;
 using std::system_error;
 using std::uint8_t;
 using std::uint16_t;
+using std::uint32_t;
 using std::unique_ptr;
 using std::vector;
 using namespace xllmnrd;

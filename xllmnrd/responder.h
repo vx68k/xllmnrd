@@ -62,15 +62,19 @@ protected:
 public:
     explicit responder(in_port_t port = htons(LLMNR_PORT));
 
+    // This class is not copy-constructible.
     responder(const responder &) = delete;
 
-public:
+    // This class is not copy-assignable.
     void operator =(const responder &) = delete;
 
 public:
     virtual ~responder();
 
 public:
+    /**
+     * Enters the responder loop.
+     */
     void run();
 
 public:

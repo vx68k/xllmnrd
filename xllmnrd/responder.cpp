@@ -165,7 +165,7 @@ void responder::process_udp6()
             in6addr_any, // .ipi6_addr
             0,           // .ipi6_ifindex
         };
-        packet_size = recv_udp6(&packet[0], packet_size, &sender, &pktinfo);
+        packet_size = recv_udp6(&packet[0], packet_size, sender, pktinfo);
         if (packet_size < 0) {
             syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
             return;
@@ -193,7 +193,7 @@ void responder::process_udp6()
 }
 
 ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
-    struct sockaddr_in6 *const sender, struct in6_pktinfo *const pktinfo)
+    struct sockaddr_in6 &sender, struct in6_pktinfo &pktinfo)
 {
     struct iovec iov[] = {
         {
@@ -203,8 +203,8 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
     };
     unsigned char control[128];
     struct msghdr msg = {
-        sender,         // .msg_name
-        sizeof *sender, // .msg_namelen
+        &sender,         // .msg_name
+        sizeof sender, // .msg_namelen
         iov,            // .msg_iov
         1,              // .msg_iovlen
         control,        // .msg_control
@@ -213,7 +213,7 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
     };
     ssize_t received = recvmsg(_udp6, &msg, 0);
     if (received >= 0) {
-        if (msg.msg_namelen < sizeof *sender) {
+        if (msg.msg_namelen < sizeof sender) {
             errno = ENOMSG;
             return -1;
         }
@@ -224,8 +224,8 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
             case IPPROTO_IPV6:
                 switch (cmsg->cmsg_type) {
                 case IPV6_PKTINFO:
-                    if (cmsg->cmsg_len >= CMSG_LEN(sizeof *pktinfo)) {
-                        *pktinfo = *reinterpret_cast<struct in6_pktinfo *>
+                    if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {
+                        pktinfo = *reinterpret_cast<struct in6_pktinfo *>
                             (CMSG_DATA(cmsg));
                     }
                     break;
@@ -239,11 +239,12 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
 }
 
 void responder::handle_udp6_query(const struct llmnr_header *const packet,
-    const size_t packet_size, const struct sockaddr_in6 &const sender,
+    const size_t packet_size, const struct sockaddr_in6 &sender,
     const unsigned int interface_index)
 {
     // TODO: Implement this function.
 }
+
 
 /**
  * Sets socket options for an IPv6 UDP responder socket.

@@ -138,16 +138,13 @@ static inline int set_udp_options(int fd) {
     // The unicast hop limit SHOULD be 1.
     static const int unicast_hops = 1;
 
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only,
-            sizeof (int)) != 0) {
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &v6only) != 0) {
         return errno;
     }
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &recvpktinfo,
-            sizeof (int)) != 0) {
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &recvpktinfo) != 0) {
         return errno;
     }
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &unicast_hops,
-            sizeof (int)) != 0) {
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &unicast_hops) != 0) {
         syslog(LOG_WARNING,
                 "Could not set IPV6_UNICAST_HOPS to %d: %s",
                 unicast_hops, strerror(errno));
@@ -155,8 +152,7 @@ static inline int set_udp_options(int fd) {
 
 #ifdef IPV6_DONTFRAG
     int dontfrag = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_DONTFRAG, &dontfrag, sizeof (int))
-            != 0) {
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_DONTFRAG, &dontfrag) != 0) {
         syslog(LOG_WARNING, "Could not set IPV6_DONTFRAG to %d: %s",
                 dontfrag, strerror(errno));
     }
@@ -187,8 +183,7 @@ static inline int open_udp(in_port_t port, int *fd_out) {
                 in6addr_any, // .sin6_addr
                 0,           // .sin6_scode_id
             };
-            if (bind(fd, (const struct sockaddr *) &addr,
-                    sizeof (struct sockaddr_in6)) == 0) {
+            if (bind(fd, &addr) == 0) {
                 *fd_out = fd;
                 return 0;
             }

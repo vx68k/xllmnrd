@@ -80,8 +80,13 @@ protected:
     void process_udp6();
 
 protected:
-    ssize_t recv_udp6(void *buffer, ::size_t buffer_size,
+    ssize_t recv_udp6(void *buffer, size_t buffer_size,
         struct sockaddr_in6 *sender, struct in6_pktinfo *pktinfo);
+
+protected:
+    void handle_udp6_query(const struct llmnr_header *packet,
+        size_t packet_size, const struct sockaddr_in6 &sender,
+        unsigned int interface_index);
 };
 
 BEGIN_C_LINKAGE

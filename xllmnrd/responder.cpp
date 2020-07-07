@@ -184,9 +184,7 @@ void responder::process_udp6()
         const struct llmnr_header *header =
             reinterpret_cast<const struct llmnr_header *>(&packet[0]);
         if (llmnr_query_is_valid(header)) {
-            // TODO: Handle the query.
-            // responder_handle_query(pktinfo.ipi6_ifindex, header,
-            //         packet_size, &sender);
+            handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
         else {
             log_in6_sender("non-query packet", &sender);
@@ -194,7 +192,7 @@ void responder::process_udp6()
     }
 }
 
-ssize_t responder::recv_udp6(void *const buffer, ::size_t buffer_size,
+ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
     struct sockaddr_in6 *const sender, struct in6_pktinfo *const pktinfo)
 {
     struct iovec iov[] = {
@@ -238,6 +236,13 @@ ssize_t responder::recv_udp6(void *const buffer, ::size_t buffer_size,
         }
     }
     return received;
+}
+
+void responder::handle_udp6_query(const struct llmnr_header *const packet,
+    const size_t packet_size, const struct sockaddr_in6 &const sender,
+    const unsigned int interface_index)
+{
+    // TODO: Implement this function.
 }
 
 /**

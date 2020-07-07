@@ -47,7 +47,6 @@
 
 using std::error_code;
 using std::swap;
-using std::size_t;
 using std::strerror;
 using std::system_error;
 using std::unique_ptr;
@@ -166,9 +165,7 @@ void responder::process_udp6()
             in6addr_any, // .ipi6_addr
             0,           // .ipi6_ifindex
         };
-        // TODO: Receive a packet.
-        // packet_size = responder_receive_udp(_udp6, &packet[0], packet_size,
-        //     &sender, &pktinfo);
+        packet_size = recv_udp6(&packet[0], packet_size, &sender, &pktinfo);
         if (packet_size < 0) {
             syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
             return;
@@ -195,6 +192,52 @@ void responder::process_udp6()
             log_in6_sender("non-query packet", &sender);
         }
     }
+}
+
+ssize_t responder::recv_udp6(void *const buffer, ::size_t buffer_size,
+    struct sockaddr_in6 *const sender, struct in6_pktinfo *const pktinfo)
+{
+    struct iovec iov[] = {
+        {
+            buffer,      // .iov_base
+            buffer_size, // .iov_len
+        },
+    };
+    unsigned char control[128];
+    struct msghdr msg = {
+        sender,         // .msg_name
+        sizeof *sender, // .msg_namelen
+        iov,            // .msg_iov
+        1,              // .msg_iovlen
+        control,        // .msg_control
+        sizeof control, // .msg_controllen
+        0,              // .msg_flags
+    };
+    ssize_t received = recvmsg(_udp6, &msg, 0);
+    if (received >= 0) {
+        if (msg.msg_namelen < sizeof *sender) {
+            errno = ENOMSG;
+            return -1;
+        }
+
+        struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+        while (cmsg) {
+            switch (cmsg->cmsg_level) {
+            case IPPROTO_IPV6:
+                switch (cmsg->cmsg_type) {
+                case IPV6_PKTINFO:
+                    if (cmsg->cmsg_len >= CMSG_LEN(sizeof *pktinfo)) {
+                        *pktinfo = *reinterpret_cast<struct in6_pktinfo *>
+                            (CMSG_DATA(cmsg));
+                    }
+                    break;
+                }
+                break;
+            }
+            cmsg = CMSG_NXTHDR(&msg, cmsg);
+        }
+    }
+    return received;
 }
 
 /**

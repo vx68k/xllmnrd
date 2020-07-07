@@ -21,7 +21,8 @@
 
 #include "llmnr.h"
 #include "interface.h"
-#include <netinet/in.h> /* in_port_t */
+#include <netinet/in.h>
+#include <unistd.h>
 #include <atomic>
 #include <memory>
 
@@ -77,6 +78,10 @@ public:
 
 protected:
     void process_udp6();
+
+protected:
+    ssize_t recv_udp6(void *buffer, ::size_t buffer_size,
+        struct sockaddr_in6 *sender, struct in6_pktinfo *pktinfo);
 };
 
 BEGIN_C_LINKAGE

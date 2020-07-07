@@ -51,8 +51,13 @@ private:
     std::atomic<bool> _running;
 
 protected:
+    /**
+     * Opens an IPv6 UDP socket for LLMNR.
+     *
+     * @param port a port to bind the socket, in network byte order.
+     */
     [[nodiscard]]
-    int open_llmnr_udp6(in_port_t port);
+    int open_udp6(in_port_t port);
 
 public:
     explicit responder(in_port_t port = htons(LLMNR_PORT));

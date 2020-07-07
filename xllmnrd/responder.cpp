@@ -79,7 +79,7 @@ static inline void log(const int priority, const char *const message,
     }
 }
 
-int responder::open_llmnr_udp6(const in_port_t port)
+int responder::open_udp6(const in_port_t port)
 {
     int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp6 == -1) {
@@ -135,7 +135,7 @@ int responder::open_llmnr_udp6(const in_port_t port)
 responder::responder(const in_port_t port)
 :
     _interface_manager {new rtnetlink_interface_manager()},
-    _udp6 {open_llmnr_udp6(port)}
+    _udp6 {open_udp6(port)}
 {
     _interface_manager->refresh(true);
 }

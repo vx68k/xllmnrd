@@ -34,7 +34,10 @@
 #include <arpa/inet.h> /* inet_ntop */
 #include <sys/socket.h>
 #include <syslog.h>
+#include <set>
 #include <vector>
+#include <algorithm>
+#include <system_error>
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
@@ -42,14 +45,23 @@
 #include <cinttypes>
 #include <cassert>
 
+using std::copy;
+using std::copy_n;
 using std::error_code;
-using std::swap;
+using std::for_each;
+using std::set;
 using std::strchr;
 using std::strlen;
 using std::strerror;
+using std::swap;
 using std::system_error;
+using std::uint8_t;
+using std::uint16_t;
 using std::unique_ptr;
+using std::vector;
 using namespace xllmnrd;
+
+static const uint32_t TTL = 30;
 
 /*
  * Logs a message with the sender address.
@@ -238,25 +250,90 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
     return received;
 }
 
-void responder::handle_udp6_query(const struct llmnr_header *const packet,
-    const size_t packet_size, const struct sockaddr_in6 &sender,
+void responder::handle_udp6_query(const struct llmnr_header *const query,
+    const size_t query_size, const struct sockaddr_in6 &sender,
     const unsigned int interface_index)
 {
     // These must be checked before.
-    assert(packet_size >= sizeof (struct llmnr_header));
+    assert(query_size >= sizeof query);
 
-    const uint8_t *question = llmnr_data(packet);
-    size_t remains = packet_size - sizeof (struct llmnr_header);
+    const uint8_t *qname = reinterpret_cast<const uint8_t *>(query + 1);
+    size_t remains = query_size - sizeof *query;
 
-    const uint8_t *name_end = llmnr_skip_name(question, &remains);
-    if (name_end && remains >= 4) {
-        if (matches_host_name(question)) {
-            // TODO: Implement this block.
-            // responder_respond_for_name(index, header, qname_end, sender);
+    const uint8_t *qname_end = llmnr_skip_name(qname, &remains);
+    if (qname_end && remains >= 4) {
+        if (matches_host_name(qname)) {
+            respond_for_name(_udp6, query, qname, qname_end, sender, interface_index);
         }
     }
     else {
         log(LOG_INFO, "invalid question", &sender);
+    }
+}
+
+void responder::respond_for_name(const int fd, const llmnr_header *const query,
+    const uint8_t *const qname, const uint8_t *const qname_end,
+    const sockaddr_in6 &sender, const unsigned int interface_index)
+{
+    set<in6_addr> in6_addresses;
+
+    auto &&qtype = llmnr_get_uint16(qname_end);
+    auto &&qclass = llmnr_get_uint16(qname_end + 2);
+    switch (qtype) {
+    case LLMNR_QTYPE_ANY:
+    case LLMNR_QTYPE_AAAA:
+        if (qclass == LLMNR_QCLASS_IN) {
+            in6_addresses = _interface_manager->in6_addresses(interface_index);
+            if (in6_addresses.empty()) {
+                char name[IF_NAMESIZE];
+                if_indextoname(interface_index, name);
+                syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
+            }
+        }
+        break;
+    }
+
+    std::vector<uint8_t> response
+        {reinterpret_cast<const uint8_t *>(query), qname_end + 4};
+
+    auto &&response_header = reinterpret_cast<llmnr_header *>(response.data());
+    response_header->flags = htons(LLMNR_HEADER_QR);
+    response_header->ancount = htons(0);
+    response_header->nscount = htons(0);
+    response_header->arcount = htons(0);
+
+    auto &&response_size = response.size();
+    for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
+        if (response_header->ancount == htons(0)) {
+            copy(qname, qname_end, back_inserter(response));
+        }
+        else {
+            uint8_t name[2] = {};
+            llmnr_put_uint16(0xc000 + response_size, name);
+            copy_n(name, 2, back_inserter(response));
+        }
+
+        uint8_t type_class_ttl[8] = {};
+        llmnr_put_uint16(LLMNR_TYPE_AAAA, type_class_ttl);
+        llmnr_put_uint16(LLMNR_CLASS_IN, type_class_ttl + 2);
+        llmnr_put_uint32(TTL, type_class_ttl + 4);
+        copy_n(type_class_ttl, 8, back_inserter(response));
+
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i,
+            back_inserter(response));
+
+        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+    });
+
+    // Sends the response.
+    if (sendto(fd, response.data(), response.size(), 0,
+        reinterpret_cast<const sockaddr *>(&sender), sizeof sender) == -1) {
+        if (response.size() > 512 && errno == EMSGSIZE) {
+            // Resends with truncation.
+            response_header->flags |= htons(LLMNR_HEADER_TC);
+            sendto(fd, response.data(), 512, 0,
+                reinterpret_cast<const sockaddr *>(&sender), sizeof sender);
+        }
     }
 }
 

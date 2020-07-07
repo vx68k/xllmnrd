@@ -89,6 +89,11 @@ protected:
         unsigned int interface_index);
 
 protected:
+    void respond_for_name(int fd, const llmnr_header *query,
+        const uint8_t *qname, const uint8_t *qname_end,
+        const sockaddr_in6 &sender, unsigned int interface_index);
+
+protected:
     /**
      * Returns true if, and only if, a question matches the host name.
      */

@@ -242,7 +242,21 @@ void responder::handle_udp6_query(const struct llmnr_header *const packet,
     const size_t packet_size, const struct sockaddr_in6 &sender,
     const unsigned int interface_index)
 {
-    // TODO: Implement this function.
+    // These must be checked before.
+    assert(packet_size >= sizeof (struct llmnr_header));
+
+    const uint8_t *question = llmnr_data(packet);
+    size_t remains = packet_size - sizeof (struct llmnr_header);
+    const uint8_t *name_end = llmnr_skip_name(question, &remains);
+    if (name_end && remains >= 4) {
+        // TODO: Implement this function.
+        // if (responder_name_matches(question)) {
+        //     responder_respond_for_name(index, header, qname_end, sender);
+        // }
+    }
+    else {
+        log_in6_sender("invalid question", &sender);
+    }
 }
 
 

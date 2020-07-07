@@ -29,14 +29,11 @@
 #include "rtnetlink.h"
 #include "ascii.h"
 #include "llmnr_packet.h"
-#include "llmnr.h"
 #include "socket_utility.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */
-#include <netinet/in.h>
 #include <sys/socket.h>
 #include <syslog.h>
-#include <unistd.h>
 #include <vector>
 #include <csignal>
 #include <cstring>

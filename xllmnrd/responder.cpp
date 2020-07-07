@@ -150,11 +150,14 @@ responder::responder(const in_port_t port)
     _interface_manager {new rtnetlink_interface_manager()},
     _udp6 {open_udp6(port)}
 {
+    _interface_manager->add_interface_listener(this);
     _interface_manager->refresh(true);
 }
 
 responder::~responder()
 {
+    _interface_manager->remove_interface_listener(this);
+
     int udp6 = -1;
     swap(_udp6, udp6);
     if (udp6 != -1) {
@@ -375,6 +378,16 @@ bool responder::matches_host_name(const void *const question) const
         }
     }
     return false;
+}
+
+void responder::interface_added(const interface_event &event)
+{
+    // TODO: Implement this function.
+}
+
+void responder::interface_removed(const interface_event &event)
+{
+    // TODO: Implement this function.
 }
 
 

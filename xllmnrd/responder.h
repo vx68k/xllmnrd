@@ -39,7 +39,7 @@ using namespace xllmnrd;
 /**
  * LLMNR responder objects.
  */
-class responder
+class responder: public interface_listener
 {
 private:
     std::unique_ptr<interface_manager> _interface_manager;
@@ -103,6 +103,12 @@ protected:
      * Returns true if, and only if, a question matches the host name.
      */
     bool matches_host_name(const void *question) const;
+
+public:
+    void interface_added(const interface_event &event) override;
+
+public:
+    void interface_removed(const interface_event &event) override;
 };
 
 BEGIN_C_LINKAGE

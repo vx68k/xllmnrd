@@ -22,6 +22,7 @@
 #include "llmnr.h"
 #include "interface.h"
 #include <netinet/in.h> /* in_port_t */
+#include <atomic>
 #include <memory>
 
 using namespace xllmnrd;
@@ -45,6 +46,9 @@ private:
 private:
     int _udp6 = -1;
 
+private:
+    std::atomic<bool> _running;
+
 protected:
     [[nodiscard]]
     int open_llmnr_udp6(in_port_t port);
@@ -62,6 +66,9 @@ public:
 
 public:
     void run();
+
+protected:
+    void process_udp6();
 };
 
 BEGIN_C_LINKAGE

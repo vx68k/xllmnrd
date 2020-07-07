@@ -122,6 +122,14 @@ responder::~responder()
 
 void responder::run()
 {
+    _running.store(true);
+    while (_running) {
+        process_udp6();
+    }
+}
+
+void responder::process_udp6()
+{
     // TODO: Implemente this function.
 }
 

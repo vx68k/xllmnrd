@@ -66,16 +66,28 @@ static const uint32_t TTL = 30;
 /*
  * Logs a message with the sender address.
  */
-static inline void log(const int priority, const char *const message,
-    const sockaddr_in6 *const sender)
+static inline void log_with_sender(const int pri, const char *const message,
+    const void *const sender, const size_t sender_size)
 {
-    if (sender && sender->sin6_family == AF_INET6) {
-        char addrstr[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, &sender->sin6_addr, addrstr, INET6_ADDRSTRLEN);
-        syslog(priority, "%s from %s%%%" PRIu32, message, addrstr,
-            sender->sin6_scope_id);
-    } else {
-        syslog(priority, "%s", message);
+    if (sender != nullptr) {
+        int family = static_cast<const sockaddr *>(sender)->sa_family;
+        switch (family) {
+        case AF_INET6:
+            if (sender_size >= sizeof (sockaddr_in6)) {
+                auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
+                char addrstr[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &in6->sin6_addr, addrstr, INET6_ADDRSTRLEN);
+                syslog(pri, "%s from %s%%%" PRIu32, message, addrstr,
+                    in6->sin6_scope_id);
+            }
+            break;
+        default:
+            syslog(pri, "%s from an address of family %d", family);
+            break;
+        }
+    }
+    else {
+        syslog(pri, "%s", message);
     }
 }
 
@@ -185,11 +197,11 @@ void responder::process_udp6()
 
         // The sender address must not be multicast.
         if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-            log(LOG_INFO, "packet from a multicast address", &sender);
+            log_with_sender(LOG_INFO, "packet from a multicast address", &sender, sizeof sender);
             return;
         }
         if (size_t(packet_size) < sizeof (llmnr_header)) {
-            log(LOG_INFO, "short packet", &sender);
+            log_with_sender(LOG_INFO, "short packet", &sender, sizeof sender);
             return;
         }
 
@@ -199,7 +211,7 @@ void responder::process_udp6()
             handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
         else {
-            log(LOG_INFO, "non-query packet", &sender);
+            log_with_sender(LOG_INFO, "non-query packet", &sender, sizeof sender);
         }
     }
 }
@@ -267,7 +279,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
         }
     }
     else {
-        log(LOG_INFO, "invalid question", &sender);
+        log_with_sender(LOG_INFO, "invalid question", &sender, sizeof sender);
     }
 }
 
@@ -599,13 +611,13 @@ int responder_run(void) {
                         responder_handle_query(pktinfo.ipi6_ifindex, header,
                                 packet_size, &sender);
                     } else {
-                        log(LOG_INFO, "Non-query packet", &sender);
+                        log_with_sender(LOG_INFO, "Non-query packet", &sender, sizeof sender);
                     }
                 } else {
-                    log(LOG_INFO, "Short packet", &sender);
+                    log_with_sender(LOG_INFO, "Short packet", &sender, sizeof sender);
                 }
             } else {
-                log(LOG_INFO, "Packet from multicast address", &sender);
+                log_with_sender(LOG_INFO, "Packet from multicast address", &sender, sizeof sender);
             }
         }
     }
@@ -726,7 +738,7 @@ int responder_handle_query(unsigned int index,
             responder_respond_for_name(index, header, qname_end, sender);
         }
     } else {
-        log(LOG_INFO, "Invalid question", sender);
+        log_with_sender(LOG_INFO, "Invalid question", sender, sizeof *sender);
     }
 
     return 0;

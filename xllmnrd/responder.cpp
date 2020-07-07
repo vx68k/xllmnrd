@@ -120,6 +120,11 @@ responder::~responder()
     }
 }
 
+void responder::run()
+{
+    // TODO: Implemente this function.
+}
+
 /**
  * Sets socket options for an IPv6 UDP responder socket.
  * @param fd file descriptor of a socket.

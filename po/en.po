@@ -1,7 +1,7 @@
-# English translations for the xllmnrd package
+# English translations for the xllmnrd package.
 # Copyright (C) 2020 Kaz Nishimura
 # This file is distributed under the same license as the xllmnrd package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Kaz Nishimura, 2020.
 #
 msgid ""
 msgstr ""
@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2020-07-08 20:09+0900\n"
 "PO-Revision-Date: 2020-07-08 20:09+0900\n"
 "Last-Translator: Kaz Nishimura\n"
-"Language-Team: English\n"
+"Language-Team: none\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

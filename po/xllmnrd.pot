@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 4-alpha.2\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-07-08 15:06+0900\n"
+"POT-Creation-Date: 2020-07-08 19:37+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,61 +22,52 @@ msgstr ""
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:303
+#: xllmnrd/xllmnrd.cpp:304
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:304
+#: xllmnrd/xllmnrd.cpp:305
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:306
-#, c-format
-msgid "  -f, --foreground      run in foreground\n"
+#: xllmnrd/xllmnrd.cpp:307
+msgid "run in foreground"
 msgstr ""
 
 #: xllmnrd/xllmnrd.cpp:308
-#, c-format
-msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
+msgid "record the process ID in FILE"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:309
+msgid "display this help and exit"
 msgstr ""
 
 #: xllmnrd/xllmnrd.cpp:310
-#, c-format
-msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
+msgid "output version information and exit"
 msgstr ""
 
 #: xllmnrd/xllmnrd.cpp:312
 #, c-format
-msgid "      --help            display this help and exit\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:314
-#, c-format
-msgid "      --version         output version information and exit\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:317
-#, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:321
+#: xllmnrd/xllmnrd.cpp:316
 #, c-format
 msgid "%s %s\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:323
+#: xllmnrd/xllmnrd.cpp:318
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:325
+#: xllmnrd/xllmnrd.cpp:320
 msgid "(C)"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:326
+#: xllmnrd/xllmnrd.cpp:321
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

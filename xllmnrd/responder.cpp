@@ -354,13 +354,11 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     });
 
     // Sends the response.
-    if (sendto(fd, response.data(), response.size(), 0,
-        reinterpret_cast<const sockaddr *>(&sender), sizeof sender) == -1) {
+    if (sendto(fd, response.data(), response.size(), 0, &sender) == -1) {
         if (response.size() > 512 && errno == EMSGSIZE) {
             // Resends with truncation.
             response_header->flags |= htons(LLMNR_HEADER_TC);
-            sendto(fd, response.data(), 512, 0,
-                reinterpret_cast<const sockaddr *>(&sender), sizeof sender);
+            sendto(fd, response.data(), 512, 0, &sender);
         }
     }
 }

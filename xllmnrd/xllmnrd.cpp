@@ -96,7 +96,7 @@ static int make_pid_file(const char *__name);
  * @param __argv pointer array of command-line arguments.
  * @param __options [out] parsed options.
  */
-static void parse_arguments(int __argc, char *__argv[],
+static int parse_options(int __argc, char *__argv[],
         struct program_options *__options);
 
 /**
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     textdomain(PACKAGE_TARNAME);
 
     struct program_options options = {};
-    parse_arguments(argc, argv, &options);
+    parse_options(argc, argv, &options);
 
     // Sets the locale back to the default to keep logs untranslated.
     locale::global(locale::classic());
@@ -260,45 +260,45 @@ int make_pid_file(const char *restrict name) {
     return err;
 }
 
-void parse_arguments(int argc, char *argv[],
-        struct program_options *restrict options) {
-    enum opt_char {
-        OPT_VERSION = numeric_limits<unsigned char>::max() + 1,
-        OPT_HELP,
+int parse_options(const int argc, char **const argv,
+    struct program_options *const program_options)
+{
+    enum {
+        VERSION = -128,
+        HELP,
     };
-    static const struct option long_options[] = {
+    static const option options[] = {
         {"foreground", no_argument, 0, 'f'},
         {"pid-file", required_argument, 0, 'p'},
-        {"name", required_argument, 0, 'n'},
-        {"help", no_argument, 0, OPT_HELP},
-        {"version", no_argument, 0, OPT_VERSION},
-        {NULL, no_argument, NULL, 0},
+        {"help", no_argument, 0, HELP},
+        {"version", no_argument, 0, VERSION},
+        {}
     };
 
-    int opt;
+    int opt = -1;
     do {
-        opt = getopt_long(argc, argv, "fp:n:", long_options, 0);
+        opt = getopt_long(argc, argv, "fp:", options, nullptr);
         switch (opt) {
         case 'f':
-            options->foreground = true;
+            program_options->foreground = true;
             break;
         case 'p':
-            options->pid_file = optarg;
+            program_options->pid_file = optarg;
             break;
-        case 'n':
-            options->host_name = optarg;
-            break;
-        case OPT_HELP:
+        case HELP:
             print_usage(argv[0]);
-            exit(EXIT_SUCCESS);
-        case OPT_VERSION:
+            exit(0);
+        case VERSION:
             print_version();
-            exit(EXIT_SUCCESS);
+            exit(0);
         case '?':
             printf(_("Try '%s --help' for more information.\n"), argv[0]);
             exit(EX_USAGE);
         }
-    } while (opt >= 0);
+    }
+    while (opt != -1);
+
+    return optind;
 }
 
 void print_usage(const char *const arg0)

@@ -100,10 +100,11 @@ static void parse_arguments(int __argc, char *__argv[],
         struct program_options *__options);
 
 /**
- * Shows the command help.
- * @param __name command name.
+ * Shows the command usage.
+ *
+ * @param arg0 the command name
  */
-static void show_help(const char *__name);
+static void print_usage(const char *arg0);
 
 /**
  * Shows the version information.
@@ -287,7 +288,7 @@ void parse_arguments(int argc, char *argv[],
             options->host_name = optarg;
             break;
         case OPT_HELP:
-            show_help(argv[0]);
+            print_usage(argv[0]);
             exit(EXIT_SUCCESS);
         case OPT_VERSION:
             show_version();
@@ -299,7 +300,7 @@ void parse_arguments(int argc, char *argv[],
     } while (opt >= 0);
 }
 
-void show_help(const char *const arg0)
+void print_usage(const char *const arg0)
 {
     printf(_("Usage: %s [OPTION]...\n"), arg0);
     printf(_("Respond to IPv6 LLMNR queries.\n"));

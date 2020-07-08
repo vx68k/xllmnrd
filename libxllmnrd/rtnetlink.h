@@ -73,7 +73,7 @@ namespace xllmnrd
 
     private:
         // Mutex for the worker.
-        std::mutex _worker_mutex;
+        mutable std::mutex _worker_mutex;
 
     protected:
         /*

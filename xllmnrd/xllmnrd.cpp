@@ -60,6 +60,7 @@
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
+using std::unique_ptr;
 using namespace std;
 
 struct program_options {
@@ -67,6 +68,8 @@ struct program_options {
     const char *pid_file;
     const char *host_name;
 };
+
+static unique_ptr<class responder> responder;
 
 static volatile sig_atomic_t caught_signal;
 
@@ -157,23 +160,19 @@ int main(int argc, char *argv[])
     }
     syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
-    auto &&err = responder_initialize(0);
-    if (err != 0) {
-        syslog(LOG_ERR, "Failed to initialize responder: %s", strerror(err));
-        exit(EXIT_FAILURE);
-    }
+    responder.reset(new class responder());
 
-    if (options.host_name) {
-        syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
-                options.host_name);
-        responder_set_host_name(options.host_name);
-    } else {
-        int err = set_default_host_name();
-        if (err != 0) {
-            syslog(LOG_ERR, "Failed to get the default host name");
-            exit(EX_OSERR);
-        }
-    }
+    // if (options.host_name) {
+    //     syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
+    //             options.host_name);
+    //     responder_set_host_name(options.host_name);
+    // } else {
+    //     int err = set_default_host_name();
+    //     if (err != 0) {
+    //         syslog(LOG_ERR, "Failed to get the default host name");
+    //         exit(EX_OSERR);
+    //     }
+    // }
 
     int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {
@@ -195,7 +194,7 @@ int main(int argc, char *argv[])
         }
 
         if (exit_status == EXIT_SUCCESS) {
-            responder_run();
+            responder->run();
 
             if (options.pid_file) {
                 if (unlink(options.pid_file) != 0) {
@@ -206,7 +205,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    responder_finalize();
+    responder.reset();
 
     if (caught_signal != 0) {
         // Resets the handler to default and reraise the same signal.
@@ -233,7 +232,7 @@ int set_default_host_name(void) {
 
     std::vector<char> host_name(host_name_max + 1);
     if (gethostname(host_name.data(), host_name_max + 1) == 0) {
-        responder_set_host_name(host_name.data());
+        // responder_set_host_name(host_name.data());
         return 0;
     }
 
@@ -336,6 +335,6 @@ void handle_signal_to_terminate(int sig) {
     if (caught_signal == 0) {
         caught_signal = sig;
 
-        responder_terminate();
+        responder->terminate();
     }
 }

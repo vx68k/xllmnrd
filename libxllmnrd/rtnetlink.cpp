@@ -29,7 +29,6 @@
 #include <syslog.h>
 #include <vector>
 #include <cstring>
-#include <cstdlib> /* abort */
 #include <cerrno>
 #include <cassert>
 

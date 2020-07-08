@@ -75,7 +75,12 @@ namespace xllmnrd
         std::mutex _worker_mutex;
 
     protected:
-        /// Opens the RTNETLINK socket.
+        /*
+         * Opens a RTNETLINK socket.
+         *
+         * @param os an operation system interface
+         */
+        [[nodiscard]]
         static int open_rtnetlink(const std::shared_ptr<posix> &os);
 
     public:

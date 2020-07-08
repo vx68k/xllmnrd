@@ -100,16 +100,17 @@ static void parse_arguments(int __argc, char *__argv[],
         struct program_options *__options);
 
 /**
- * Shows the command usage.
+ * Prints the command usage.
  *
  * @param arg0 the command name
  */
 static void print_usage(const char *arg0);
 
 /**
- * Shows the version information.
+ * Prints the version information.
  */
-static void show_version(void);
+static void print_version();
+
 
 static void handle_signal_to_terminate(int __sig);
 
@@ -291,7 +292,7 @@ void parse_arguments(int argc, char *argv[],
             print_usage(argv[0]);
             exit(EXIT_SUCCESS);
         case OPT_VERSION:
-            show_version();
+            print_version();
             exit(EXIT_SUCCESS);
         case '?':
             printf(_("Try '%s --help' for more information.\n"), argv[0]);
@@ -313,11 +314,9 @@ void print_usage(const char *const arg0)
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
-void show_version(void) {
-    printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
-#ifdef PACKAGE_REVISION
-    printf(_("Packaged from revision %s\n"), PACKAGE_REVISION);
-#endif
+void print_version()
+{
+    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
     printf(_("\
 This is free software: you are free to change and redistribute it.\n\

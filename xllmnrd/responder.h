@@ -28,14 +28,6 @@
 
 using namespace xllmnrd;
 
-#if __cplusplus
-#define BEGIN_C_LINKAGE extern "C" {
-#define END_C_LINKAGE }
-#else
-#define BEGIN_C_LINKAGE
-#define END_C_LINKAGE
-#endif
-
 /**
  * LLMNR responder objects.
  */
@@ -116,45 +108,5 @@ public:
 public:
     void interface_removed(const interface_event &event) override;
 };
-
-BEGIN_C_LINKAGE
-
-/**
- * Initializes the responder object.
- * @param __port port number in the network byte order; if this value is 0,
- * the default port number will be used.
- * @return 0 if succeeded, or non-zero error number.
- */
-int responder_initialize(in_port_t __port);
-
-/*
- * Finalizes the responder object.
- */
-void responder_finalize(void);
-
-/**
- * Sets the host name for which the responder object is authoritative.
- * Only the first label of the host name is used.  If it is longer than
- * 'LLMNR_LABEL_MAX' octets, it will be truncated.
- * @param __name host name.
- * @return 0 if succeeded, or non-zero error number.
- */
-extern void responder_set_host_name(const char *__name);
-
-/*
- * Runs the responder in a loop.
- */
-int responder_run(void);
-
-/*
- * Requests the termination of the responder loop.
- * This function is atomic regarding signals.
- */
-extern void responder_terminate(void);
-
-END_C_LINKAGE
-
-#undef END_C_LINKAGE
-#undef BEGIN_C_LINKAGE
 
 #endif

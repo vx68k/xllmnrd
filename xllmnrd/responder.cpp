@@ -51,7 +51,7 @@ using std::error_code;
 using std::for_each;
 using std::generic_category;
 using std::set;
-using std::strchr;
+using std::strcspn;
 using std::strlen;
 using std::strerror;
 using std::swap;

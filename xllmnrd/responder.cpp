@@ -159,7 +159,7 @@ responder::responder(const in_port_t port)
     _udp6 {open_udp6(port)}
 {
     _interface_manager->add_interface_listener(this);
-    _interface_manager->refresh(true);
+    _interface_manager->refresh();
 }
 
 responder::~responder()

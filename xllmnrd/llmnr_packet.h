@@ -1,5 +1,5 @@
 // llmnr_packet.h -*- C++ -*-
-// Copyright (C) 2013  Kaz Nishimura
+// Copyright (C) 2013-2020 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -35,37 +35,38 @@
  */
 #define LLMNR_LABEL_MAX 63
 
-#define LLMNR_HEADER_QR     0x8000
-#define LLMNR_HEADER_OPCODE 0x7800
-#define LLMNR_HEADER_C      0x0400
-#define LLMNR_HEADER_TC     0x0200
-#define LLMNR_HEADER_T      0x0100
-#define LLMNR_HEADER_RCODE  0x000f
+// Header flag constants.
+static const uint16_t LLMNR_HEADER_QR     = 0x8000;
+static const uint16_t LLMNR_HEADER_OPCODE = 0x7800;
+static const uint16_t LLMNR_HEADER_C      = 0x0400;
+static const uint16_t LLMNR_HEADER_TC     = 0x0200;
+static const uint16_t LLMNR_HEADER_T      = 0x0100;
+static const uint16_t LLMNR_HEADER_RCODE  = 0x000f;
 
 /*
  * TYPE constants.
  */
-#define LLMNR_TYPE_A       1
-#define LLMNR_TYPE_PTR    12
-#define LLMNR_TYPE_AAAA   28
+static const uint16_t LLMNR_TYPE_A    =  1;
+static const uint16_t LLMNR_TYPE_PTR  = 12;
+static const uint16_t LLMNR_TYPE_AAAA = 28;
 
 /*
  * QTYPE constants.
  */
-#define LLMNR_QTYPE_A    LLMNR_TYPE_A
-#define LLMNR_QTYPE_PTR  LLMNR_TYPE_PTR
-#define LLMNR_QTYPE_AAAA LLMNR_TYPE_AAAA
-#define LLMNR_QTYPE_ANY  255
+static const uint16_t LLMNR_QTYPE_A    = LLMNR_TYPE_A;
+static const uint16_t LLMNR_QTYPE_PTR  = LLMNR_TYPE_PTR;
+static const uint16_t LLMNR_QTYPE_AAAA = LLMNR_TYPE_AAAA;
+static const uint16_t LLMNR_QTYPE_ANY  = 255;
 
 /*
  * CLASS constant.
  */
-#define LLMNR_CLASS_IN   1
+static const uint16_t LLMNR_CLASS_IN = 1;
 
 /*
  * QCLASS constant.
  */
-#define LLMNR_QCLASS_IN LLMNR_CLASS_IN
+static const uint16_t LLMNR_QCLASS_IN = LLMNR_CLASS_IN;
 
 /*
  * LLMNR header structure.

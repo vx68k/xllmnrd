@@ -49,6 +49,7 @@ using std::copy;
 using std::copy_n;
 using std::error_code;
 using std::for_each;
+using std::generic_category;
 using std::set;
 using std::strchr;
 using std::strlen;
@@ -96,7 +97,7 @@ int responder::open_udp6(const in_port_t port)
 {
     int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp6 == -1) {
-        throw system_error(error_code(), "could not open a UDP socket");
+        throw system_error(errno, generic_category(), "could not open a UDP socket");
     }
 
     try {
@@ -104,10 +105,10 @@ int responder::open_udp6(const in_port_t port)
         static const int ON = 1;
 
         if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON) == -1) {
-            throw system_error(error_code(), "could not set IPV6_V6ONLY");
+            throw system_error(errno, generic_category(), "could not set IPV6_V6ONLY");
         }
         if (setsockopt(udp6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ON) == -1) {
-            throw system_error(error_code(), "could not set IPV6_RECVPKTINFO");
+            throw system_error(errno, generic_category(), "could not set IPV6_RECVPKTINFO");
         }
 
         // The unicast hop limit SHOULD be 1.
@@ -134,7 +135,7 @@ int responder::open_udp6(const in_port_t port)
             0,           // .sin6_scode_id
         };
         if (bind(udp6, &addr) == -1) {
-            throw system_error(error_code(), "could not bind");
+            throw system_error(errno, generic_category(), "could not bind");
         }
     }
     catch (...) {

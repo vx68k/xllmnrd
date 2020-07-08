@@ -6,7 +6,7 @@
 # this notice are preserved.  This file is offered as-is, without any warranty.
 ---
 variables:
-  package.distName: xllmnrd-4-alpha.1
+  package.distName: xllmnrd-4-alpha.2
 trigger:
   - master
   - release/*

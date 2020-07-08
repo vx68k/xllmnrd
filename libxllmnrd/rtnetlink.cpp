@@ -177,17 +177,14 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
 
 void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 {
-    // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
-    // aligned.
-    unsigned int rta_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
-    if (message->nlmsg_len >= rta_offset) {
+    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (ifaddrmsg))) {
         auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(message));
         // Only handles non-temporary and at least link-local addresses.
         if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
             && ifa->ifa_scope <= RT_SCOPE_LINK) {
-            auto rta = reinterpret_cast<const rtattr *>(
-                reinterpret_cast<const char *>(message) + rta_offset);
-            unsigned int remains = message->nlmsg_len - rta_offset;
+            auto rta = reinterpret_cast<const rtattr *>(ifa + 1);
+            unsigned int remains =
+                message->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
             while (RTA_OK(rta, remains)) {
                 if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
                     switch (message->nlmsg_type) {

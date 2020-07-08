@@ -16,6 +16,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// This header defines locale-independent ASCII-only versions of several
+// <ctype.h> functions.
+
 #ifndef ASCII_H
 #define ASCII_H 1
 

@@ -137,6 +137,28 @@ static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i) {
     i[3] = x;
 }
 
+#if __cplusplus
+
+template<class OutputIterator>
+static inline OutputIterator llmnr_put_uint16(const uint16_t x, OutputIterator i)
+{
+    *(i++) = uint8_t(x >> 8);
+    *(i++) = uint8_t(x);
+    return i;
+}
+
+template<class OutputIterator>
+static inline OutputIterator llmnr_put_uint32(const uint32_t x, OutputIterator i)
+{
+    *(i++) = uint8_t(x >> 24);
+    *(i++) = uint8_t(x >> 16);
+    *(i++) = uint8_t(x >>  8);
+    *(i++) = uint8_t(x);
+    return i;
+}
+
+#endif
+
 /**
  * Skips a name in a LLMNR packet.
  * @param i [in] first octet of the name.

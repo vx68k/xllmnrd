@@ -299,20 +299,15 @@ void parse_arguments(int argc, char *argv[],
     } while (opt >= 0);
 }
 
-void show_help(const char *restrict name) {
-    printf(_("Usage: %s [OPTION]...\n"), name);
+void show_help(const char *const arg0)
+{
+    printf(_("Usage: %s [OPTION]...\n"), arg0);
     printf(_("Respond to IPv6 LLMNR queries.\n"));
     putchar('\n');
-    printf(_("\
-  -f, --foreground      run in foreground\n"));
-    printf(_("\
-  -p, --pid-file=FILE   record the process ID in FILE\n"));
-    printf(_("\
-  -n, --name=NAME       set the host name of the responder to NAME\n"));
-    printf(_("\
-      --help            display this help and exit\n"));
-    printf(_("\
-      --version         output version information and exit\n"));
+    printf("  -f, --foreground      %s\n", _("run in foreground"));
+    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
+    printf("      --help            %s\n", _("display this help and exit"));
+    printf("      --version         %s\n", _("output version information and exit"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }

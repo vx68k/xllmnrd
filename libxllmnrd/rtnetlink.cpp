@@ -33,7 +33,7 @@
 #include <cerrno>
 #include <cassert>
 
-using std::error_code;
+using std::generic_category;
 using std::system_error;
 using namespace xllmnrd;
 
@@ -42,7 +42,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
 {
     int &&rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
-        throw std::runtime_error(std::strerror(errno));
+        throw system_error(errno, generic_category(), "could not open a RTNETLINK socket");
     }
 
     try {
@@ -53,7 +53,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
             RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
         if (os->bind(rtnetlink, &address) == -1) {
-            throw system_error(error_code(), "could not bind a RTNETLINK socket");
+            throw system_error(errno, generic_category(), "could not bind the RTNETLINK socket");
         }
     }
     catch (...) {
@@ -98,24 +98,20 @@ void rtnetlink_interface_manager::run()
 void rtnetlink_interface_manager::process_messages()
 {
     // Gets the required buffer size.
-    auto &&size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
-    if (size != 0) {
-        if (size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw std::system_error(errno, std::generic_category());
-        }
+    auto &&packet_size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+    if (packet_size == -1) {
+        throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
+    }
+    if (packet_size != 0) {
+        std::unique_ptr<char []> buffer {new char [packet_size]};
 
-        std::unique_ptr<char []> buffer {new char [size]};
         // This must not block.
-        size = _os->recv(_rtnetlink, buffer.get(), size, 0);
-        if (size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw std::system_error(errno, std::generic_category());
+        packet_size = _os->recv(_rtnetlink, buffer.get(), packet_size, 0);
+        if (packet_size == -1) {
+            throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
         }
 
-        dispatch_messages(buffer.get(), size);
+        dispatch_messages(buffer.get(), packet_size);
     }
 }
 
@@ -248,8 +244,9 @@ void rtnetlink_interface_manager::begin_refresh()
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));
-            throw std::system_error(errno, std::generic_category());
-        } else if (send_size != ssize_t(nl->nlmsg_len)) {
+            throw system_error(errno, generic_category(), "could not send to RTNETLINK");
+        }
+        else if (send_size != ssize_t(nl->nlmsg_len)) {
             syslog(LOG_CRIT, "RTNETLINK request truncated");
             throw std::runtime_error("RTNETLINK request truncated");
         }

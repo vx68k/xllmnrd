@@ -89,7 +89,7 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::run()
 {
-    while (_worker_running) {
+    while (_running) {
         process_messages();
     }
 }
@@ -213,7 +213,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     if (not(maybe_asynchronous)) {
         std::unique_lock<std::mutex> lock(_refresh_mutex);
 
-        while (_worker_running && _refreshing) {
+        while (_running && _refreshing) {
             _refresh_completion.wait(lock);
         }
     }
@@ -267,7 +267,7 @@ void rtnetlink_interface_manager::start_worker()
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
-        _worker_running = true;
+        _running.store(true);
         _worker_thread = std::thread(&rtnetlink_interface_manager::run, this);
     }
 }
@@ -276,8 +276,9 @@ void rtnetlink_interface_manager::stop_worker()
 {
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
-    _worker_running = false;
     if (_worker_thread.joinable()) {
+        _running.store(false);
+
         // This should make a blocking recv call return.
         begin_refresh();
 

@@ -32,6 +32,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <atomic>
 #include <memory>
 #include <cstddef>
 
@@ -63,8 +64,8 @@ namespace xllmnrd
         mutable std::condition_variable _refresh_completion;
 
     private:
-        // Indicates if the worker thread is terminated.
-        bool _worker_running {false};
+        // Indicates if the interface manager loop is running.
+        std::atomic<bool> _running {false};
 
     private:
         // Worker thread.
@@ -97,7 +98,7 @@ namespace xllmnrd
          */
         bool running() const
         {
-            return _worker_running;
+            return _running;
         }
 
     public:

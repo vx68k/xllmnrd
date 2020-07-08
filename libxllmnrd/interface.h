@@ -27,21 +27,20 @@
 #include <atomic>
 #include <cstddef>
 
-/*
- * Specializations of 'std::less'.
- */
+// Specializations of 'std::less' for address types.
 
-template <>
+template<>
 struct std::less<in_addr>
 {
     bool operator ()(const in_addr &x, const in_addr &y) const;
 };
 
-template <>
+template<>
 struct std::less<in6_addr>
 {
     bool operator ()(const in6_addr &x, const in6_addr &y) const;
 };
+
 
 namespace xllmnrd
 {
@@ -83,7 +82,11 @@ namespace xllmnrd
         virtual void interface_removed(const interface_event &event) = 0;
     };
 
-    /// Abstract interface manager class.
+    /**
+     * Abstract class of interface managers.
+     *
+     * This class keeps a table of interface addresses for IPv4 and IPv6.
+     */
     class interface_manager
     {
     protected:
@@ -113,17 +116,21 @@ namespace xllmnrd
         mutable std::recursive_mutex _interfaces_mutex;
 
     protected:
-        /// Constructs an interface manager.
+        /**
+         * Constructs an interface manager object.
+         */
         interface_manager();
 
-        // The copy constructor is deleted.
+        // This class is not copy-constructible.
         interface_manager(const interface_manager &) = delete;
 
-        // The copy assignment operator is deleted.
+        // This class is not copy-assignable.
         void operator =(const interface_manager &) = delete;
 
     public:
-        /// Destructs an interface manager.
+        /**
+         * Destructs an interface manager object.
+         */
         virtual ~interface_manager();
 
     public:
@@ -140,13 +147,13 @@ namespace xllmnrd
 
     public:
         /**
-         * Adds a listener object for interface change events.
+         * Adds a listener for interface events.
          */
         void add_interface_listener(interface_listener *listener);
 
     public:
         /**
-         * Removes a listener object for interface change events.
+         * Removes a listener for interface events.
          */
         void remove_interface_listener(interface_listener *listener);
 

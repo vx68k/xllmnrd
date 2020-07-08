@@ -143,7 +143,7 @@ namespace xllmnrd
 
     protected:
         /// Handles a NETLINK error message.
-        void handle_error(const struct nlmsghdr *message);
+        void handle_error(const nlmsghdr *message);
 
     protected:
         // Handles a RTNETLINK message for an interface address change.

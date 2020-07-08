@@ -53,7 +53,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
     }
 
     try {
-        const struct sockaddr_nl address = {
+        const sockaddr_nl address = {
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
@@ -126,7 +126,7 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     size_t size)
 {
     bool done = false;
-    auto &&message = static_cast<const struct nlmsghdr *>(messages);
+    auto &&message = static_cast<const nlmsghdr *>(messages);
     while (NLMSG_OK(message, size)) {
         switch (message->nlmsg_type) {
 
@@ -169,8 +169,8 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
 
 void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
 {
-    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (struct nlmsgerr))) {
-        auto &&e = static_cast<const struct nlmsgerr *>(NLMSG_DATA(message));
+    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
+        auto &&e = static_cast<const nlmsgerr *>(NLMSG_DATA(message));
         syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
     }
 }
@@ -179,7 +179,7 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 {
     // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
     // aligned.
-    auto &&rtattr_offset = NLMSG_SPACE(sizeof (struct ifaddrmsg));
+    auto &&rtattr_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
     if (message->nlmsg_len >= rtattr_offset) {
         auto &&ifaddrmsg = static_cast<const struct ifaddrmsg *>(
             NLMSG_DATA(message));

@@ -1,4 +1,4 @@
-// ascii.h
+// ascii.h -*- C -*-
 // Copyright (C) 2013-2020 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -19,9 +19,6 @@
 #ifndef ASCII_H
 #define ASCII_H 1
 
-#include <stdint.h>
-#include <stdbool.h>
-
 /*
  * NOTE: These functions MUST be locale-independent.
  */
@@ -32,11 +29,9 @@
  * @param c character to be tested.
  * @return true if the argument is an uppercase letter; otherwise false.
  */
-static inline int ascii_is_upper(uint_fast8_t c) {
-    if (c >= 'A' && c <= 'Z') {
-        return 1;
-    }
-    return 0;
+static inline int ascii_isupper(const int c)
+{
+    return c >= 'A' && c <= 'Z';
 }
 
 /**
@@ -45,11 +40,9 @@ static inline int ascii_is_upper(uint_fast8_t c) {
  * @param c character to be tested.
  * @return true if the argument is a lowercase letter; otherwise false.
  */
-static inline int ascii_is_lower(uint_fast8_t c) {
-    if (c >= 'a' && c <= 'z') {
-        return true;
-    }
-    return false;
+static inline int ascii_islower(const int c)
+{
+    return c >= 'a' && c <= 'z';
 }
 
 /**
@@ -59,9 +52,10 @@ static inline int ascii_is_lower(uint_fast8_t c) {
  * @return the corresponding uppercase letter if the argument is a lowercase
  * letter; otherwise the argument unchanged.
  */
-static inline uint_fast8_t ascii_to_upper(uint_fast8_t c) {
-    if (ascii_is_lower(c)) {
-        c -= 'a' - 'A';
+static inline uint_fast8_t ascii_toupper(const int c)
+{
+    if (ascii_islower(c)) {
+        return c - 'a' + 'A';
     }
     return c;
 }
@@ -73,9 +67,10 @@ static inline uint_fast8_t ascii_to_upper(uint_fast8_t c) {
  * @return the corresponding lowercase letter if the argument is an uppercase
  * letter; otherwise the argument unchanged.
  */
-static inline uint_fast8_t ascii_to_lower(uint_fast8_t c) {
-    if (ascii_is_lower(c)) {
-        c += 'a' - 'A';
+static inline uint_fast8_t ascii_tolower(const int c)
+{
+    if (ascii_isupper(c)) {
+        return c - 'A' + 'a';
     }
     return c;
 }

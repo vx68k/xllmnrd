@@ -374,7 +374,7 @@ bool responder::matches_host_name(const void *const question) const
     if (length == strlen(host_name)) {
         // This comparison must be case-insensitive in ASCII.
         while (length--) {
-            if (ascii_to_upper(*i++) != ascii_to_upper(*j++)) {
+            if (ascii_toupper(*i++) != ascii_toupper(*j++)) {
                 return false;
             }
         }
@@ -587,7 +587,7 @@ static inline int responder_name_matches(const uint8_t *restrict question) {
     if (*question++ == n) {
         const uint8_t *restrict p = host_name + 1;
         while (n--) {
-            if (ascii_to_upper(*question++) != ascii_to_upper(*p++)) {
+            if (ascii_toupper(*question++) != ascii_toupper(*p++)) {
                 return false;
             }
         }

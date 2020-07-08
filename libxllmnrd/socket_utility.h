@@ -22,13 +22,24 @@
 template<class T>
 inline int bind(int fd, T *addr)
 {
-    return bind(fd, reinterpret_cast<const struct sockaddr *>(addr), sizeof *addr);
+    return bind(fd, reinterpret_cast<const sockaddr *>(addr), sizeof *addr);
 }
 
 template<class T>
 inline int setsockopt(int fd, int level, int option, T *value)
 {
     return setsockopt(fd, level, option, value, sizeof *value);
+}
+
+/**
+ * Typed wrapper function for 'sendto'.
+ */
+template<class T>
+inline ssize_t sendto(const int fd, const void *const buf, const size_t n,
+    const int flags, const T *const addr)
+{
+    return sendto(fd, buf, n, flags, reinterpret_cast<const sockaddr *>(addr),
+        sizeof *addr);
 }
 
 #endif

@@ -36,12 +36,12 @@
 #define LLMNR_LABEL_MAX 63
 
 // Header flag constants.
-static const uint16_t LLMNR_HEADER_QR     = 0x8000;
-static const uint16_t LLMNR_HEADER_OPCODE = 0x7800;
-static const uint16_t LLMNR_HEADER_C      = 0x0400;
-static const uint16_t LLMNR_HEADER_TC     = 0x0200;
-static const uint16_t LLMNR_HEADER_T      = 0x0100;
-static const uint16_t LLMNR_HEADER_RCODE  = 0x000f;
+static const uint16_t LLMNR_FLAG_QR     = 0x8000;
+static const uint16_t LLMNR_FLAG_OPCODE = 0x7800;
+static const uint16_t LLMNR_FLAG_C      = 0x0400;
+static const uint16_t LLMNR_FLAG_TC     = 0x0200;
+static const uint16_t LLMNR_FLAG_T      = 0x0100;
+static const uint16_t LLMNR_FLAG_RCODE  = 0x000f;
 
 /*
  * TYPE constants.
@@ -89,7 +89,7 @@ struct llmnr_header {
 static inline int llmnr_query_is_valid(
         const struct llmnr_header *restrict header) {
     // The following bits must be zero in any query.
-    const uint_fast16_t mask = htons(LLMNR_HEADER_QR | LLMNR_HEADER_OPCODE);
+    const uint_fast16_t mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
     if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
             header->ancount == htons(0) && header->nscount == htons(0)) {
         return 1;

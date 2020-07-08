@@ -321,7 +321,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         {reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
     auto response_header = reinterpret_cast<llmnr_header *>(response.data());
-    response_header->flags = htons(LLMNR_HEADER_QR);
+    response_header->flags = htons(LLMNR_FLAG_QR);
     response_header->ancount = htons(0);
     response_header->nscount = htons(0);
     response_header->arcount = htons(0);
@@ -357,7 +357,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     if (sendto(fd, response.data(), response.size(), 0, &sender) == -1) {
         if (response.size() > 512 && errno == EMSGSIZE) {
             // Resends with truncation.
-            response_header->flags |= htons(LLMNR_HEADER_TC);
+            response_header->flags |= htons(LLMNR_FLAG_TC);
             sendto(fd, response.data(), 512, 0, &sender);
         }
     }
@@ -854,7 +854,7 @@ int responder_respond_for_name(unsigned int index,
     memcpy(packet.data(), query, query_size);
 
     llmnr_header *response = (llmnr_header *) packet.data();
-    response->flags = htons(LLMNR_HEADER_QR);
+    response->flags = htons(LLMNR_FLAG_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
     response->arcount = htons(0);
@@ -905,7 +905,7 @@ int responder_respond_for_name(unsigned int index,
     // TODO
     if (packet_size > 512 && errno == EMSGSIZE) {
         // Resends with truncation.
-        response->flags |= htons(LLMNR_HEADER_TC);
+        response->flags |= htons(LLMNR_FLAG_TC);
         if (sendto(udp_fd, response, 512, 0,
                 reinterpret_cast<const sockaddr *>(sender),
                 sizeof (sockaddr_in6)) >= 0) {

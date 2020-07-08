@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -Im4
 
 EXTRA_DIST = README.md m4/gnulib-cache.m4
 
-SUBDIRS = libgnu libxllmnrd xllmnrd test lsb po
+SUBDIRS = libgnu libxllmnrd xllmnrd test po
 
 dist-hook: $(distdir)/SHA256SUMS
 	if test -n "$$GPG_USERNAME"; then \

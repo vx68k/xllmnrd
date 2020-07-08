@@ -1,20 +1,20 @@
-/*
- * interface.h
- * Copyright (C) 2013-2020 Kaz Nishimura
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// interface.h -*- C++ -*-
+// Copyright (C) 2013-2020 Kaz Nishimura
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #ifndef INTERFACE_H
 #define INTERFACE_H 1
@@ -32,45 +32,56 @@
  */
 
 template <>
-struct std::less<struct in_addr>
+struct std::less<in_addr>
 {
-    bool operator ()(const struct in_addr &x, const struct in_addr &y) const;
+    bool operator ()(const in_addr &x, const in_addr &y) const;
 };
 
 template <>
-struct std::less<struct in6_addr>
+struct std::less<in6_addr>
 {
-    bool operator ()(const struct in6_addr &x, const struct in6_addr &y) const;
+    bool operator ()(const in6_addr &x, const in6_addr &y) const;
 };
 
 namespace xllmnrd
 {
     using std::size_t;
 
-    /// Interface change event class.
-    struct interface_change_event
+    /**
+     * Event objects about interfaces.
+     */
+    struct interface_event
     {
-        enum event_type: int
-        {
-            REMOVED,
-            ADDED,
-        };
-
-        event_type type;
         unsigned int interface_index;
         int address_family;
 
-        constexpr interface_change_event(event_type type,
-            unsigned int interface_index, int address_family = AF_UNSPEC)
+        constexpr interface_event(const unsigned int interface_index,
+            const int address_family)
         :
-            type {type},
             interface_index {interface_index},
             address_family {address_family}
-        {}
+        {
+            // Nothing to do.
+        }
     };
 
-    // Pointer to an interface change handler.
-    typedef void (*interface_change_handler)(const interface_change_event *);
+    /**
+     * Listener objects for interface events.
+     */
+    class interface_listener
+    {
+    protected:
+        interface_listener() = default;
+
+    protected:
+        ~interface_listener() = default;
+
+    public:
+        virtual void interface_added(const interface_event &event) = 0;
+
+    public:
+        virtual void interface_removed(const interface_event &event) = 0;
+    };
 
     /// Abstract interface manager class.
     class interface_manager
@@ -78,8 +89,8 @@ namespace xllmnrd
     protected:
         struct interface
         {
-            std::set<struct in_addr> in_addresses;
-            std::set<struct in6_addr> in6_addresses;
+            std::set<in_addr> in_addresses;
+            std::set<in6_addr> in6_addresses;
 
             /// Returns true if no address is stored, false otherwise.
             bool empty() const
@@ -89,8 +100,10 @@ namespace xllmnrd
         };
 
     private:
-        /// Interface change handler.
-        std::atomic<interface_change_handler> _interface_change {nullptr};
+        int _debug_level {0};
+
+    private:
+        std::atomic<interface_listener *> _interface_listener {nullptr};
 
     private:
         /// Map from interface indices to interfaces.
@@ -114,12 +127,38 @@ namespace xllmnrd
         virtual ~interface_manager();
 
     public:
-        /// Set the interface change handler.
-        ///
-        /// This function is thread-safe.
-        interface_change_handler set_interface_change(
-            interface_change_handler interface_change);
+        int debug_level() const
+        {
+            return _debug_level;
+        }
 
+    public:
+        void set_debug_level(const int debug_level)
+        {
+            _debug_level = debug_level;
+        }
+
+    public:
+        /**
+         * Adds a listener object for interface change events.
+         */
+        void add_interface_listener(interface_listener *listener);
+
+    public:
+        /**
+         * Removes a listener object for interface change events.
+         */
+        void remove_interface_listener(interface_listener *listener);
+
+    private:
+        // Fires an event for an added interface.
+        void fire_interface_added(const interface_event &event);
+
+    private:
+        // Fires an event for a removed interface.
+        void fire_interface_removed(const interface_event &event);
+
+    public:
         /**
          * Returns a copy of the IPv4 addresses of an interface.
          *
@@ -128,8 +167,9 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv4 addresses of the interface
          */
-        std::set<struct in_addr> in_addresses(unsigned int index) const;
+        std::set<in_addr> in_addresses(unsigned int index) const;
 
+    public:
         /**
          * Returns a copy of the IPv6 addresses of an interface.
          *
@@ -138,32 +178,57 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv6 addresses of the interface
          */
-        std::set<struct in6_addr> in6_addresses(unsigned int index) const;
+        std::set<in6_addr> in6_addresses(unsigned int index) const;
 
+    public:
         // Refreshes the interface addresses.
         //
         // This function is thread safe.
         virtual void refresh(bool maybe_asynchronous = false) = 0;
 
     protected:
-        /// Returns the reference to the mutex object.
-        std::recursive_mutex &mutex() const
-        {
-            return _interfaces_mutex;
-        }
-
         /// Removes all the interfaces.
         void remove_interfaces();
 
-        void add_interface_address(unsigned int index, int family,
+    protected:
+        /**
+         * Adds an interface address.
+         */
+        void add_interface_address(unsigned int index, int address_family,
             const void *address, size_t address_size);
 
-        void remove_interface_address(unsigned int index, int family,
+        /**
+         * Adds an interface address.
+         *
+         * This overload takes a typed address argument.
+         */
+        template<class T>
+        void add_interface_address(const unsigned int index,
+            const int address_family, T *const address)
+        {
+            add_interface_address(index, address_family, address,
+                sizeof *address);
+        }
+
+    protected:
+        /**
+         * Removes an interface address.
+         */
+        void remove_interface_address(unsigned int index, int address_family,
             const void *address, size_t address_size);
 
-    private:
-        // Fires an interace change event.
-        void fire_interface_change(const interface_change_event *event);
+        /**
+         * Removes an interface address.
+         *
+         * This overload takes a typed address argument.
+         */
+        template<class T>
+        void remove_interface_address(const unsigned int index,
+            const int address_family, T *const address)
+        {
+            remove_interface_address(index, address_family, address,
+                sizeof *address);
+        }
     };
 }
 

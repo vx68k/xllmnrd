@@ -31,6 +31,13 @@ namespace xllmnrd
     public:
         virtual int socket(int domain, int type, int protocol);
         virtual int bind(int fd, const struct sockaddr *addr, socklen_t len);
+
+        template<class T>
+        int bind(int fd, T *addr) {
+            return bind(fd, reinterpret_cast<const struct sockaddr *>(addr),
+                sizeof *addr);
+        }
+
         virtual int close(int fd);
 
         /// Receives a message from a socket.

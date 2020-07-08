@@ -1,20 +1,20 @@
-/*
- * rtnetlink.cpp
- * Copyright (C) 2013-2020 Kaz Nishimura
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// rtnetlink.cpp -*- C++ -*-
+// Copyright (C) 2013-2020 Kaz Nishimura
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -29,10 +29,11 @@
 #include <syslog.h>
 #include <vector>
 #include <cstring>
-#include <cstdlib> /* abort */
 #include <cerrno>
 #include <cassert>
 
+using std::generic_category;
+using std::system_error;
 using namespace xllmnrd;
 
 int rtnetlink_interface_manager::open_rtnetlink(
@@ -40,7 +41,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
 {
     int &&rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
-        throw std::runtime_error(std::strerror(errno));
+        throw system_error(errno, generic_category(), "could not open a RTNETLINK socket");
     }
 
     try {
@@ -50,12 +51,8 @@ int rtnetlink_interface_manager::open_rtnetlink(
             0,          // .nl_pid
             RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
-
-        auto &&result = os->bind(rtnetlink,
-            reinterpret_cast<const struct sockaddr *>(&address),
-            sizeof (struct sockaddr_nl));
-        if (result < 0) {
-            throw std::runtime_error(std::strerror(errno));
+        if (os->bind(rtnetlink, &address) == -1) {
+            throw system_error(errno, generic_category(), "could not bind the RTNETLINK socket");
         }
     }
     catch (...) {
@@ -81,7 +78,7 @@ rtnetlink_interface_manager::rtnetlink_interface_manager(
 
 rtnetlink_interface_manager::~rtnetlink_interface_manager()
 {
-    stop();
+    stop_worker();
 
     auto result = _os->close(_rtnetlink);
     if (result < 0) {
@@ -92,7 +89,7 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::run()
 {
-    while (_worker_running) {
+    while (_running) {
         process_messages();
     }
 }
@@ -100,46 +97,46 @@ void rtnetlink_interface_manager::run()
 void rtnetlink_interface_manager::process_messages()
 {
     // Gets the required buffer size.
-    auto &&size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
-    if (size != 0) {
-        if (size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw std::system_error(errno, std::generic_category());
-        }
+    auto &&packet_size = _os->recv(_rtnetlink, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+    if (packet_size == -1) {
+        throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
+    }
+    if (packet_size != 0) {
+        std::unique_ptr<char []> buffer {new char [packet_size]};
 
-        std::unique_ptr<char []> buffer {new char [size]};
         // This must not block.
-        size = _os->recv(_rtnetlink, buffer.get(), size, 0);
-        if (size < 0) {
-            syslog(LOG_ERR, "Failed to recv from RTNETLINK: %s",
-                    strerror(errno));
-            throw std::system_error(errno, std::generic_category());
+        packet_size = _os->recv(_rtnetlink, buffer.get(), packet_size, 0);
+        if (packet_size == -1) {
+            throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
         }
 
-        dispatch_messages(buffer.get(), size);
+        dispatch_messages(buffer.get(), packet_size);
     }
 }
 
 void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     size_t size)
 {
+    bool done = false;
     auto &&message = static_cast<const struct nlmsghdr *>(messages);
     while (NLMSG_OK(message, size)) {
-        bool done = false;
-
         switch (message->nlmsg_type) {
+
         case NLMSG_NOOP:
-            syslog(LOG_INFO, "Got NLMSG_NOOP");
+            if (debug_level() >= 1) {
+                syslog(LOG_DEBUG, "Got NLMSG_NOOP");
+            }
+            break;
+
+        case NLMSG_DONE:
+            if (!done) {
+                done = true;
+                end_refresh();
+            }
             break;
 
         case NLMSG_ERROR:
             handle_error(message);
-            break;
-
-        case NLMSG_DONE:
-            handle_done();
-            done = true;
             break;
 
         case RTM_NEWADDR:
@@ -148,14 +145,15 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
 
         default:
-            syslog(LOG_DEBUG, "Unknown netlink message type: %u",
-                    (unsigned int) message->nlmsg_type);
+            syslog(LOG_DEBUG, "Unknown NETLINK message type: %u",
+                static_cast<unsigned int>(message->nlmsg_type));
             break;
         }
 
-        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 || done) {
-            // There are no more messages.
-            break;
+        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 && !done) {
+            // There should be no more messages.
+            done = true;
+            end_refresh();
         }
         message = NLMSG_NEXT(message, size);
     }
@@ -167,14 +165,6 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
         auto &&e = static_cast<const struct nlmsgerr *>(NLMSG_DATA(message));
         syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
     }
-}
-
-void rtnetlink_interface_manager::handle_done()
-{
-    std::lock_guard<std::mutex> lock(_refresh_mutex);
-
-    _refreshing = false;
-    _refresh_completion.notify_all();
 }
 
 void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
@@ -217,9 +207,25 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 
 void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
 {
-    std::unique_lock<std::mutex> lock(_refresh_mutex);
+    start_worker();
+    begin_refresh();
+
+    if (not(maybe_asynchronous)) {
+        std::unique_lock<std::mutex> lock(_refresh_mutex);
+
+        while (_running && _refreshing) {
+            _refresh_completion.wait(lock);
+        }
+    }
+}
+
+void rtnetlink_interface_manager::begin_refresh()
+{
+    std::lock_guard<std::mutex> lock(_refresh_mutex);
 
     if (not(_refreshing)) {
+        _refreshing = true;
+
         remove_interfaces();
 
         unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
@@ -237,44 +243,44 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
         if (send_size < 0) {
             syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
                     strerror(errno));
-            throw std::system_error(errno, std::generic_category());
-        } else if (send_size != ssize_t(nl->nlmsg_len)) {
+            throw system_error(errno, generic_category(), "could not send to RTNETLINK");
+        }
+        else if (send_size != ssize_t(nl->nlmsg_len)) {
             syslog(LOG_CRIT, "RTNETLINK request truncated");
             throw std::runtime_error("RTNETLINK request truncated");
-        }
-
-        _refreshing = true;
-    }
-
-    if (not(maybe_asynchronous)) {
-        while (_worker_running && _refreshing) {
-            _refresh_completion.wait(lock);
         }
     }
 }
 
-rtnetlink_interface_manager *rtnetlink_interface_manager::start()
+void rtnetlink_interface_manager::end_refresh()
+{
+    std::lock_guard<std::mutex> lock(_refresh_mutex);
+
+    if (_refreshing) {
+        _refreshing = false;
+        _refresh_completion.notify_all();
+    }
+}
+
+void rtnetlink_interface_manager::start_worker()
 {
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
-        _worker_running = true;
+        _running.store(true);
         _worker_thread = std::thread(&rtnetlink_interface_manager::run, this);
-
-        refresh(true);
     }
-
-    return this;
 }
 
-void rtnetlink_interface_manager::stop()
+void rtnetlink_interface_manager::stop_worker()
 {
     std::lock_guard<std::mutex> lock(_worker_mutex);
 
-    _worker_running = false;
     if (_worker_thread.joinable()) {
+        _running.store(false);
+
         // This should make a blocking recv call return.
-        refresh(true);
+        begin_refresh();
 
         _worker_thread.join();
     }

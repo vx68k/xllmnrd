@@ -8,7 +8,7 @@ TESTS =
 CLEANFILES =
 
 if CPPUNIT
-check_PROGRAMS = test_rtnetlink.exec test_ifaddr.exec
+check_PROGRAMS = test_rtnetlink.exec
 check_SCRIPTS = run-test
 
 EXEC_LOG_COMPILER = $(SHELL) ./run-test
@@ -22,9 +22,7 @@ test_rtnetlink_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \
 $(CPPUNIT_LIBS)
 test_rtnetlink_exec_SOURCES = main.cpp xmlreport.cpp test_rtnetlink.cpp
 
-test_ifaddr_exec_SOURCES = main.cpp xmlreport.cpp test_ifaddr.cpp
-test_ifaddr_exec_LDADD = $(top_builddir)/libxllmnrd/libxllmnrd.a \
-$(CPPUNIT_LIBS)
+EXTRA_DIST = run-test.in
 
 run-test: $(srcdir)/run-test.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status --file=$(subdir)/$@

@@ -1,20 +1,20 @@
-/*
- * rtnetlink.h
- * Copyright (C) 2013-2020 Kaz Nishimura
- *
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+// rtnetlink.h
+// Copyright (C) 2013-2020 Kaz Nishimura
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+//
+// You should have received a copy of the GNU General Public License along with
+// this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #ifndef RTNETLINK_H
 #define RTNETLINK_H 1
@@ -32,6 +32,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <thread>
+#include <atomic>
 #include <memory>
 #include <cstddef>
 
@@ -63,8 +64,8 @@ namespace xllmnrd
         mutable std::condition_variable _refresh_completion;
 
     private:
-        // Indicates if the worker thread is terminated.
-        bool _worker_running {false};
+        // Indicates if the interface manager loop is running.
+        std::atomic<bool> _running {false};
 
     private:
         // Worker thread.
@@ -72,10 +73,15 @@ namespace xllmnrd
 
     private:
         // Mutex for the worker.
-        std::mutex _worker_mutex;
+        mutable std::mutex _worker_mutex;
 
     protected:
-        /// Opens the RTNETLINK socket.
+        /*
+         * Opens a RTNETLINK socket.
+         *
+         * @param os an operation system interface
+         */
+        [[nodiscard]]
         static int open_rtnetlink(const std::shared_ptr<posix> &os);
 
     public:
@@ -88,46 +94,58 @@ namespace xllmnrd
 
     public:
         /**
-         * Starts a thread that monitors interface changes and returns 'this'.
-         *
-         * This function is thread-safe.
-         */
-        rtnetlink_interface_manager *start();
-
-        /**
          * Returns true if the worker thread is running; false otherwise.
          */
         bool running() const
         {
-            return _worker_running;
+            return _running;
         }
 
+    public:
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:
         /**
-         * Stops the worker if running.
+         * Begins a refresh task if not running.
          */
-        void stop();
+        void begin_refresh();
 
+    protected:
+        /**
+         * Ends the current refresh task if running.
+         */
+        void end_refresh();
+
+    protected:
+        /**
+         * Starts a worker thread that monitors interface changes.
+         *
+         * This function is thread-safe.
+         */
+        void start_worker();
+
+    protected:
+        /**
+         * Stops the worker thread if running.
+         */
+        void stop_worker();
+
+    protected:
         void run();
 
+    protected:
         /// Processes NETLINK messages.
         void process_messages();
 
+    protected:
         /// Dispatches NETLINK messages.
         void dispatch_messages(const void *messages, size_t size);
 
+    protected:
         /// Handles a NETLINK error message.
         void handle_error(const struct nlmsghdr *message);
 
-        /**
-         * Handles a NETLINK done message.
-         *
-         * This function completes the running refresh task.
-         */
-        void handle_done();
-
+    protected:
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *message);
     };

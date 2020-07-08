@@ -24,7 +24,6 @@
 #endif
 
 #include "responder.h"
-#include "ifaddr.h"
 #include <gettext.h>
 #include <getopt.h>
 #include <sysexits.h>
@@ -61,6 +60,7 @@
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
+using std::unique_ptr;
 using namespace std;
 
 struct program_options {
@@ -68,6 +68,8 @@ struct program_options {
     const char *pid_file;
     const char *host_name;
 };
+
+static unique_ptr<class responder> responder;
 
 static volatile sig_atomic_t caught_signal;
 
@@ -107,12 +109,6 @@ static void show_help(const char *__name);
  * Shows the version information.
  */
 static void show_version(void);
-
-/**
- * Do nothing on a signal.
- * @param __sig signal number.
- */
-static void discard_signal(int __sig);
 
 static void handle_signal_to_terminate(int __sig);
 
@@ -162,35 +158,21 @@ int main(int argc, char *argv[])
         // In background mode, uses the daemon facility by default.
         openlog(program_name, 0, LOG_DAEMON);
     }
+    syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
-    // Sets the handler for SIGUSR2 to interrupt a blocking system call.
-    set_signal_handler(SIGUSR2, &discard_signal, NULL);
+    responder.reset(new class responder());
 
-    int err = ifaddr_initialize(SIGUSR2);
-    if (err != 0) {
-        syslog(LOG_CRIT, "Failed to initialize ifaddr: %s",
-                strerror(err));
-        exit(EXIT_FAILURE);
-    }
-    atexit(&ifaddr_finalize);
-
-    err = responder_initialize(0);
-    if (err != 0) {
-        syslog(LOG_ERR, "Failed to initialize responder: %s", strerror(err));
-        exit(EXIT_FAILURE);
-    }
-
-    if (options.host_name) {
-        syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
-                options.host_name);
-        responder_set_host_name(options.host_name);
-    } else {
-        int err = set_default_host_name();
-        if (err != 0) {
-            syslog(LOG_ERR, "Failed to get the default host name");
-            exit(EX_OSERR);
-        }
-    }
+    // if (options.host_name) {
+    //     syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
+    //             options.host_name);
+    //     responder_set_host_name(options.host_name);
+    // } else {
+    //     int err = set_default_host_name();
+    //     if (err != 0) {
+    //         syslog(LOG_ERR, "Failed to get the default host name");
+    //         exit(EX_OSERR);
+    //     }
+    // }
 
     int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {
@@ -212,8 +194,7 @@ int main(int argc, char *argv[])
         }
 
         if (exit_status == EXIT_SUCCESS) {
-            ifaddr_start();
-            responder_run();
+            responder->run();
 
             if (options.pid_file) {
                 if (unlink(options.pid_file) != 0) {
@@ -224,12 +205,10 @@ int main(int argc, char *argv[])
         }
     }
 
-    responder_finalize();
+    responder.reset();
 
     if (caught_signal != 0) {
         // Resets the handler to default and reraise the same signal.
-
-        ifaddr_finalize(); // The exit functions will not be called.
 
         struct sigaction default_action = {};
         default_action.sa_handler = SIG_DFL;
@@ -253,7 +232,7 @@ int set_default_host_name(void) {
 
     std::vector<char> host_name(host_name_max + 1);
     if (gethostname(host_name.data(), host_name_max + 1) == 0) {
-        responder_set_host_name(host_name.data());
+        // responder_set_host_name(host_name.data());
         return 0;
     }
 
@@ -349,11 +328,6 @@ This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
-// We expect a warning about unused parameter 'sig' in this function.
-void discard_signal(int sig) {
-    // Does nothing.
-}
-
 /*
  * Handles a signal by terminating the process.
  */
@@ -361,6 +335,6 @@ void handle_signal_to_terminate(int sig) {
     if (caught_signal == 0) {
         caught_signal = sig;
 
-        responder_terminate();
+        responder->terminate();
     }
 }

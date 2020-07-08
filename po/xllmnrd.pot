@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd 3.0\n"
+"Project-Id-Version: xllmnrd 4-alpha.1\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-06-13 01:07+0900\n"
+"POT-Creation-Date: 2020-07-08 15:00+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,66 +17,66 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: xllmnrd/main.cpp:317
+#: xllmnrd/xllmnrd.cpp:296
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:324
+#: xllmnrd/xllmnrd.cpp:303
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:325
+#: xllmnrd/xllmnrd.cpp:304
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:327
+#: xllmnrd/xllmnrd.cpp:306
 #, c-format
 msgid "  -f, --foreground      run in foreground\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:329
+#: xllmnrd/xllmnrd.cpp:308
 #, c-format
 msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:331
+#: xllmnrd/xllmnrd.cpp:310
 #, c-format
 msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:333
+#: xllmnrd/xllmnrd.cpp:312
 #, c-format
 msgid "      --help            display this help and exit\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:335
+#: xllmnrd/xllmnrd.cpp:314
 #, c-format
 msgid "      --version         output version information and exit\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:338
+#: xllmnrd/xllmnrd.cpp:317
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:342
+#: xllmnrd/xllmnrd.cpp:321
 #, c-format
 msgid "%s %s\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:344
+#: xllmnrd/xllmnrd.cpp:323
 #, c-format
 msgid "Packaged from revision %s\n"
 msgstr ""
 
-#: xllmnrd/main.cpp:346
+#: xllmnrd/xllmnrd.cpp:325
 msgid "(C)"
 msgstr ""
 
-#: xllmnrd/main.cpp:347
+#: xllmnrd/xllmnrd.cpp:326
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

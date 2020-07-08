@@ -300,13 +300,22 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     const uint8_t *const qname_end, const unique_ptr<uint8_t []> &name,
     const sockaddr_in6 &sender, const unsigned int interface_index)
 {
+    set<in_addr> in_addresses;
     set<in6_addr> in6_addresses;
 
     auto &&qtype = llmnr_get_uint16(qname_end);
     auto &&qclass = llmnr_get_uint16(qname_end + 2);
-    switch (qtype) {
-    case LLMNR_QTYPE_ANY:
-    case LLMNR_QTYPE_AAAA:
+    if (qtype == LLMNR_QTYPE_A || qtype == LLMNR_QTYPE_ANY) {
+        if (qclass == LLMNR_QCLASS_IN) {
+            in_addresses = _interface_manager->in_addresses(interface_index);
+            if (in_addresses.empty()) {
+                char name[IF_NAMESIZE];
+                if_indextoname(interface_index, name);
+                syslog(LOG_NOTICE, "no IPv4 interface addresses for %s", name);
+            }
+        }
+    }
+    if (qtype == LLMNR_QTYPE_AAAA || qtype == LLMNR_QTYPE_ANY) {
         if (qclass == LLMNR_QCLASS_IN) {
             in6_addresses = _interface_manager->in6_addresses(interface_index);
             if (in6_addresses.empty()) {
@@ -315,7 +324,6 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
                 syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
             }
         }
-        break;
     }
 
     std::vector<uint8_t> response
@@ -327,7 +335,28 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     response_header->nscount = htons(0);
     response_header->arcount = htons(0);
 
-    auto &&response_size = response.size();
+    auto &&answer_offset = response.size();
+    for_each(in_addresses.begin(), in_addresses.end(), [&](const in_addr &i) {
+        auto &&response_back = back_inserter(response);
+
+        if (response_header->ancount == htons(0)) {
+            copy_n(&name[0], name[0] + 1, response_back);
+            response.push_back(0);
+        }
+        else {
+            llmnr_put_uint16(0xc000 + answer_offset, response_back);
+        }
+
+        llmnr_put_uint16(LLMNR_TYPE_A, response_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
+
+        llmnr_put_uint32(TTL, response_back);
+        llmnr_put_uint16(sizeof i, response_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
+
+        response_header = reinterpret_cast<llmnr_header *>(response.data());
+        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+    });
     for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
         auto &&response_back = back_inserter(response);
 
@@ -336,7 +365,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             response.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + response_size, response_back);
+            llmnr_put_uint16(0xc000 + answer_offset, response_back);
         }
 
         llmnr_put_uint16(LLMNR_TYPE_AAAA, response_back);

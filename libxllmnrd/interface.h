@@ -191,12 +191,44 @@ namespace xllmnrd
         void remove_interfaces();
 
     protected:
-        void add_interface_address(unsigned int index, int family,
+        /**
+         * Adds an interface address.
+         */
+        void add_interface_address(unsigned int index, int address_family,
             const void *address, size_t address_size);
 
+        /**
+         * Adds an interface address.
+         *
+         * This overload takes a typed address argument.
+         */
+        template<class T>
+        void add_interface_address(const unsigned int index,
+            const int address_family, T *const address)
+        {
+            add_interface_address(index, address_family, address,
+                sizeof *address);
+        }
+
     protected:
-        void remove_interface_address(unsigned int index, int family,
+        /**
+         * Removes an interface address.
+         */
+        void remove_interface_address(unsigned int index, int address_family,
             const void *address, size_t address_size);
+
+        /**
+         * Removes an interface address.
+         *
+         * This overload takes a typed address argument.
+         */
+        template<class T>
+        void remove_interface_address(const unsigned int index,
+            const int address_family, T *const address)
+        {
+            remove_interface_address(index, address_family, address,
+                sizeof *address);
+        }
     };
 }
 

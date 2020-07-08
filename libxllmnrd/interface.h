@@ -32,15 +32,15 @@
  */
 
 template <>
-struct std::less<struct in_addr>
+struct std::less<in_addr>
 {
-    bool operator ()(const struct in_addr &x, const struct in_addr &y) const;
+    bool operator ()(const in_addr &x, const in_addr &y) const;
 };
 
 template <>
-struct std::less<struct in6_addr>
+struct std::less<in6_addr>
 {
-    bool operator ()(const struct in6_addr &x, const struct in6_addr &y) const;
+    bool operator ()(const in6_addr &x, const in6_addr &y) const;
 };
 
 namespace xllmnrd
@@ -89,8 +89,8 @@ namespace xllmnrd
     protected:
         struct interface
         {
-            std::set<struct in_addr> in_addresses;
-            std::set<struct in6_addr> in6_addresses;
+            std::set<in_addr> in_addresses;
+            std::set<in6_addr> in6_addresses;
 
             /// Returns true if no address is stored, false otherwise.
             bool empty() const
@@ -167,7 +167,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv4 addresses of the interface
          */
-        std::set<struct in_addr> in_addresses(unsigned int index) const;
+        std::set<in_addr> in_addresses(unsigned int index) const;
 
     public:
         /**
@@ -178,7 +178,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv6 addresses of the interface
          */
-        std::set<struct in6_addr> in6_addresses(unsigned int index) const;
+        std::set<in6_addr> in6_addresses(unsigned int index) const;
 
     public:
         // Refreshes the interface addresses.

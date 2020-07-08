@@ -33,11 +33,19 @@
 #include <cassert>
 
 using std::generic_category;
+using std::lock_guard;
+using std::make_shared;
+using std::runtime_error;
+using std::shared_ptr;
+using std::size_t;
 using std::system_error;
+using std::thread;
+using std::unique_lock;
+using std::unique_ptr;
 using namespace xllmnrd;
 
 int rtnetlink_interface_manager::open_rtnetlink(
-    const std::shared_ptr<posix> &os)
+    const shared_ptr<posix> &os)
 {
     int &&rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
@@ -65,12 +73,12 @@ int rtnetlink_interface_manager::open_rtnetlink(
 
 rtnetlink_interface_manager::rtnetlink_interface_manager()
 :
-    rtnetlink_interface_manager(std::make_shared<posix>())
+    rtnetlink_interface_manager(make_shared<posix>())
 {
 }
 
 rtnetlink_interface_manager::rtnetlink_interface_manager(
-    const std::shared_ptr<posix> &os)
+    const shared_ptr<posix> &os)
 :
     _os {os}, _rtnetlink {open_rtnetlink(_os)}
 {
@@ -102,7 +110,7 @@ void rtnetlink_interface_manager::process_messages()
         throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
     }
     if (packet_size != 0) {
-        std::unique_ptr<char []> buffer {new char [packet_size]};
+        unique_ptr<char []> buffer {new char [packet_size]};
 
         // This must not block.
         packet_size = _os->recv(_rtnetlink, buffer.get(), packet_size, 0);
@@ -180,7 +188,7 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
             && ifaddrmsg->ifa_scope <= RT_SCOPE_LINK) {
             auto &&rtattr = reinterpret_cast<const struct rtattr *>(
                     reinterpret_cast<const char *>(message) + rtattr_offset);
-            std::size_t rtattr_size = message->nlmsg_len - rtattr_offset;
+            size_t rtattr_size = message->nlmsg_len - rtattr_offset;
 
             while (RTA_OK(rtattr, rtattr_size)) {
                 if (rtattr->rta_type == IFA_ADDRESS
@@ -211,7 +219,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     begin_refresh();
 
     if (not(maybe_asynchronous)) {
-        std::unique_lock<std::mutex> lock(_refresh_mutex);
+        unique_lock<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
         while (_running && _refreshing) {
             _refresh_completion.wait(lock);
@@ -221,7 +229,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
 
 void rtnetlink_interface_manager::begin_refresh()
 {
-    std::lock_guard<std::mutex> lock(_refresh_mutex);
+    lock_guard<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
     if (not(_refreshing)) {
         _refreshing = true;
@@ -247,14 +255,14 @@ void rtnetlink_interface_manager::begin_refresh()
         }
         else if (send_size != ssize_t(nl->nlmsg_len)) {
             syslog(LOG_CRIT, "RTNETLINK request truncated");
-            throw std::runtime_error("RTNETLINK request truncated");
+            throw runtime_error("RTNETLINK request truncated");
         }
     }
 }
 
 void rtnetlink_interface_manager::end_refresh()
 {
-    std::lock_guard<std::mutex> lock(_refresh_mutex);
+    lock_guard<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
     if (_refreshing) {
         _refreshing = false;
@@ -264,17 +272,17 @@ void rtnetlink_interface_manager::end_refresh()
 
 void rtnetlink_interface_manager::start_worker()
 {
-    std::lock_guard<std::mutex> lock(_worker_mutex);
+    lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
         _running.store(true);
-        _worker_thread = std::thread(&rtnetlink_interface_manager::run, this);
+        _worker_thread = thread(&rtnetlink_interface_manager::run, this);
     }
 }
 
 void rtnetlink_interface_manager::stop_worker()
 {
-    std::lock_guard<std::mutex> lock(_worker_mutex);
+    lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (_worker_thread.joinable()) {
         _running.store(false);

@@ -29,6 +29,11 @@
 #include <cstring>
 #include <cassert>
 
+using std::for_each;
+using std::lock_guard;
+using std::memcmp;
+using std::set;
+using std::size_t;
 using namespace xllmnrd;
 
 /*
@@ -38,13 +43,13 @@ using namespace xllmnrd;
 bool std::less<in_addr>::operator ()(
     const in_addr &x, const in_addr &y) const
 {
-    return std::memcmp(&x, &y, sizeof (in_addr)) < 0;
+    return memcmp(&x, &y, sizeof (in_addr)) < 0;
 }
 
 bool std::less<in6_addr>::operator ()(
     const in6_addr &x, const in6_addr &y) const
 {
-    return std::memcmp(&x, &y, sizeof (in6_addr)) < 0;
+    return memcmp(&x, &y, sizeof (in6_addr)) < 0;
 }
 
 interface_manager::interface_manager()
@@ -84,37 +89,37 @@ void interface_manager::fire_interface_removed(const interface_event &event)
     }
 }
 
-std::set<in_addr> interface_manager::in_addresses(
+set<in_addr> interface_manager::in_addresses(
     const unsigned int index) const
 {
-    std::lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
+    lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
 
     auto &&found = _interfaces.find(index);
     if (found != _interfaces.end()) {
         return found->second.in_addresses;
     }
 
-    return std::set<in_addr>();
+    return set<in_addr>();
 }
 
-std::set<in6_addr> interface_manager::in6_addresses(
+set<in6_addr> interface_manager::in6_addresses(
     const unsigned int index) const
 {
-    std::lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
+    lock_guard<decltype(_interfaces_mutex)> lock(_interfaces_mutex);
 
     auto &&found = _interfaces.find(index);
     if (found != _interfaces.end()) {
         return found->second.in6_addresses;
     }
 
-    return std::set<in6_addr>();
+    return set<in6_addr>();
 }
 
 void interface_manager::remove_interfaces()
 {
-    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
+    lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
-    std::for_each(_interfaces.begin(), _interfaces.end(),
+    for_each(_interfaces.begin(), _interfaces.end(),
         [this](decltype(_interfaces)::reference i) {
             if (i.second.in6_addresses.size() != 0) {
                 fire_interface_removed({i.first, AF_INET6});
@@ -128,12 +133,12 @@ void interface_manager::remove_interfaces()
 }
 
 void interface_manager::add_interface_address(unsigned int index,
-    int family, const void *address, std::size_t address_size)
+    int family, const void *address, size_t address_size)
 {
     char interface_name[IF_NAMESIZE];
     if_indextoname(index, interface_name);
 
-    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
+    lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     switch (family) {
     case AF_INET:
@@ -194,12 +199,12 @@ void interface_manager::add_interface_address(unsigned int index,
 }
 
 void interface_manager::remove_interface_address(unsigned int index,
-    int family, const void *address, std::size_t address_size)
+    int family, const void *address, size_t address_size)
 {
     char interface_name[IF_NAMESIZE];
     if_indextoname(index, interface_name);
 
-    std::lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
+    lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     switch (family) {
     case AF_INET:

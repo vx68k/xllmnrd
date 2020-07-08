@@ -328,26 +328,21 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 
     auto &&response_size = response.size();
     for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
+        auto &&response_back = back_inserter(response);
+
         if (response_header->ancount == htons(0)) {
-            copy(qname, qname_end, back_inserter(response));
+            copy(qname, qname_end, response_back);
         }
         else {
-            uint8_t name[2] = {};
-            llmnr_put_uint16(0xc000 + response_size, name);
-            copy_n(name, 2, back_inserter(response));
+            llmnr_put_uint16(0xc000 + response_size, response_back);
         }
 
-        uint8_t type_class[4] = {};
-        llmnr_put_uint16(LLMNR_TYPE_AAAA, type_class);
-        llmnr_put_uint16(LLMNR_CLASS_IN, type_class + 2);
-        copy_n(type_class, 4, back_inserter(response));
+        llmnr_put_uint16(LLMNR_TYPE_AAAA, response_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
 
-        uint8_t ttl_rdlength[6] = {};
-        llmnr_put_uint32(TTL, ttl_rdlength);
-        llmnr_put_uint16(sizeof (in6_addr), ttl_rdlength + 4);
-        copy_n(ttl_rdlength, 6, back_inserter(response));
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i,
-            back_inserter(response));
+        llmnr_put_uint32(TTL, response_back);
+        llmnr_put_uint16(sizeof i, response_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
 
         response_header = reinterpret_cast<llmnr_header *>(response.data());
         response_header->ancount = htons(ntohs(response_header->ancount) + 1);

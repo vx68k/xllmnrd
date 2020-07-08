@@ -179,35 +179,30 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
 {
     // Uses 'NLMSG_SPACE' instead of 'NLMSG_LENGTH' since the payload must be
     // aligned.
-    auto &&rtattr_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
-    if (message->nlmsg_len >= rtattr_offset) {
-        auto &&ifaddrmsg = static_cast<const struct ifaddrmsg *>(
-            NLMSG_DATA(message));
+    unsigned int rta_offset = NLMSG_SPACE(sizeof (ifaddrmsg));
+    if (message->nlmsg_len >= rta_offset) {
+        auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(message));
         // Only handles non-temporary and at least link-local addresses.
-        if ((ifaddrmsg->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
-            && ifaddrmsg->ifa_scope <= RT_SCOPE_LINK) {
-            auto &&rtattr = reinterpret_cast<const struct rtattr *>(
-                    reinterpret_cast<const char *>(message) + rtattr_offset);
-            size_t rtattr_size = message->nlmsg_len - rtattr_offset;
-
-            while (RTA_OK(rtattr, rtattr_size)) {
-                if (rtattr->rta_type == IFA_ADDRESS
-                    && rtattr->rta_len >= RTA_LENGTH(0)) {
-                    auto &&addr = RTA_DATA(rtattr);
+        if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
+            && ifa->ifa_scope <= RT_SCOPE_LINK) {
+            auto rta = reinterpret_cast<const rtattr *>(
+                reinterpret_cast<const char *>(message) + rta_offset);
+            unsigned int remains = message->nlmsg_len - rta_offset;
+            while (RTA_OK(rta, remains)) {
+                if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
                     switch (message->nlmsg_type) {
                     case RTM_NEWADDR:
-                        add_interface_address(ifaddrmsg->ifa_index,
-                            ifaddrmsg->ifa_family, addr, RTA_PAYLOAD(rtattr));
+                        add_interface_address(ifa->ifa_index,
+                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
                         break;
-
                     case RTM_DELADDR:
-                        remove_interface_address(ifaddrmsg->ifa_index,
-                            ifaddrmsg->ifa_family, addr, RTA_PAYLOAD(rtattr));
+                        remove_interface_address(ifa->ifa_index,
+                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
                         break;
                     }
                 }
 
-                rtattr = RTA_NEXT(rtattr, rtattr_size);
+                rta = RTA_NEXT(rta, remains);
             }
         }
     }

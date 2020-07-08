@@ -286,8 +286,9 @@ void responder::handle_udp6_query(const llmnr_header *const query,
 
     const uint8_t *qname_end = llmnr_skip_name(qname, &remains);
     if (qname_end && remains >= 4) {
-        if (matches_host_name(qname)) {
-            respond_for_name(_udp6, query, qname, qname_end, sender, interface_index);
+        auto &&name = matching_host_name(qname);
+        if (name != nullptr) {
+            respond_for_name(_udp6, query, qname_end, name, sender, interface_index);
         }
     }
     else {
@@ -296,7 +297,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
 }
 
 void responder::respond_for_name(const int fd, const llmnr_header *const query,
-    const uint8_t *const qname, const uint8_t *const qname_end,
+    const uint8_t *const qname_end, const unique_ptr<uint8_t []> &name,
     const sockaddr_in6 &sender, const unsigned int interface_index)
 {
     set<in6_addr> in6_addresses;
@@ -331,7 +332,8 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         auto &&response_back = back_inserter(response);
 
         if (response_header->ancount == htons(0)) {
-            copy(qname, qname_end, response_back);
+            copy_n(&name[0], name[0] + 1, response_back);
+            response.push_back(0);
         }
         else {
             llmnr_put_uint16(0xc000 + response_size, response_back);
@@ -358,31 +360,36 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     }
 }
 
-bool responder::matches_host_name(const void *const question) const
+auto responder::matching_host_name(const void *const qname) const
+    -> unique_ptr<uint8_t []>
 {
-    // TODO: Implement this function.
     char host_name[LLMNR_LABEL_MAX + 1] = {};
     gethostname(host_name, LLMNR_LABEL_MAX);
-    auto &&dot = strchr(host_name, '.');
-    if (dot != nullptr) {
-        *dot = '\0';
-    }
 
-    const uint8_t *i = static_cast<const uint8_t *>(question);
+    auto &&host_name_length = strcspn(host_name, ".");
+    host_name[host_name_length] = '\0';
+
+    const uint8_t *i = static_cast<const uint8_t *>(qname);
     const unsigned char *j = reinterpret_cast<unsigned char *>(host_name);
     size_t length = *i++;
-    if (length == strlen(host_name)) {
-        // This comparison must be case-insensitive in ASCII.
-        while (length--) {
-            if (ascii_toupper(*i++) != ascii_toupper(*j++)) {
-                return false;
-            }
-        }
-        if (*i++ == 0) {
-            return true;
+    if (length != host_name_length) {
+        return nullptr;
+    }
+    // This comparison must be case-insensitive in ASCII.
+    while (length--) {
+        if (ascii_toupper(*i++) != ascii_toupper(*j++)) {
+            return nullptr;
         }
     }
-    return false;
+    if (*i++ != 0) {
+        return nullptr;
+    }
+
+    unique_ptr<uint8_t []> name {new uint8_t [host_name_length + 2]};
+    name[0] = host_name_length;
+    copy_n(host_name, host_name_length, &name[1]);
+    name[host_name_length + 1] = 0;
+    return name;
 }
 
 void responder::interface_added(const interface_event &event)

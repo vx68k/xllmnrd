@@ -93,14 +93,15 @@ protected:
 
 protected:
     void respond_for_name(int fd, const llmnr_header *query,
-        const uint8_t *qname, const uint8_t *qname_end,
+        const uint8_t *qname_end, const std::unique_ptr<uint8_t []> &name,
         const sockaddr_in6 &sender, unsigned int interface_index);
 
 protected:
     /**
-     * Returns true if, and only if, a question matches the host name.
+     * Returns a matching host name, or 'null' if nothing matches.
      */
-    bool matches_host_name(const void *question) const;
+    auto matching_host_name(const void *qname) const
+        -> std::unique_ptr<uint8_t []>;
 
 public:
     void interface_added(const interface_event &event) override;

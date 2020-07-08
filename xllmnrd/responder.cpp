@@ -320,7 +320,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     std::vector<uint8_t> response
         {reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
-    auto &&response_header = reinterpret_cast<llmnr_header *>(response.data());
+    auto response_header = reinterpret_cast<llmnr_header *>(response.data());
     response_header->flags = htons(LLMNR_HEADER_QR);
     response_header->ancount = htons(0);
     response_header->nscount = htons(0);
@@ -337,15 +337,19 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             copy_n(name, 2, back_inserter(response));
         }
 
-        uint8_t type_class_ttl[8] = {};
-        llmnr_put_uint16(LLMNR_TYPE_AAAA, type_class_ttl);
-        llmnr_put_uint16(LLMNR_CLASS_IN, type_class_ttl + 2);
-        llmnr_put_uint32(TTL, type_class_ttl + 4);
-        copy_n(type_class_ttl, 8, back_inserter(response));
+        uint8_t type_class[4] = {};
+        llmnr_put_uint16(LLMNR_TYPE_AAAA, type_class);
+        llmnr_put_uint16(LLMNR_CLASS_IN, type_class + 2);
+        copy_n(type_class, 4, back_inserter(response));
 
+        uint8_t ttl_rdlength[6] = {};
+        llmnr_put_uint32(TTL, ttl_rdlength);
+        llmnr_put_uint16(sizeof (in6_addr), ttl_rdlength + 4);
+        copy_n(ttl_rdlength, 6, back_inserter(response));
         copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i,
             back_inserter(response));
 
+        response_header = reinterpret_cast<llmnr_header *>(response.data());
         response_header->ancount = htons(ntohs(response_header->ancount) + 1);
     });
 

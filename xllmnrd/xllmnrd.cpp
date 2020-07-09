@@ -144,9 +144,6 @@ int main(int argc, char **argv)
     struct program_options options = {};
     parse_options(argc, argv, &options);
 
-    // Sets the locale back to the default to keep logs untranslated.
-    locale::global(locale::classic());
-
     if (options.foreground) {
         // In foreground mode, tries to use the standard error stream as well.
         openlog(nullptr, LOG_PERROR, LOG_USER);

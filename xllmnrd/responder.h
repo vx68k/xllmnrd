@@ -40,7 +40,7 @@ private:
     int _udp6 = -1;
 
 private:
-    std::atomic<bool> _running;
+    std::atomic<bool> _running {false};
 
 protected:
     /**

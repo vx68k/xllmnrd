@@ -100,15 +100,6 @@ namespace xllmnrd
         virtual ~rtnetlink_interface_manager();
 
     public:
-        /**
-         * Returns true if the worker thread is running; false otherwise.
-         */
-        bool running() const
-        {
-            return _running;
-        }
-
-    public:
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:

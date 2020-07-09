@@ -428,7 +428,7 @@ void responder::interface_added(const interface_event &event)
         if_indextoname(event.interface_index, name);
 
         switch (event.address_family) {
-        case AF_INET6:
+        case AF_UNSPEC:
             {
                 const ipv6_mreq mr = {
                     in6addr_mc_llmnr,        // .ipv6mr_multiaddr
@@ -455,7 +455,7 @@ void responder::interface_removed(const interface_event &event)
         if_indextoname(event.interface_index, name);
 
         switch (event.address_family) {
-        case AF_INET6:
+        case AF_UNSPEC:
             {
                 const ipv6_mreq mr = {
                     in6addr_mc_llmnr,        // .ipv6mr_multiaddr

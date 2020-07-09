@@ -136,14 +136,32 @@ void interface_manager::enable_interface(const unsigned int interface_index)
 {
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
-    _interfaces[interface_index].enabled = true;
+    auto &interface = _interfaces[interface_index];
+    if (not(interface.enabled)) {
+        interface.enabled = true;
+
+        if (debug_level() >= 0) {
+            char interface_name[IF_NAMESIZE];
+            if_indextoname(interface_index, interface_name);
+            syslog(LOG_DEBUG, "device enabled: %s", interface_name);
+        }
+    }
 }
 
 void interface_manager::disable_interface(const unsigned int interface_index)
 {
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
-    _interfaces[interface_index].enabled = false;
+    auto &interface = _interfaces[interface_index];
+    if (interface.enabled) {
+        interface.enabled = false;
+
+        if (debug_level() >= 0) {
+            char interface_name[IF_NAMESIZE];
+            if_indextoname(interface_index, interface_name);
+            syslog(LOG_DEBUG, "device disabled: %s", interface_name);
+        }
+    }
 }
 
 void interface_manager::add_interface_address(unsigned int index,

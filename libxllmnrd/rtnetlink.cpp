@@ -228,16 +228,19 @@ void rtnetlink_interface_manager::handle_ifinfo(const nlmsghdr *nlmsg)
 {
     if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (ifinfomsg))) {
         auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
-        const unsigned int flags_mask = IFF_MULTICAST;
-        if ((ifi->ifi_flags & flags_mask) == flags_mask) {
-            switch (nlmsg->nlmsg_type) {
-            case RTM_NEWLINK:
-                syslog(LOG_DEBUG, "RTM_NEWLINK %d", ifi->ifi_index);
-                break;
-            case RTM_DELLINK:
-                syslog(LOG_DEBUG, "RTM_DELLINK %d", ifi->ifi_index);
-                break;
+        const unsigned int flags_mask = IFF_UP | IFF_MULTICAST;
+        switch (nlmsg->nlmsg_type) {
+        case RTM_NEWLINK:
+            if ((ifi->ifi_flags & flags_mask) == flags_mask) {
+                enable_interface(ifi->ifi_index);
             }
+            else {
+                disable_interface(ifi->ifi_index);
+            }
+            break;
+        case RTM_DELLINK:
+            disable_interface(ifi->ifi_index);
+            break;
         }
     }
 }

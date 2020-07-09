@@ -92,6 +92,7 @@ namespace xllmnrd
     protected:
         struct interface
         {
+            bool enabled = false;
             std::set<in_addr> in_addresses;
             std::set<in6_addr> in6_addresses;
 
@@ -196,6 +197,18 @@ namespace xllmnrd
     protected:
         /// Removes all the interfaces.
         void remove_interfaces();
+
+    protected:
+        /**
+         * Enables an interface.
+         */
+        void enable_interface(unsigned int interface_index);
+
+    protected:
+        /**
+         * Disables an interface.
+         */
+        void disable_interface(unsigned int interface_index);
 
     protected:
         /**

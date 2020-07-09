@@ -132,6 +132,20 @@ void interface_manager::remove_interfaces()
     _interfaces.clear();
 }
 
+void interface_manager::enable_interface(const unsigned int interface_index)
+{
+    lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
+
+    _interfaces[interface_index].enabled = true;
+}
+
+void interface_manager::disable_interface(const unsigned int interface_index)
+{
+    lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
+
+    _interfaces[interface_index].enabled = false;
+}
+
 void interface_manager::add_interface_address(unsigned int index,
     int family, const void *address, size_t address_size)
 {

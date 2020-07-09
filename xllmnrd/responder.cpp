@@ -26,9 +26,9 @@
 
 #include "responder.h"
 
+#include "llmnr.h"
 #include "rtnetlink.h"
 #include "ascii.h"
-#include "llmnr_packet.h"
 #include "socket_utility.h"
 #include <net/if.h> /* if_indextoname */
 #include <arpa/inet.h> /* inet_ntop */

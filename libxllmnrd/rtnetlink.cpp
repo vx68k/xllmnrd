@@ -57,7 +57,8 @@ int rtnetlink_interface_manager::open_rtnetlink(
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
-            RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
+            RTMGRP_NOTIFY | RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR,
+                        // .nl_groups
         };
         if (os->bind(rtnetlink, &address) == -1) {
             throw system_error(errno, generic_category(), "could not bind the RTNETLINK socket");

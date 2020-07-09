@@ -102,6 +102,24 @@ void rtnetlink_interface_manager::run()
     }
 }
 
+void rtnetlink_interface_manager::request_ifaddrs()
+{
+    char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};
+
+    auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
+    nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
+    nlmsg->nlmsg_type = RTM_GETADDR;
+    nlmsg->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+
+    auto ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nlmsg));
+    ifa->ifa_family = AF_UNSPEC;
+
+    ssize_t sent = _os->send(_rtnetlink, nlmsg, nlmsg->nlmsg_len, 0);
+    if (sent == -1) {
+        throw system_error(errno, generic_category(), "could not send a RTNETLINK request");
+    }
+}
+
 void rtnetlink_interface_manager::process_messages()
 {
     // Gets the required buffer size.
@@ -228,27 +246,7 @@ void rtnetlink_interface_manager::begin_refresh()
 
         remove_interfaces();
 
-        unsigned char buffer[NLMSG_LENGTH(sizeof (ifaddrmsg))];
-        nlmsghdr *nl = reinterpret_cast<nlmsghdr *>(buffer);
-        *nl = nlmsghdr();
-        nl->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
-        nl->nlmsg_type = RTM_GETADDR;
-        nl->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
-
-        ifaddrmsg *ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(nl));
-        *ifa = ifaddrmsg();
-        ifa->ifa_family = AF_UNSPEC;
-
-        ssize_t send_size = _os->send(_rtnetlink, nl, nl->nlmsg_len, 0);
-        if (send_size < 0) {
-            syslog(LOG_ERR, "Failed to send to RTNETLINK: %s",
-                    strerror(errno));
-            throw system_error(errno, generic_category(), "could not send to RTNETLINK");
-        }
-        else if (send_size != ssize_t(nl->nlmsg_len)) {
-            syslog(LOG_CRIT, "RTNETLINK request truncated");
-            throw runtime_error("RTNETLINK request truncated");
-        }
+        request_ifaddrs();
     }
 }
 

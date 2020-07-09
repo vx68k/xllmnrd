@@ -134,6 +134,9 @@ namespace xllmnrd
         void run();
 
     protected:
+        void request_ifaddrs();
+
+    protected:
         /// Processes NETLINK messages.
         void process_messages();
 

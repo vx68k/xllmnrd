@@ -64,11 +64,14 @@ using std::unique_ptr;
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
-struct program_options
+struct responder_builder
 {
     bool foreground;
     const char *pid_file;
 
+    /**
+     * Builds a responder object.
+     */
     auto build() -> unique_ptr<class responder>
     {
         if (foreground) {
@@ -106,7 +109,7 @@ static int make_pid_file(const char *__name);
  * @param __options [out] parsed options.
  */
 static int parse_options(int __argc, char *__argv[],
-        struct program_options *__options);
+        struct responder_builder *__options);
 
 /**
  * Prints the command usage.
@@ -160,7 +163,7 @@ int main(const int argc, char **const argv)
 #endif
     textdomain(PACKAGE_TARNAME);
 
-    struct program_options options = {};
+    struct responder_builder options = {};
     parse_options(argc, argv, &options);
 
     responder = options.build();
@@ -232,7 +235,7 @@ int make_pid_file(const char *restrict name) {
 }
 
 int parse_options(const int argc, char **const argv,
-    struct program_options *const program_options)
+    struct responder_builder *const program_options)
 {
     enum
     {

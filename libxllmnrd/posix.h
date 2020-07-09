@@ -23,6 +23,9 @@
 
 namespace xllmnrd
 {
+    /**
+     * POSIX abstraction objects.
+     */
     class posix
     {
     public:
@@ -38,6 +41,11 @@ namespace xllmnrd
                 sizeof *addr);
         }
 
+        /**
+         * Closes a file descriptor.
+         *
+         * @param fd a file descriptor to be closed
+         */
         virtual int close(int fd);
 
         /// Receives a message from a socket.

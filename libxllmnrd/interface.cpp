@@ -122,7 +122,7 @@ void interface_manager::remove_interfaces()
     for_each(_interfaces.begin(), _interfaces.end(),
         [this](decltype(_interfaces)::reference i) {
             if (i.second.enabled) {
-                fire_interface_removed({i.first, AF_UNSPEC});
+                fire_interface_removed({i.first});
             }
         });
 
@@ -143,7 +143,7 @@ void interface_manager::enable_interface(const unsigned int interface_index)
             syslog(LOG_DEBUG, "device enabled: %s", interface_name);
         }
 
-        fire_interface_added({interface_index, AF_UNSPEC});
+        fire_interface_added({interface_index});
     }
 }
 
@@ -161,7 +161,7 @@ void interface_manager::disable_interface(const unsigned int interface_index)
             syslog(LOG_DEBUG, "device disabled: %s", interface_name);
         }
 
-        fire_interface_removed({interface_index, AF_UNSPEC});
+        fire_interface_removed({interface_index});
     }
 }
 

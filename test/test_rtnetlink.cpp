@@ -86,25 +86,15 @@ public:
 public:
     void interface_added(const interface_event &event) override
     {
-        switch (event.address_family)
-        {
-        case AF_UNSPEC:
-            enableCount++;
-            clog << "devices enabled " << enableCount << endl;
-            break;
-        }
+        enableCount++;
+        clog << "devices enabled " << enableCount << endl;
     }
 
 public:
     void interface_removed(const interface_event &event) override
     {
-        switch (event.address_family)
-        {
-        case AF_UNSPEC:
-            disableCount++;
-            clog << "devices disabled " << disableCount << endl;
-            break;
-        }
+        disableCount++;
+        clog << "devices disabled " << disableCount << endl;
     }
 
 private:

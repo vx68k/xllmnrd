@@ -52,13 +52,10 @@ namespace xllmnrd
     struct interface_event
     {
         unsigned int interface_index;
-        int address_family;
 
-        constexpr interface_event(const unsigned int interface_index,
-            const int address_family)
+        constexpr interface_event(const unsigned int interface_index)
         :
-            interface_index {interface_index},
-            address_family {address_family}
+            interface_index {interface_index}
         {
             // Nothing to do.
         }

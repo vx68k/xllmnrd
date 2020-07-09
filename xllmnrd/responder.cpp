@@ -424,26 +424,20 @@ auto responder::matching_host_name(const void *const qname) const
 void responder::interface_added(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char name[IF_NAMESIZE];
-        if_indextoname(event.interface_index, name);
+        char interface_name[IF_NAMESIZE];
+        if_indextoname(event.interface_index, interface_name);
 
-        switch (event.address_family) {
-        case AF_UNSPEC:
-            {
-                const ipv6_mreq mr = {
-                    in6addr_mc_llmnr,        // .ipv6mr_multiaddr
-                    event.interface_index, // .ipv6mr_interface
-                };
-                if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
-                    syslog(LOG_NOTICE, "joined the IPv6 LLMNR multicast group on %s",
-                        name);
-                }
-                else {
-                    syslog(LOG_ERR, "could not join the IPv6 LLMNR multicast group on %s",
-                        name);
-                }
-            }
-            break;
+        const ipv6_mreq mr = {
+            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+            event.interface_index, // .ipv6mr_interface
+        };
+        if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
+            syslog(LOG_NOTICE, "joined the IPv6 LLMNR multicast group on %s",
+                interface_name);
+        }
+        else {
+            syslog(LOG_ERR, "could not join the IPv6 LLMNR multicast group on %s",
+                interface_name);
         }
     }
 }
@@ -451,26 +445,20 @@ void responder::interface_added(const interface_event &event)
 void responder::interface_removed(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char name[IF_NAMESIZE];
-        if_indextoname(event.interface_index, name);
+        char interface_name[IF_NAMESIZE];
+        if_indextoname(event.interface_index, interface_name);
 
-        switch (event.address_family) {
-        case AF_UNSPEC:
-            {
-                const ipv6_mreq mr = {
-                    in6addr_mc_llmnr,        // .ipv6mr_multiaddr
-                    event.interface_index, // .ipv6mr_interface
-                };
-                if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {
-                    syslog(LOG_NOTICE, "left the IPv6 LLMNR multicast group on %s",
-                        name);
-                }
-                else {
-                    syslog(LOG_ERR, "could not leave the IPv6 LLMNR multicast group on %s",
-                        name);
-                }
-            }
-            break;
+        const ipv6_mreq mr = {
+            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+            event.interface_index, // .ipv6mr_interface
+        };
+        if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {
+            syslog(LOG_NOTICE, "left the IPv6 LLMNR multicast group on %s",
+                interface_name);
+        }
+        else {
+            syslog(LOG_ERR, "could not leave the IPv6 LLMNR multicast group on %s",
+                interface_name);
         }
     }
 }

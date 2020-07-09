@@ -1,18 +1,19 @@
-# Japanese translations for the xllmnrd package
-# Copyright (C) 2013-2014 Kaz Nishimura
+# Japanese translations for the xllmnrd package.
+# Copyright (C) 2013-2020 Kaz Nishimura
 # This file is distributed under the same license as the xllmnrd package.
 #
 # Translators:
-# Kaz Nishimura, 2013-2014
+# Kaz Nishimura <kazssym@linuxfront.com>, 2013-2020
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd 2.0\n"
+"Project-Id-Version: xllmnrd 3.0\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
 "POT-Creation-Date: 2020-07-08 20:09+0900\n"
-"PO-Revision-Date: 2014-01-09 08:48+0000\n"
-"Last-Translator: Kaz Nishimura\n"
-"Language-Team: Japanese (http://www.transifex.com/projects/p/xllmnrd/"
-"language/ja/)\n"
+"PO-Revision-Date: 2020-07-08 11:50+0000\n"
+"Last-Translator: Kaz Nishimura <kazssym@linuxfront.com>\n"
+"Language-Team: Japanese (http://www.transifex.com/vx68k/xllmnrd/language/"
+"ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -36,22 +37,19 @@ msgstr "IPv6 LLMNR クエリに応答します。\n"
 
 #: xllmnrd/xllmnrd.cpp:309
 msgid "run in foreground"
-msgstr ""
+msgstr "フォアグラウンドで実行"
 
 #: xllmnrd/xllmnrd.cpp:310
-#, fuzzy
 msgid "record the process ID in FILE"
-msgstr "  -p, --pid-file=FILE   プロセス ID を FILE に記録\n"
+msgstr "プロセス ID を FILE に記録"
 
 #: xllmnrd/xllmnrd.cpp:311
-#, fuzzy
 msgid "display this help and exit"
-msgstr "      --help            このヘルプを表示して終了\n"
+msgstr "このヘルプを表示して終了"
 
 #: xllmnrd/xllmnrd.cpp:312
-#, fuzzy
 msgid "output version information and exit"
-msgstr "      --version         バージョン情報を出力して終了\n"
+msgstr "バージョン情報を出力して終了"
 
 #: xllmnrd/xllmnrd.cpp:314
 #, c-format
@@ -68,17 +66,18 @@ msgid ""
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
 msgstr ""
-"This is free software: you are free to change and redistribute it.\n"
-"There is NO WARRANTY, to the extent permitted by law.\n"
-
-#~ msgid "%s %s\n"
-#~ msgstr "%s %s\n"
-
-#~ msgid "Packaged from revision %s\n"
-#~ msgstr "リビジョン %s からのパッケージ化\n"
+"これはフリー ソフトウェアです: あなたにはそれを変更し再配布する自由がありま"
+"す。\n"
+"法令で認められている範囲において、保証はありません。\n"
 
 #~ msgid "  -f, --foreground      run in foreground\n"
 #~ msgstr "  -f, --foreground      フォアグラウンドで実行\n"
 
 #~ msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
 #~ msgstr "  -n, --name=NAME       レスポンダーのホスト名を NAME に設定\n"
+
+#~ msgid "%s %s\n"
+#~ msgstr "%s %s\n"
+
+#~ msgid "Packaged from revision %s\n"
+#~ msgstr "リビジョン %s からのパッケージ化\n"

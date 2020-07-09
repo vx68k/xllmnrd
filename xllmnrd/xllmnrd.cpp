@@ -228,7 +228,8 @@ int make_pid_file(const char *restrict name) {
 int parse_options(const int argc, char **const argv,
     struct program_options *const program_options)
 {
-    enum {
+    enum
+    {
         VERSION = -128,
         HELP,
     };

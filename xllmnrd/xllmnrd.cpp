@@ -257,7 +257,7 @@ int parse_options(const int argc, char **const argv,
             print_version();
             exit(0);
         case '?':
-            printf(_("Try '%s --help' for more information.\n"), argv[0]);
+            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
             exit(EX_USAGE);
         }
     }

@@ -162,9 +162,9 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     size_t size)
 {
     bool done = false;
-    auto &&message = static_cast<const nlmsghdr *>(messages);
-    while (NLMSG_OK(message, size)) {
-        switch (message->nlmsg_type) {
+    auto &&nlmsg = static_cast<const nlmsghdr *>(messages);
+    while (NLMSG_OK(nlmsg, size)) {
+        switch (nlmsg->nlmsg_type) {
 
         case NLMSG_NOOP:
             if (debug_level() >= 1) {
@@ -180,30 +180,30 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
 
         case NLMSG_ERROR:
-            handle_error(message);
+            handle_error(nlmsg);
             break;
 
         case RTM_NEWLINK:
         case RTM_DELLINK:
-            handle_ifinfo(message);
+            handle_ifinfo(nlmsg);
             break;
         case RTM_NEWADDR:
         case RTM_DELADDR:
-            handle_ifaddrmsg(message);
+            handle_ifaddrmsg(nlmsg);
             break;
 
         default:
             syslog(LOG_DEBUG, "Unknown NETLINK message type: %u",
-                static_cast<unsigned int>(message->nlmsg_type));
+                static_cast<unsigned int>(nlmsg->nlmsg_type));
             break;
         }
 
-        if ((message->nlmsg_flags & NLM_F_MULTI) == 0 && !done) {
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 && !done) {
             // There should be no more messages.
             done = true;
             end_refresh();
         }
-        message = NLMSG_NEXT(message, size);
+        nlmsg = NLMSG_NEXT(nlmsg, size);
     }
 }
 

@@ -22,13 +22,14 @@
 #include <sys/socket.h>
 
 template<class T>
-inline int bind(int fd, T *addr)
+inline int bind(const int fd, const T *const addr)
 {
     return bind(fd, reinterpret_cast<const sockaddr *>(addr), sizeof *addr);
 }
 
 template<class T>
-inline int setsockopt(int fd, int level, int option, T *value)
+inline int setsockopt(const int fd, const int level, const int option,
+    const T *const value)
 {
     return setsockopt(fd, level, option, value, sizeof *value);
 }

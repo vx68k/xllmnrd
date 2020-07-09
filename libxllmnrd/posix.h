@@ -33,11 +33,11 @@ namespace xllmnrd
 
     public:
         virtual int socket(int domain, int type, int protocol);
-        virtual int bind(int fd, const struct sockaddr *addr, socklen_t len);
+        virtual int bind(int fd, const sockaddr *addr, socklen_t len);
 
         template<class T>
         int bind(int fd, T *addr) {
-            return bind(fd, reinterpret_cast<const struct sockaddr *>(addr),
+            return bind(fd, reinterpret_cast<const sockaddr *>(addr),
                 sizeof *addr);
         }
 

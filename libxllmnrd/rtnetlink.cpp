@@ -57,7 +57,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
-            RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
+            RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
         if (os->bind(rtnetlink, &address) == -1) {
             throw system_error(errno, generic_category(), "could not bind the RTNETLINK socket");
@@ -183,6 +183,10 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             handle_error(message);
             break;
 
+        case RTM_NEWLINK:
+        case RTM_DELLINK:
+            handle_ifinfo(message);
+            break;
         case RTM_NEWADDR:
         case RTM_DELADDR:
             handle_ifaddrmsg(message);
@@ -208,6 +212,16 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
     if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
         auto &&e = static_cast<const nlmsgerr *>(NLMSG_DATA(message));
         syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
+    }
+}
+
+void rtnetlink_interface_manager::handle_ifinfo(const nlmsghdr *nlmsg)
+{
+    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (ifinfomsg))) {
+        auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
+        syslog(LOG_DEBUG, ".ifi_type = 0x%x", ifi->ifi_type);
+        syslog(LOG_DEBUG, ".ifi_index = %d", ifi->ifi_index);
+        syslog(LOG_DEBUG, ".ifi_flags = 0x%x", ifi->ifi_flags);
     }
 }
 

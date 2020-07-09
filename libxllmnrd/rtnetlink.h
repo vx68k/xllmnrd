@@ -151,6 +151,9 @@ namespace xllmnrd
         /// Handles a NETLINK error message.
         void handle_error(const nlmsghdr *message);
 
+    private:
+        void handle_ifinfo(const nlmsghdr *nlmsg);
+
     protected:
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *message);

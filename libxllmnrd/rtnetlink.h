@@ -56,11 +56,13 @@ namespace xllmnrd
         bool _refreshing {false};
 
     private:
-        enum class refresh_state: char {
+        enum class refresh_state: char
+        {
             STANDBY = 0,
             IFINFO,
             IFADDR,
-        } _refresh_state = refresh_state::STANDBY;
+        }
+        _refresh_state = refresh_state::STANDBY;
 
     private:
         /// Mutex for the refresh task.

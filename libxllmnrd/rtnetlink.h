@@ -134,6 +134,9 @@ namespace xllmnrd
         void run();
 
     protected:
+        void request_ifinfos();
+
+    protected:
         void request_ifaddrs();
 
     protected:

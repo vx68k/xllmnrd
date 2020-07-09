@@ -102,6 +102,24 @@ void rtnetlink_interface_manager::run()
     }
 }
 
+void rtnetlink_interface_manager::request_ifinfos()
+{
+    char request[NLMSG_LENGTH(sizeof (ifinfomsg))] = {};
+
+    auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
+    nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifinfomsg));
+    nlmsg->nlmsg_type = RTM_GETLINK;
+    nlmsg->nlmsg_flags = NLM_F_REQUEST | NLM_F_ROOT;
+
+    auto ifi = static_cast<ifinfomsg *>(NLMSG_DATA(nlmsg));
+    ifi->ifi_family = AF_UNSPEC;
+
+    ssize_t sent = _os->send(_rtnetlink, nlmsg, nlmsg->nlmsg_len, 0);
+    if (sent == -1) {
+        throw system_error(errno, generic_category(), "could not send a RTNETLINK request");
+    }
+}
+
 void rtnetlink_interface_manager::request_ifaddrs()
 {
     char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};

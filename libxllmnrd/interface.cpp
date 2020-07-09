@@ -121,12 +121,6 @@ void interface_manager::remove_interfaces()
 
     for_each(_interfaces.begin(), _interfaces.end(),
         [this](decltype(_interfaces)::reference i) {
-            if (i.second.in6_addresses.size() != 0) {
-                fire_interface_removed({i.first, AF_INET6});
-            }
-            if (i.second.in_addresses.size() != 0) {
-                fire_interface_removed({i.first, AF_INET});
-            }
             if (i.second.enabled) {
                 fire_interface_removed({i.first, AF_UNSPEC});
             }
@@ -193,10 +187,6 @@ void interface_manager::add_interface_address(unsigned int index,
                     syslog(LOG_DEBUG, "IPv4 address %s added on %s", ipv4,
                         interface_name);
                 }
-
-                if (addresses.size() == 1) {
-                    fire_interface_added({index, AF_INET});
-                }
             }
         }
         else {
@@ -217,10 +207,6 @@ void interface_manager::add_interface_address(unsigned int index,
                     inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
                     syslog(LOG_DEBUG, "IPv6 address %s added on %s", ipv6,
                         interface_name);
-                }
-
-                if (addresses.size() == 1) {
-                    fire_interface_added({index, AF_INET6});
                 }
             }
         }
@@ -259,10 +245,6 @@ void interface_manager::remove_interface_address(unsigned int index,
                     syslog(LOG_DEBUG, "IPv4 address %s removed on %s", ipv4,
                         interface_name);
                 }
-
-                if (addresses.empty()) {
-                    fire_interface_removed({index, AF_INET});
-                }
             }
         }
         else {
@@ -283,10 +265,6 @@ void interface_manager::remove_interface_address(unsigned int index,
                     inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
                     syslog(LOG_DEBUG, "IPv6 address %s removed on %s", ipv6,
                         interface_name);
-                }
-
-                if (addresses.empty()) {
-                    fire_interface_removed({index, AF_INET6});
                 }
             }
         }

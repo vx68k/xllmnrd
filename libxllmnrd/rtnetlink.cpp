@@ -48,7 +48,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
-            RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
+            RTMGRP_NOTIFY | RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR, // .nl_groups
         };
 
         auto &&result = os->bind(rtnetlink,

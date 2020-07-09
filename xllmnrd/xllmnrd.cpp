@@ -63,18 +63,11 @@ using namespace std;
 struct program_options {
     bool foreground;
     const char *pid_file;
-    const char *host_name;
 };
 
 static unique_ptr<class responder> responder;
 
 static volatile sig_atomic_t caught_signal;
-
-/**
- * Sets the default host name of the responder object.
- * @return 0 if succeeded, or non-zero error number.
- */
-static int set_default_host_name(void);
 
 /**
  * Makes a pid file.
@@ -162,18 +155,6 @@ int main(int argc, char *argv[])
 
     responder.reset(new class responder());
 
-    // if (options.host_name) {
-    //     syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
-    //             options.host_name);
-    //     responder_set_host_name(options.host_name);
-    // } else {
-    //     int err = set_default_host_name();
-    //     if (err != 0) {
-    //         syslog(LOG_ERR, "Failed to get the default host name");
-    //         exit(EX_OSERR);
-    //     }
-    // }
-
     int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;
@@ -218,25 +199,6 @@ int main(int argc, char *argv[])
     }
 
     return exit_status;
-}
-
-int set_default_host_name(void) {
-    // Gets the maximum length of the host name.
-    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
-    if (host_name_max < 0) {
-        host_name_max = HOST_NAME_MAX;
-    } else if (host_name_max > 255) {
-        // Avoids allocation overflow.
-        host_name_max = 255;
-    }
-
-    std::vector<char> host_name(host_name_max + 1);
-    if (gethostname(host_name.data(), host_name_max + 1) == 0) {
-        // responder_set_host_name(host_name.data());
-        return 0;
-    }
-
-    return errno;
 }
 
 int make_pid_file(const char *restrict name) {

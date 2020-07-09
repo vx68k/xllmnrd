@@ -143,20 +143,20 @@ namespace xllmnrd
         /// Processes NETLINK messages.
         void process_messages();
 
-    protected:
+    private:
         /// Dispatches NETLINK messages.
         void dispatch_messages(const void *messages, size_t size);
 
-    protected:
+    private:
         /// Handles a NETLINK error message.
-        void handle_error(const nlmsghdr *message);
+        void handle_error(const nlmsghdr *nlmsg);
 
     private:
         void handle_ifinfo(const nlmsghdr *nlmsg);
 
-    protected:
+    private:
         // Handles a RTNETLINK message for an interface address change.
-        void handle_ifaddrmsg(const nlmsghdr *message);
+        void handle_ifaddrmsg(const nlmsghdr *nlmsg);
     };
 }
 

@@ -46,15 +46,20 @@ namespace xllmnrd
 {
     using std::size_t;
 
+    class interface_manager;
+
     /**
      * Event objects about interfaces.
      */
     struct interface_event
     {
-        unsigned int interface_index;
+        interface_manager *source = nullptr;
+        unsigned int interface_index = 0;
 
-        constexpr interface_event(const unsigned int interface_index)
+        constexpr interface_event(interface_manager *const source,
+            const unsigned int interface_index)
         :
+            source {source},
             interface_index {interface_index}
         {
             // Nothing to do.

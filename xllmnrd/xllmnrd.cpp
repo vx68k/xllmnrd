@@ -124,7 +124,7 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     try {
         locale::global(locale(""));

@@ -19,7 +19,7 @@
 #ifndef RESPONDER_H
 #define RESPONDER_H 1
 
-#include "llmnr.h"
+#include "llmnr_packet.h"
 #include "interface.h"
 #include <netinet/in.h>
 #include <unistd.h>
@@ -84,12 +84,11 @@ protected:
 
 protected:
     ssize_t recv_udp6(void *buffer, size_t buffer_size,
-        struct sockaddr_in6 &sender, struct in6_pktinfo &pktinfo);
+        sockaddr_in6 &sender, in6_pktinfo &pktinfo);
 
 protected:
-    void handle_udp6_query(const struct llmnr_header *packet,
-        size_t packet_size, const struct sockaddr_in6 &sender,
-        unsigned int interface_index);
+    void handle_udp6_query(const llmnr_header *query, size_t query_size,
+        const sockaddr_in6 &sender, unsigned int interface_index);
 
 protected:
     void respond_for_name(int fd, const llmnr_header *query,

@@ -27,9 +27,6 @@
 #include <gettext.h>
 #include <getopt.h>
 #include <sysexits.h>
-#if HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
 // Uses POSIX signals instead of ones from <csignal>.
 #include <signal.h>
 #include <syslog.h>
@@ -152,13 +149,12 @@ int main(int argc, char *argv[])
     // Sets the locale back to the default to keep logs untranslated.
     locale::global(locale::classic());
 
-    const char *program_name = basename(argv[0]);
     if (options.foreground) {
         // In foreground mode, tries to use the standard error stream as well.
-        openlog(program_name, LOG_PERROR, LOG_USER);
+        openlog(nullptr, LOG_PERROR, LOG_USER);
     } else {
         // In background mode, uses the daemon facility by default.
-        openlog(program_name, 0, LOG_DAEMON);
+        openlog(nullptr, 0, LOG_DAEMON);
     }
     syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 

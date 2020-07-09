@@ -104,12 +104,12 @@ static int make_pid_file(const char *__name);
  * return but terminates this program with a zero exit status.
  * If an invalid option is used, this function does not return but prints a
  * diagnostic message and terminates this program with a non-zero exit status.
- * @param __argc number of command-line arguments.
- * @param __argv pointer array of command-line arguments.
- * @param __options [out] parsed options.
+ *
+ * @param argc number of command-line arguments.
+ * @param argv pointer array of command-line arguments.
+ * @param builder parsed options.
  */
-static int parse_options(int __argc, char *__argv[],
-        struct responder_builder *__options);
+static int parse_options(int argc, char **argv, responder_builder &builder);
 
 /**
  * Prints the command usage.
@@ -163,14 +163,14 @@ int main(const int argc, char **const argv)
 #endif
     textdomain(PACKAGE_TARNAME);
 
-    struct responder_builder options = {};
-    parse_options(argc, argv, &options);
+    responder_builder builder {};
+    parse_options(argc, argv, builder);
 
-    responder = options.build();
+    responder = builder.build();
     syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
     int exit_status = EXIT_SUCCESS;
-    if (options.foreground || daemon(false, false) == 0) {
+    if (builder.foreground || daemon(false, false) == 0) {
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGINT);
@@ -179,11 +179,11 @@ int main(const int argc, char **const argv)
         set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
-        if (options.pid_file) {
-            int err = make_pid_file(options.pid_file);
+        if (builder.pid_file) {
+            int err = make_pid_file(builder.pid_file);
             if (err != 0) {
                 syslog(LOG_ERR, "Failed to make pid file '%s': %s",
-                        options.pid_file, strerror(err));
+                        builder.pid_file, strerror(err));
                 exit_status = EX_CANTCREAT;
             }
         }
@@ -191,10 +191,10 @@ int main(const int argc, char **const argv)
         if (exit_status == EXIT_SUCCESS) {
             responder->run();
 
-            if (options.pid_file) {
-                if (unlink(options.pid_file) != 0) {
+            if (builder.pid_file) {
+                if (unlink(builder.pid_file) != 0) {
                     syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
-                            options.pid_file, strerror(errno));
+                            builder.pid_file, strerror(errno));
                 }
             }
         }
@@ -235,7 +235,7 @@ int make_pid_file(const char *restrict name) {
 }
 
 int parse_options(const int argc, char **const argv,
-    struct responder_builder *const program_options)
+    responder_builder &builder)
 {
     enum
     {
@@ -255,10 +255,10 @@ int parse_options(const int argc, char **const argv,
         opt = getopt_long(argc, argv, "fp:", options, nullptr);
         switch (opt) {
         case 'f':
-            program_options->foreground = true;
+            builder.foreground = true;
             break;
         case 'p':
-            program_options->pid_file = optarg;
+            builder.pid_file = optarg;
             break;
         case HELP:
             print_usage(argv[0]);

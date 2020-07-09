@@ -127,6 +127,9 @@ void interface_manager::remove_interfaces()
             if (i.second.in_addresses.size() != 0) {
                 fire_interface_removed({i.first, AF_INET});
             }
+            if (i.second.enabled) {
+                fire_interface_removed({i.first, AF_UNSPEC});
+            }
         });
 
     _interfaces.clear();
@@ -145,6 +148,8 @@ void interface_manager::enable_interface(const unsigned int interface_index)
             if_indextoname(interface_index, interface_name);
             syslog(LOG_DEBUG, "device enabled: %s", interface_name);
         }
+
+        fire_interface_added({interface_index, AF_UNSPEC});
     }
 }
 
@@ -161,6 +166,8 @@ void interface_manager::disable_interface(const unsigned int interface_index)
             if_indextoname(interface_index, interface_name);
             syslog(LOG_DEBUG, "device disabled: %s", interface_name);
         }
+
+        fire_interface_removed({interface_index, AF_UNSPEC});
     }
 }
 

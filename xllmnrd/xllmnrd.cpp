@@ -140,7 +140,9 @@ int main(int argc, char *argv[])
         fprintf(stderr, "error: failed to set locale: %s\n", error.what());
     }
 
+#if defined LOCALEDIR
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
+#endif
     textdomain(PACKAGE_TARNAME);
 
     struct program_options options = {};

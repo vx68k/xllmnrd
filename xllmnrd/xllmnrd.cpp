@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <atomic>
 #include <vector>
 #include <locale>
 #include <limits>
@@ -39,6 +40,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+using std::atomic;
 using std::fclose;
 using std::fopen;
 using std::fprintf;
@@ -70,7 +72,7 @@ struct program_options
 
 static unique_ptr<class responder> responder;
 
-static volatile sig_atomic_t caught_signal;
+static atomic<int> caught_signal;
 
 /**
  * Makes a pid file.
@@ -286,10 +288,10 @@ There is NO WARRANTY, to the extent permitted by law.\n"));
 /*
  * Handles a signal by terminating the process.
  */
-void handle_signal_to_terminate(int sig) {
-    if (caught_signal == 0) {
-        caught_signal = sig;
-
+void handle_signal_to_terminate(int sig)
+{
+    int expected = 0;
+    if (caught_signal.compare_exchange_weak(expected, sig)) {
         responder->terminate();
     }
 }

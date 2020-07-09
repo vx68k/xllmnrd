@@ -68,6 +68,20 @@ struct program_options
 {
     bool foreground;
     const char *pid_file;
+
+    auto build() -> unique_ptr<class responder>
+    {
+        if (foreground) {
+            // In foreground mode, tries to use the standard error stream as well.
+            openlog(nullptr, LOG_PERROR, LOG_USER);
+        } else {
+            // In background mode, uses the daemon facility by default.
+            openlog(nullptr, 0, LOG_DAEMON);
+        }
+
+        unique_ptr<class responder> responder {new class responder()};
+        return responder;
+    }
 };
 
 static unique_ptr<class responder> responder;
@@ -149,16 +163,8 @@ int main(const int argc, char **const argv)
     struct program_options options = {};
     parse_options(argc, argv, &options);
 
-    if (options.foreground) {
-        // In foreground mode, tries to use the standard error stream as well.
-        openlog(nullptr, LOG_PERROR, LOG_USER);
-    } else {
-        // In background mode, uses the daemon facility by default.
-        openlog(nullptr, 0, LOG_DAEMON);
-    }
+    responder = options.build();
     syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
-
-    responder.reset(new class responder());
 
     int exit_status = EXIT_SUCCESS;
     if (options.foreground || daemon(false, false) == 0) {

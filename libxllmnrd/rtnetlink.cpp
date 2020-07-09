@@ -162,6 +162,7 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     size_t size)
 {
     bool done = false;
+
     auto &&nlmsg = static_cast<const nlmsghdr *>(messages);
     while (NLMSG_OK(nlmsg, size)) {
         switch (nlmsg->nlmsg_type) {
@@ -171,18 +172,12 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
                 syslog(LOG_DEBUG, "Got NLMSG_NOOP");
             }
             break;
-
-        case NLMSG_DONE:
-            if (!done) {
-                done = true;
-                end_refresh();
-            }
-            break;
-
         case NLMSG_ERROR:
             handle_error(nlmsg);
             break;
-
+        case NLMSG_DONE:
+            done = true;
+            break;
         case RTM_NEWLINK:
         case RTM_DELLINK:
             handle_ifinfo(nlmsg);
@@ -191,19 +186,33 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
         case RTM_DELADDR:
             handle_ifaddrmsg(nlmsg);
             break;
-
         default:
             syslog(LOG_DEBUG, "Unknown NETLINK message type: %u",
                 static_cast<unsigned int>(nlmsg->nlmsg_type));
             break;
         }
 
-        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0 && !done) {
+        if ((nlmsg->nlmsg_flags & NLM_F_MULTI) == 0) {
             // There should be no more messages.
             done = true;
-            end_refresh();
         }
         nlmsg = NLMSG_NEXT(nlmsg, size);
+    }
+
+    if (done) {
+        switch (_refresh_state) {
+        case refresh_state::IFINFO:
+            _refresh_state = refresh_state::IFADDR;
+            request_ifaddrs();
+            break;
+        case refresh_state::IFADDR:
+            _refresh_state = refresh_state::STANDBY;
+            end_refresh();
+            break;
+        default:
+            // Nothing to do.
+            break;
+        }
     }
 }
 
@@ -286,7 +295,8 @@ void rtnetlink_interface_manager::begin_refresh()
 
         remove_interfaces();
 
-        request_ifaddrs();
+        _refresh_state = refresh_state::IFINFO;
+        request_ifinfos();
     }
 }
 

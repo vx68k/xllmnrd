@@ -113,6 +113,7 @@ void rtnetlink_interface_manager::request_ifinfos()
 
     auto ifi = static_cast<ifinfomsg *>(NLMSG_DATA(nlmsg));
     ifi->ifi_family = AF_UNSPEC;
+    ifi->ifi_change = IFF_UP | IFF_MULTICAST;
 
     ssize_t sent = _os->send(_rtnetlink, nlmsg, nlmsg->nlmsg_len, 0);
     if (sent == -1) {

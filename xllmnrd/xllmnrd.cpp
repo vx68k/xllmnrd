@@ -39,9 +39,14 @@
 #include <cstdio>
 #include <cstdlib>
 
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 255
-#endif
+using std::fclose;
+using std::fopen;
+using std::fprintf;
+using std::locale;
+using std::putchar;
+using std::printf;
+using std::runtime_error;
+using std::unique_ptr;
 
 // We just ignore 'LOG_PERROR' if it is not defined.
 #ifndef LOG_PERROR
@@ -57,10 +62,8 @@
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
-using std::unique_ptr;
-using namespace std;
-
-struct program_options {
+struct program_options
+{
     bool foreground;
     const char *pid_file;
 };

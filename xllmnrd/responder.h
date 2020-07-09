@@ -103,10 +103,10 @@ protected:
         -> std::unique_ptr<uint8_t []>;
 
 public:
-    void interface_added(const interface_event &event) override;
+    void interface_enabled(const interface_event &event) override;
 
 public:
-    void interface_removed(const interface_event &event) override;
+    void interface_disabled(const interface_event &event) override;
 };
 
 #endif

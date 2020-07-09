@@ -421,7 +421,7 @@ auto responder::matching_host_name(const void *const qname) const
     return name;
 }
 
-void responder::interface_added(const interface_event &event)
+void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
         char interface_name[IF_NAMESIZE];
@@ -442,7 +442,7 @@ void responder::interface_added(const interface_event &event)
     }
 }
 
-void responder::interface_removed(const interface_event &event)
+void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
         char interface_name[IF_NAMESIZE];

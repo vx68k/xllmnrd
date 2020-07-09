@@ -78,10 +78,10 @@ namespace xllmnrd
         ~interface_listener() = default;
 
     public:
-        virtual void interface_added(const interface_event &event) = 0;
+        virtual void interface_enabled(const interface_event &event) = 0;
 
     public:
-        virtual void interface_removed(const interface_event &event) = 0;
+        virtual void interface_disabled(const interface_event &event) = 0;
     };
 
     /**
@@ -162,11 +162,11 @@ namespace xllmnrd
 
     private:
         // Fires an event for an added interface.
-        void fire_interface_added(const interface_event &event);
+        void fire_interface_enabled(const interface_event &event);
 
     private:
         // Fires an event for a removed interface.
-        void fire_interface_removed(const interface_event &event);
+        void fire_interface_disabled(const interface_event &event);
 
     public:
         /**

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 4-alpha.2\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-07-09 22:59+0900\n"
+"POT-Creation-Date: 2020-07-10 19:21+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,47 +17,47 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: xllmnrd/xllmnrd.cpp:255
+#: xllmnrd/xllmnrd.cpp:289
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:266
+#: xllmnrd/xllmnrd.cpp:300
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:267
+#: xllmnrd/xllmnrd.cpp:301
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:269
+#: xllmnrd/xllmnrd.cpp:303
 msgid "run in foreground"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:270
+#: xllmnrd/xllmnrd.cpp:304
 msgid "record the process ID in FILE"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:271
+#: xllmnrd/xllmnrd.cpp:305
 msgid "display this help and exit"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:272
+#: xllmnrd/xllmnrd.cpp:306
 msgid "output version information and exit"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:274
+#: xllmnrd/xllmnrd.cpp:308
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:280
+#: xllmnrd/xllmnrd.cpp:314
 msgid "(C)"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:281
+#: xllmnrd/xllmnrd.cpp:315
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"

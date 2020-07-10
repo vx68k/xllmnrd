@@ -80,10 +80,7 @@ struct responder_builder
     bool foreground = false;
     const char *pid_file = nullptr;
 
-    /**
-     * Builds a responder object.
-     */
-    auto build() -> unique_ptr<class responder>
+    void init()
     {
         if (not(foreground)) {
             foreground = true;
@@ -103,7 +100,13 @@ struct responder_builder
                     "could not make a pid file");
             }
         }
+    }
 
+    /**
+     * Builds a responder object.
+     */
+    auto build() -> unique_ptr<class responder>
+    {
         unique_ptr<class responder> responder {new class responder()};
         return responder;
     }
@@ -185,8 +188,10 @@ int main(const int argc, char **const argv)
         responder_builder builder {};
         parse_options(argc, argv, builder);
 
-        responder = builder.build();
+        builder.init();
         syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
+
+        responder = builder.build();
 
         int exit_status = EXIT_SUCCESS;
 

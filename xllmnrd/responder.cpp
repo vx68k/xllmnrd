@@ -68,7 +68,7 @@ static const uint32_t TTL = 30;
 /*
  * Logs a message with the sender address.
  */
-static inline void log_with_sender(const int pri, const char *const message,
+inline void log_with_sender(const int pri, const char *const message,
     const void *const sender, const size_t sender_size)
 {
     if (sender != nullptr) {
@@ -91,6 +91,13 @@ static inline void log_with_sender(const int pri, const char *const message,
     else {
         syslog(pri, "%s", message);
     }
+}
+
+template<class T>
+inline void log_with_sender(const int pri, const char *const message,
+    T *sender)
+{
+    log_with_sender(pri, message, sender, sizeof *sender);
 }
 
 int responder::open_udp6(const in_port_t port)

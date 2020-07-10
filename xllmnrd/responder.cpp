@@ -219,7 +219,7 @@ void responder::process_udp6()
 
         const llmnr_header *header =
             reinterpret_cast<const llmnr_header *>(&packet[0]);
-        if (llmnr_query_is_valid(header)) {
+        if (llmnr_is_valid_query(header)) {
             handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
         else {

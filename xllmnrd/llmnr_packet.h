@@ -86,15 +86,15 @@ struct llmnr_header {
  * @param header pointer to a LLMNR header.
  * @return true if the query is valid, or false.
  */
-static inline int llmnr_query_is_valid(
-        const struct llmnr_header *restrict header) {
+static inline bool llmnr_is_valid_query(const struct llmnr_header *const header)
+{
     // The following bits must be zero in any query.
-    const uint_fast16_t mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
+    const uint16_t mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
     if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
             header->ancount == htons(0) && header->nscount == htons(0)) {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 /**

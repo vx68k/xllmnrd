@@ -51,10 +51,8 @@ class RtnetlinkTest: public TestFixture, public interface_listener
     CPPUNIT_TEST_SUITE_END();
 
 private:
-    unsigned int addInCount = 0;
-    unsigned int addIn6Count = 0;
-    unsigned int removeInCount = 0;
-    unsigned int removeIn6Count = 0;
+    unsigned int enableCount = 0;
+    unsigned int disableCount = 0;
 
 private:
     unique_ptr<rtnetlink_interface_manager> manager;
@@ -74,11 +72,9 @@ public:
 public:
     void setUp() override
     {
+        enableCount = 0;
+        disableCount = 0;
         manager.reset(new rtnetlink_interface_manager());
-        addInCount = 0;
-        removeInCount = 0;
-        addIn6Count = 0;
-        removeIn6Count = 0;
     }
 
 public:
@@ -88,47 +84,25 @@ public:
     }
 
 public:
-    void interface_added(const interface_event &event) override
+    void interface_enabled(const interface_event &) override
     {
-        switch (event.address_family)
-        {
-        case AF_INET:
-            addInCount++;
-            clog << "Add an IPv4 address " << addInCount << endl;
-            break;
-
-        case AF_INET6:
-            addIn6Count++;
-            clog << "Add an IPv6 address " << addIn6Count << endl;
-            break;
-        }
+        enableCount++;
+        clog << "devices enabled " << enableCount << endl;
     }
 
 public:
-    void interface_removed(const interface_event &event) override
+    void interface_disabled(const interface_event &) override
     {
-        switch (event.address_family)
-        {
-        case AF_INET:
-            removeInCount++;
-            clog << "Remove an IPv4 address " << removeInCount << endl;
-            break;
-
-        case AF_INET6:
-            removeIn6Count++;
-            clog << "Remove an IPv6 address " << removeIn6Count << endl;
-            break;
-        }
+        disableCount++;
+        clog << "devices disabled " << disableCount << endl;
     }
 
 private:
     void testRefresh1()
     {
         manager->add_interface_listener(this);
-        CPPUNIT_ASSERT_EQUAL(0U, addInCount);
-        CPPUNIT_ASSERT_EQUAL(0U, addIn6Count);
-        CPPUNIT_ASSERT_EQUAL(0U, removeInCount);
-        CPPUNIT_ASSERT_EQUAL(0U, removeIn6Count);
+        CPPUNIT_ASSERT_EQUAL(0U, enableCount);
+        CPPUNIT_ASSERT_EQUAL(0U, disableCount);
     }
 
 private:
@@ -136,10 +110,7 @@ private:
     {
         manager->add_interface_listener(this);
         manager->refresh();
-        CPPUNIT_ASSERT(addInCount > removeInCount);
-        CPPUNIT_ASSERT(addIn6Count > removeIn6Count);
-
-        clog << "End testStart2\n";
+        CPPUNIT_ASSERT(enableCount > disableCount);
     }
 };
 CPPUNIT_TEST_SUITE_REGISTRATION(RtnetlinkTest);

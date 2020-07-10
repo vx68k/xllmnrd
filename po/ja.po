@@ -1,88 +1,83 @@
-# Japanese translations for the xllmnrd package
-# Copyright (C) 2013-2014 Kaz Nishimura
+# Japanese translations for the xllmnrd package.
+# Copyright (C) 2013-2020 Kaz Nishimura
 # This file is distributed under the same license as the xllmnrd package.
 #
 # Translators:
-# Kaz Nishimura, 2013-2014
+# Kaz Nishimura <kazssym@linuxfront.com>, 2013-2020
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd 2.0\n"
+"Project-Id-Version: xllmnrd 3.0\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-07-08 15:00+0900\n"
-"PO-Revision-Date: 2014-01-09 08:48+0000\n"
-"Last-Translator: Kaz Nishimura\n"
-"Language-Team: Japanese (http://www.transifex.com/projects/p/xllmnrd/"
-"language/ja/)\n"
+"POT-Creation-Date: 2020-07-09 22:59+0900\n"
+"PO-Revision-Date: 2020-07-08 11:50+0000\n"
+"Last-Translator: Kaz Nishimura <kazssym@linuxfront.com>\n"
+"Language-Team: Japanese (http://www.transifex.com/vx68k/xllmnrd/language/"
+"ja/)\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: xllmnrd/xllmnrd.cpp:296
+#: xllmnrd/xllmnrd.cpp:255
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr "詳しくは ‘%s --help’ をお試しください。\n"
 
-#: xllmnrd/xllmnrd.cpp:303
+#: xllmnrd/xllmnrd.cpp:266
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr "使用法: %s [OPTION]...\n"
 
-#: xllmnrd/xllmnrd.cpp:304
+#: xllmnrd/xllmnrd.cpp:267
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr "IPv6 LLMNR クエリに応答します。\n"
 
-#: xllmnrd/xllmnrd.cpp:306
-#, c-format
-msgid "  -f, --foreground      run in foreground\n"
-msgstr "  -f, --foreground      フォアグラウンドで実行\n"
+#: xllmnrd/xllmnrd.cpp:269
+msgid "run in foreground"
+msgstr "フォアグラウンドで実行"
 
-#: xllmnrd/xllmnrd.cpp:308
-#, c-format
-msgid "  -p, --pid-file=FILE   record the process ID in FILE\n"
-msgstr "  -p, --pid-file=FILE   プロセス ID を FILE に記録\n"
+#: xllmnrd/xllmnrd.cpp:270
+msgid "record the process ID in FILE"
+msgstr "プロセス ID を FILE に記録"
 
-#: xllmnrd/xllmnrd.cpp:310
-#, c-format
-msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
-msgstr "  -n, --name=NAME       レスポンダーのホスト名を NAME に設定\n"
+#: xllmnrd/xllmnrd.cpp:271
+msgid "display this help and exit"
+msgstr "このヘルプを表示して終了"
 
-#: xllmnrd/xllmnrd.cpp:312
-#, c-format
-msgid "      --help            display this help and exit\n"
-msgstr "      --help            このヘルプを表示して終了\n"
+#: xllmnrd/xllmnrd.cpp:272
+msgid "output version information and exit"
+msgstr "バージョン情報を出力して終了"
 
-#: xllmnrd/xllmnrd.cpp:314
-#, c-format
-msgid "      --version         output version information and exit\n"
-msgstr "      --version         バージョン情報を出力して終了\n"
-
-#: xllmnrd/xllmnrd.cpp:317
+#: xllmnrd/xllmnrd.cpp:274
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "バグ レポートは <%s> まで。\n"
 
-#: xllmnrd/xllmnrd.cpp:321
-#, c-format
-msgid "%s %s\n"
-msgstr "%s %s\n"
-
-#: xllmnrd/xllmnrd.cpp:323
-#, c-format
-msgid "Packaged from revision %s\n"
-msgstr "リビジョン %s からのパッケージ化\n"
-
-#: xllmnrd/xllmnrd.cpp:325
+#: xllmnrd/xllmnrd.cpp:280
 msgid "(C)"
 msgstr "©"
 
-#: xllmnrd/xllmnrd.cpp:326
+#: xllmnrd/xllmnrd.cpp:281
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
 msgstr ""
-"This is free software: you are free to change and redistribute it.\n"
-"There is NO WARRANTY, to the extent permitted by law.\n"
+"これはフリー ソフトウェアです: あなたにはそれを変更し再配布する自由がありま"
+"す。\n"
+"法令で認められている範囲において、保証はありません。\n"
+
+#~ msgid "  -f, --foreground      run in foreground\n"
+#~ msgstr "  -f, --foreground      フォアグラウンドで実行\n"
+
+#~ msgid "  -n, --name=NAME       set the host name of the responder to NAME\n"
+#~ msgstr "  -n, --name=NAME       レスポンダーのホスト名を NAME に設定\n"
+
+#~ msgid "%s %s\n"
+#~ msgstr "%s %s\n"
+
+#~ msgid "Packaged from revision %s\n"
+#~ msgstr "リビジョン %s からのパッケージ化\n"

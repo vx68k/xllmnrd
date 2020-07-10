@@ -1,4 +1,4 @@
-// socket_utility.h
+// socket_utility.h -*- C++ -*-
 // Copyright (C) 2020 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -11,8 +11,10 @@
 // FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 // more details.
 //
-// You should have received a copy of the GNU General Public License along
-// with this program.  If not, see <http://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU General Public License along with
+// this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #ifndef SOCKET_UTILITY_H
 #define SOCKET_UTILITY_H 1
@@ -20,13 +22,14 @@
 #include <sys/socket.h>
 
 template<class T>
-inline int bind(int fd, T *addr)
+inline int bind(const int fd, const T *const addr)
 {
     return bind(fd, reinterpret_cast<const sockaddr *>(addr), sizeof *addr);
 }
 
 template<class T>
-inline int setsockopt(int fd, int level, int option, T *value)
+inline int setsockopt(const int fd, const int level, const int option,
+    const T *const value)
 {
     return setsockopt(fd, level, option, value, sizeof *value);
 }

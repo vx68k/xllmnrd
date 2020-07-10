@@ -86,15 +86,14 @@ struct llmnr_header {
  * @param header pointer to a LLMNR header.
  * @return true if the query is valid, or false.
  */
-static inline int llmnr_query_is_valid(
-        const struct llmnr_header *restrict header) {
+static inline bool llmnr_is_valid_query(const struct llmnr_header *const header)
+{
     // The following bits must be zero in any query.
-    const uint_fast16_t mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
-    if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
-            header->ancount == htons(0) && header->nscount == htons(0)) {
-        return 1;
-    }
-    return 0;
+    const uint16_t flags_mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
+    return (header->flags & flags_mask) == htons(0)
+        && header->qdcount == htons(1)
+        && header->ancount == htons(0)
+        && header->nscount == htons(0);
 }
 
 /**
@@ -136,6 +135,28 @@ static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i) {
     i[2] = x >>  8;
     i[3] = x;
 }
+
+#if __cplusplus
+
+template<class OutputIterator>
+static inline OutputIterator llmnr_put_uint16(const uint16_t x, OutputIterator i)
+{
+    *(i++) = uint8_t(x >> 8);
+    *(i++) = uint8_t(x);
+    return i;
+}
+
+template<class OutputIterator>
+static inline OutputIterator llmnr_put_uint32(const uint32_t x, OutputIterator i)
+{
+    *(i++) = uint8_t(x >> 24);
+    *(i++) = uint8_t(x >> 16);
+    *(i++) = uint8_t(x >>  8);
+    *(i++) = uint8_t(x);
+    return i;
+}
+
+#endif
 
 /**
  * Skips a name in a LLMNR packet.

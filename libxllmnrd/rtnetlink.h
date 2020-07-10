@@ -56,6 +56,15 @@ namespace xllmnrd
         bool _refreshing {false};
 
     private:
+        enum class refresh_state: char
+        {
+            STANDBY = 0,
+            IFINFO,
+            IFADDR,
+        }
+        _refresh_state = refresh_state::STANDBY;
+
+    private:
         /// Mutex for the refresh task.
         mutable std::mutex _refresh_mutex;
 
@@ -93,15 +102,6 @@ namespace xllmnrd
         virtual ~rtnetlink_interface_manager();
 
     public:
-        /**
-         * Returns true if the worker thread is running; false otherwise.
-         */
-        bool running() const
-        {
-            return _running;
-        }
-
-    public:
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:
@@ -134,20 +134,29 @@ namespace xllmnrd
         void run();
 
     protected:
+        void request_ifinfos();
+
+    protected:
+        void request_ifaddrs();
+
+    protected:
         /// Processes NETLINK messages.
         void process_messages();
 
-    protected:
+    private:
         /// Dispatches NETLINK messages.
         void dispatch_messages(const void *messages, size_t size);
 
-    protected:
+    private:
         /// Handles a NETLINK error message.
-        void handle_error(const struct nlmsghdr *message);
+        void handle_error(const nlmsghdr *nlmsg);
 
-    protected:
+    private:
+        void handle_ifinfo(const nlmsghdr *nlmsg);
+
+    private:
         // Handles a RTNETLINK message for an interface address change.
-        void handle_ifaddrmsg(const nlmsghdr *message);
+        void handle_ifaddrmsg(const nlmsghdr *nlmsg);
     };
 }
 

@@ -27,39 +27,40 @@
 #include <atomic>
 #include <cstddef>
 
-/*
- * Specializations of 'std::less'.
- */
+// Specializations of 'std::less' for address types.
 
-template <>
+template<>
 struct std::less<in_addr>
 {
     bool operator ()(const in_addr &x, const in_addr &y) const;
 };
 
-template <>
+template<>
 struct std::less<in6_addr>
 {
     bool operator ()(const in6_addr &x, const in6_addr &y) const;
 };
 
+
 namespace xllmnrd
 {
     using std::size_t;
+
+    class interface_manager;
 
     /**
      * Event objects about interfaces.
      */
     struct interface_event
     {
-        unsigned int interface_index;
-        int address_family;
+        interface_manager *source = nullptr;
+        unsigned int interface_index = 0;
 
-        constexpr interface_event(const unsigned int interface_index,
-            const int address_family)
+        constexpr interface_event(interface_manager *const source,
+            const unsigned int interface_index)
         :
-            interface_index {interface_index},
-            address_family {address_family}
+            source {source},
+            interface_index {interface_index}
         {
             // Nothing to do.
         }
@@ -77,18 +78,23 @@ namespace xllmnrd
         ~interface_listener() = default;
 
     public:
-        virtual void interface_added(const interface_event &event) = 0;
+        virtual void interface_enabled(const interface_event &event) = 0;
 
     public:
-        virtual void interface_removed(const interface_event &event) = 0;
+        virtual void interface_disabled(const interface_event &event) = 0;
     };
 
-    /// Abstract interface manager class.
+    /**
+     * Abstract class of interface managers.
+     *
+     * This class keeps a table of interface addresses for IPv4 and IPv6.
+     */
     class interface_manager
     {
     protected:
         struct interface
         {
+            bool enabled = false;
             std::set<in_addr> in_addresses;
             std::set<in6_addr> in6_addresses;
 
@@ -113,17 +119,21 @@ namespace xllmnrd
         mutable std::recursive_mutex _interfaces_mutex;
 
     protected:
-        /// Constructs an interface manager.
+        /**
+         * Constructs an interface manager object.
+         */
         interface_manager();
 
-        // The copy constructor is deleted.
+        // This class is not copy-constructible.
         interface_manager(const interface_manager &) = delete;
 
-        // The copy assignment operator is deleted.
+        // This class is not copy-assignable.
         void operator =(const interface_manager &) = delete;
 
     public:
-        /// Destructs an interface manager.
+        /**
+         * Destructs an interface manager object.
+         */
         virtual ~interface_manager();
 
     public:
@@ -140,23 +150,23 @@ namespace xllmnrd
 
     public:
         /**
-         * Adds a listener object for interface change events.
+         * Adds a listener for interface events.
          */
         void add_interface_listener(interface_listener *listener);
 
     public:
         /**
-         * Removes a listener object for interface change events.
+         * Removes a listener for interface events.
          */
         void remove_interface_listener(interface_listener *listener);
 
     private:
         // Fires an event for an added interface.
-        void fire_interface_added(const interface_event &event);
+        void fire_interface_enabled(const interface_event &event);
 
     private:
         // Fires an event for a removed interface.
-        void fire_interface_removed(const interface_event &event);
+        void fire_interface_disabled(const interface_event &event);
 
     public:
         /**
@@ -189,6 +199,18 @@ namespace xllmnrd
     protected:
         /// Removes all the interfaces.
         void remove_interfaces();
+
+    protected:
+        /**
+         * Enables an interface.
+         */
+        void enable_interface(unsigned int interface_index);
+
+    protected:
+        /**
+         * Disables an interface.
+         */
+        void disable_interface(unsigned int interface_index);
 
     protected:
         /**

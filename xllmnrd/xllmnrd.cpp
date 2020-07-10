@@ -27,24 +27,32 @@
 #include <gettext.h>
 #include <getopt.h>
 #include <sysexits.h>
-#if HAVE_LIBGEN_H
-#include <libgen.h>
-#endif
 // Uses POSIX signals instead of ones from <csignal>.
 #include <signal.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <atomic>
 #include <vector>
 #include <locale>
+#include <system_error>
 #include <limits>
 #include <cstring>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 255
-#endif
+using std::atomic;
+using std::exception;
+using std::fclose;
+using std::fopen;
+using std::fprintf;
+using std::generic_category;
+using std::locale;
+using std::putchar;
+using std::printf;
+using std::system_error;
+using std::runtime_error;
+using std::unique_ptr;
 
 // We just ignore 'LOG_PERROR' if it is not defined.
 #ifndef LOG_PERROR
@@ -60,25 +68,6 @@
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
-using std::unique_ptr;
-using namespace std;
-
-struct program_options {
-    bool foreground;
-    const char *pid_file;
-    const char *host_name;
-};
-
-static unique_ptr<class responder> responder;
-
-static volatile sig_atomic_t caught_signal;
-
-/**
- * Sets the default host name of the responder object.
- * @return 0 if succeeded, or non-zero error number.
- */
-static int set_default_host_name(void);
-
 /**
  * Makes a pid file.
  * @param __name name of the pid file.
@@ -86,29 +75,72 @@ static int set_default_host_name(void);
  */
 static int make_pid_file(const char *__name);
 
+struct responder_builder
+{
+    bool foreground = false;
+    const char *pid_file = nullptr;
+
+    void init()
+    {
+        if (not(foreground)) {
+            foreground = true;
+
+            if (daemon(false, false) == -1) {
+                throw system_error(errno, generic_category(),
+                    "could not become a daemon");
+            }
+
+            openlog(nullptr, 0, LOG_DAEMON);
+        }
+
+        if (pid_file) {
+            int err = make_pid_file(pid_file);
+            if (err != 0) {
+                throw system_error(err, generic_category(),
+                    "could not make a pid file");
+            }
+        }
+    }
+
+    /**
+     * Builds a responder object.
+     */
+    auto build() -> unique_ptr<class responder>
+    {
+        unique_ptr<class responder> responder {new class responder()};
+        return responder;
+    }
+};
+
+static unique_ptr<class responder> responder;
+
+static atomic<int> caught_signal;
+
 /**
  * Parses command-line arguments for options.
  * If an option that causes an immediate exit is used, this function does not
  * return but terminates this program with a zero exit status.
  * If an invalid option is used, this function does not return but prints a
  * diagnostic message and terminates this program with a non-zero exit status.
- * @param __argc number of command-line arguments.
- * @param __argv pointer array of command-line arguments.
- * @param __options [out] parsed options.
+ *
+ * @param argc number of command-line arguments.
+ * @param argv pointer array of command-line arguments.
+ * @param builder parsed options.
  */
-static void parse_arguments(int __argc, char *__argv[],
-        struct program_options *__options);
+static int parse_options(int argc, char **argv, responder_builder &builder);
 
 /**
- * Shows the command help.
- * @param __name command name.
+ * Prints the command usage.
+ *
+ * @param arg0 the command name
  */
-static void show_help(const char *__name);
+static void print_usage(const char *arg0);
 
 /**
- * Shows the version information.
+ * Prints the version information.
  */
-static void show_version(void);
+static void print_version();
+
 
 static void handle_signal_to_terminate(int __sig);
 
@@ -132,7 +164,10 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
     return ret;
 }
 
-int main(int argc, char *argv[])
+/**
+ * Runs the program.
+ */
+int main(const int argc, char **const argv)
 {
     try {
         locale::global(locale(""));
@@ -141,41 +176,25 @@ int main(int argc, char *argv[])
         fprintf(stderr, "error: failed to set locale: %s\n", error.what());
     }
 
+#if defined LOCALEDIR
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
+#endif
     textdomain(PACKAGE_TARNAME);
 
-    struct program_options options = {};
-    parse_arguments(argc, argv, &options);
+    // Tries to use the standard error stream as well.
+    openlog(nullptr, LOG_PERROR, LOG_USER);
 
-    // Sets the locale back to the default to keep logs untranslated.
-    locale::global(locale::classic());
+    try {
+        responder_builder builder {};
+        parse_options(argc, argv, builder);
 
-    const char *program_name = basename(argv[0]);
-    if (options.foreground) {
-        // In foreground mode, tries to use the standard error stream as well.
-        openlog(program_name, LOG_PERROR, LOG_USER);
-    } else {
-        // In background mode, uses the daemon facility by default.
-        openlog(program_name, 0, LOG_DAEMON);
-    }
-    syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
+        builder.init();
+        syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
-    responder.reset(new class responder());
+        responder = builder.build();
 
-    // if (options.host_name) {
-    //     syslog(LOG_NOTICE, "Setting the host name of the responder to '%s'",
-    //             options.host_name);
-    //     responder_set_host_name(options.host_name);
-    // } else {
-    //     int err = set_default_host_name();
-    //     if (err != 0) {
-    //         syslog(LOG_ERR, "Failed to get the default host name");
-    //         exit(EX_OSERR);
-    //     }
-    // }
+        int exit_status = EXIT_SUCCESS;
 
-    int exit_status = EXIT_SUCCESS;
-    if (options.foreground || daemon(false, false) == 0) {
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGINT);
@@ -184,59 +203,35 @@ int main(int argc, char *argv[])
         set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
 
-        if (options.pid_file) {
-            int err = make_pid_file(options.pid_file);
-            if (err != 0) {
-                syslog(LOG_ERR, "Failed to make pid file '%s': %s",
-                        options.pid_file, strerror(err));
-                exit_status = EX_CANTCREAT;
-            }
-        }
-
         if (exit_status == EXIT_SUCCESS) {
             responder->run();
 
-            if (options.pid_file) {
-                if (unlink(options.pid_file) != 0) {
+            if (builder.pid_file) {
+                if (unlink(builder.pid_file) != 0) {
                     syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
-                            options.pid_file, strerror(errno));
+                            builder.pid_file, strerror(errno));
                 }
             }
         }
-    }
 
-    responder.reset();
+        responder.reset();
 
-    if (caught_signal != 0) {
-        // Resets the handler to default and reraise the same signal.
+        if (caught_signal != 0) {
+            // Resets the handler to default and reraise the same signal.
 
-        struct sigaction default_action = {};
-        default_action.sa_handler = SIG_DFL;
-        if (sigaction(caught_signal, &default_action, 0) == 0) {
-            raise(caught_signal);
+            struct sigaction default_action = {};
+            default_action.sa_handler = SIG_DFL;
+            if (sigaction(caught_signal, &default_action, 0) == 0) {
+                raise(caught_signal);
+            }
         }
+
+        return exit_status;
     }
-
-    return exit_status;
-}
-
-int set_default_host_name(void) {
-    // Gets the maximum length of the host name.
-    long host_name_max = sysconf(_SC_HOST_NAME_MAX);
-    if (host_name_max < 0) {
-        host_name_max = HOST_NAME_MAX;
-    } else if (host_name_max > 255) {
-        // Avoids allocation overflow.
-        host_name_max = 255;
+    catch (const exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        exit(1);
     }
-
-    std::vector<char> host_name(host_name_max + 1);
-    if (gethostname(host_name.data(), host_name_max + 1) == 0) {
-        // responder_set_host_name(host_name.data());
-        return 0;
-    }
-
-    return errno;
 }
 
 int make_pid_file(const char *restrict name) {
@@ -258,70 +253,64 @@ int make_pid_file(const char *restrict name) {
     return err;
 }
 
-void parse_arguments(int argc, char *argv[],
-        struct program_options *restrict options) {
-    enum opt_char {
-        OPT_VERSION = numeric_limits<unsigned char>::max() + 1,
-        OPT_HELP,
+int parse_options(const int argc, char **const argv,
+    responder_builder &builder)
+{
+    enum
+    {
+        VERSION = -128,
+        HELP,
     };
-    static const struct option long_options[] = {
+    static const option options[] = {
         {"foreground", no_argument, 0, 'f'},
         {"pid-file", required_argument, 0, 'p'},
-        {"name", required_argument, 0, 'n'},
-        {"help", no_argument, 0, OPT_HELP},
-        {"version", no_argument, 0, OPT_VERSION},
-        {NULL, no_argument, NULL, 0},
+        {"help", no_argument, 0, HELP},
+        {"version", no_argument, 0, VERSION},
+        {}
     };
 
-    int opt;
+    int opt = -1;
     do {
-        opt = getopt_long(argc, argv, "fp:n:", long_options, 0);
+        opt = getopt_long(argc, argv, "fp:", options, nullptr);
         switch (opt) {
         case 'f':
-            options->foreground = true;
+            builder.foreground = true;
             break;
         case 'p':
-            options->pid_file = optarg;
+            builder.pid_file = optarg;
             break;
-        case 'n':
-            options->host_name = optarg;
-            break;
-        case OPT_HELP:
-            show_help(argv[0]);
-            exit(EXIT_SUCCESS);
-        case OPT_VERSION:
-            show_version();
-            exit(EXIT_SUCCESS);
+        case HELP:
+            print_usage(argv[0]);
+            exit(0);
+        case VERSION:
+            print_version();
+            exit(0);
         case '?':
-            printf(_("Try '%s --help' for more information.\n"), argv[0]);
+            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
             exit(EX_USAGE);
         }
-    } while (opt >= 0);
+    }
+    while (opt != -1);
+
+    return optind;
 }
 
-void show_help(const char *restrict name) {
-    printf(_("Usage: %s [OPTION]...\n"), name);
+void print_usage(const char *const arg0)
+{
+    printf(_("Usage: %s [OPTION]...\n"), arg0);
     printf(_("Respond to IPv6 LLMNR queries.\n"));
     putchar('\n');
-    printf(_("\
-  -f, --foreground      run in foreground\n"));
-    printf(_("\
-  -p, --pid-file=FILE   record the process ID in FILE\n"));
-    printf(_("\
-  -n, --name=NAME       set the host name of the responder to NAME\n"));
-    printf(_("\
-      --help            display this help and exit\n"));
-    printf(_("\
-      --version         output version information and exit\n"));
+    printf("  -f, --foreground      %s\n", _("run in foreground"));
+    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
+    printf("      --help            %s\n", _("display this help and exit"));
+    printf("      --version         %s\n", _("output version information and exit"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
-void show_version(void) {
-    printf(_("%s %s\n"), PACKAGE_NAME, PACKAGE_VERSION);
-#ifdef PACKAGE_REVISION
-    printf(_("Packaged from revision %s\n"), PACKAGE_REVISION);
-#endif
+void print_version()
+{
+    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
     printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
     printf(_("\
 This is free software: you are free to change and redistribute it.\n\
@@ -331,10 +320,10 @@ There is NO WARRANTY, to the extent permitted by law.\n"));
 /*
  * Handles a signal by terminating the process.
  */
-void handle_signal_to_terminate(int sig) {
-    if (caught_signal == 0) {
-        caught_signal = sig;
-
+void handle_signal_to_terminate(int sig)
+{
+    int expected = 0;
+    if (caught_signal.compare_exchange_weak(expected, sig)) {
         responder->terminate();
     }
 }

@@ -10,7 +10,6 @@ variables:
 trigger:
   - master
   - release/*
-  - feature/*
 stages:
   - stage: Default
     jobs:

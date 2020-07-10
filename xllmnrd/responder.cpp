@@ -389,14 +389,14 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 auto responder::matching_host_name(const void *const qname) const
     -> unique_ptr<uint8_t []>
 {
-    char host_name[LLMNR_LABEL_MAX + 1] = {};
+    char host_name[LLMNR_LABEL_MAX + 1] {};
     gethostname(host_name, LLMNR_LABEL_MAX);
 
     auto &&host_name_length = strcspn(host_name, ".");
     host_name[host_name_length] = '\0';
 
-    const uint8_t *i = static_cast<const uint8_t *>(qname);
-    const unsigned char *j = reinterpret_cast<unsigned char *>(host_name);
+    auto &&i = static_cast<const uint8_t *>(qname);
+    auto &&j = reinterpret_cast<unsigned char *>(host_name);
     size_t length = *i++;
     if (length != host_name_length) {
         return nullptr;

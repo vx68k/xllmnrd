@@ -89,12 +89,11 @@ struct llmnr_header {
 static inline bool llmnr_is_valid_query(const struct llmnr_header *const header)
 {
     // The following bits must be zero in any query.
-    const uint16_t mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
-    if ((header->flags & mask) == htons(0) && header->qdcount == htons(1) &&
-            header->ancount == htons(0) && header->nscount == htons(0)) {
-        return true;
-    }
-    return false;
+    const uint16_t flags_mask = htons(LLMNR_FLAG_QR | LLMNR_FLAG_OPCODE);
+    return (header->flags & flags_mask) == htons(0)
+        && header->qdcount == htons(1)
+        && header->ancount == htons(0)
+        && header->nscount == htons(0);
 }
 
 /**

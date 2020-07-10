@@ -235,17 +235,17 @@ void responder::process_udp6()
     }
 }
 
-ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
+ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
     sockaddr_in6 &sender, in6_pktinfo &pktinfo)
 {
-    iovec iov[] = {
+    iovec iov[1] {
         {
             buffer,      // .iov_base
             buffer_size, // .iov_len
         },
     };
     unsigned char control[128] = {};
-    msghdr msg = {
+    msghdr msg {
         &sender,        // .msg_name
         sizeof sender,  // .msg_namelen
         iov,            // .msg_iov
@@ -254,14 +254,14 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
         sizeof control, // .msg_controllen
         0,              // .msg_flags
     };
-    ssize_t received = recvmsg(_udp6, &msg, 0);
+    auto &&received = recvmsg(_udp6, &msg, 0);
     if (received >= 0) {
         if (msg.msg_namelen < sizeof sender) {
             errno = ENOMSG;
             return -1;
         }
 
-        auto cmsg = CMSG_FIRSTHDR(&msg);
+        auto &&cmsg = CMSG_FIRSTHDR(&msg);
         while (cmsg != nullptr) {
             if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO) {
                 if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {

@@ -278,17 +278,23 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     const size_t query_size, const sockaddr_in6 &sender,
     const unsigned int interface_index)
 {
-    // These must be checked before.
+    // These must already be checked.
     assert(query_size >= sizeof query);
 
-    const uint8_t *qname = reinterpret_cast<const uint8_t *>(query + 1);
+    auto &&qname = reinterpret_cast<const uint8_t *>(llmnr_data(query));
     size_t remains = query_size - sizeof *query;
 
-    const uint8_t *qname_end = llmnr_skip_name(qname, &remains);
+    auto &&qname_end = llmnr_skip_name(qname, &remains);
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
         if (name != nullptr) {
-            respond_for_name(_udp6, query, qname_end, name, sender, interface_index);
+            if ((query->flags & htons(LLMNR_FLAG_C)) == 0) {
+                respond_for_name(_udp6, query, qname_end, name, sender,
+                    interface_index);
+            }
+            else {
+                // TODO: Handle conflict notifications.
+            }
         }
     }
     else {

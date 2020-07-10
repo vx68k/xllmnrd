@@ -95,7 +95,7 @@ inline void log_with_sender(const int pri, const char *const message,
 
 template<class T>
 inline void log_with_sender(const int pri, const char *const message,
-    T *sender)
+    const T *const sender)
 {
     log_with_sender(pri, message, sender, sizeof *sender);
 }
@@ -216,11 +216,11 @@ void responder::process_udp6()
 
         // The sender address must not be multicast.
         if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-            log_with_sender(LOG_INFO, "packet from a multicast address", &sender, sizeof sender);
+            log_with_sender(LOG_INFO, "packet from a multicast address", &sender);
             return;
         }
         if (size_t(packet_size) < sizeof (llmnr_header)) {
-            log_with_sender(LOG_INFO, "short packet", &sender, sizeof sender);
+            log_with_sender(LOG_INFO, "short packet", &sender);
             return;
         }
 
@@ -230,7 +230,7 @@ void responder::process_udp6()
             handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
         }
         else {
-            log_with_sender(LOG_INFO, "non-query packet", &sender, sizeof sender);
+            log_with_sender(LOG_INFO, "non-query packet", &sender);
         }
     }
 }
@@ -305,7 +305,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
         }
     }
     else {
-        log_with_sender(LOG_INFO, "invalid question", &sender, sizeof sender);
+        log_with_sender(LOG_INFO, "invalid question", &sender);
     }
 }
 

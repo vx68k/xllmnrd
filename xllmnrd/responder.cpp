@@ -77,7 +77,7 @@ inline void log_with_sender(const int pri, const char *const message,
         case AF_INET6:
             if (sender_size >= sizeof (sockaddr_in6)) {
                 auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
-                char addrstr[INET6_ADDRSTRLEN];
+                char addrstr[INET6_ADDRSTRLEN] = {};
                 inet_ntop(AF_INET6, &in6->sin6_addr, addrstr, INET6_ADDRSTRLEN);
                 syslog(pri, "%s from %s%%%" PRIu32, message, addrstr,
                     in6->sin6_scope_id);
@@ -244,7 +244,7 @@ ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
             buffer_size, // .iov_len
         },
     };
-    unsigned char control[128];
+    unsigned char control[128] = {};
     msghdr msg = {
         &sender,         // .msg_name
         sizeof sender, // .msg_namelen
@@ -322,7 +322,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         if (qclass == LLMNR_QCLASS_IN) {
             in_addresses = _interface_manager->in_addresses(interface_index);
             if (in_addresses.empty()) {
-                char name[IF_NAMESIZE];
+                char name[IF_NAMESIZE] = {};
                 if_indextoname(interface_index, name);
                 syslog(LOG_NOTICE, "no IPv4 interface addresses for %s", name);
             }
@@ -332,7 +332,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         if (qclass == LLMNR_QCLASS_IN) {
             in6_addresses = _interface_manager->in6_addresses(interface_index);
             if (in6_addresses.empty()) {
-                char name[IF_NAMESIZE];
+                char name[IF_NAMESIZE] = {};
                 if_indextoname(interface_index, name);
                 syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
             }
@@ -437,7 +437,7 @@ auto responder::matching_host_name(const void *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE];
+        char interface_name[IF_NAMESIZE] = {};
         if_indextoname(event.interface_index, interface_name);
 
         const ipv6_mreq mr = {
@@ -458,7 +458,7 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE];
+        char interface_name[IF_NAMESIZE] = {};
         if_indextoname(event.interface_index, interface_name);
 
         const ipv6_mreq mr = {

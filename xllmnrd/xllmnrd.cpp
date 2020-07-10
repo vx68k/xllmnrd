@@ -68,6 +68,13 @@ using std::unique_ptr;
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
+/**
+ * Makes a pid file.
+ * @param __name name of the pid file.
+ * @return 0 if no error is detected, or non-zero error number.
+ */
+static int make_pid_file(const char *__name);
+
 struct responder_builder
 {
     bool foreground;
@@ -91,6 +98,14 @@ struct responder_builder
             }
         }
 
+        if (pid_file) {
+            int err = make_pid_file(pid_file);
+            if (err != 0) {
+                throw system_error(err, generic_category(),
+                    "could not make a pid file");
+            }
+        }
+
         unique_ptr<class responder> responder {new class responder()};
         return responder;
     }
@@ -99,13 +114,6 @@ struct responder_builder
 static unique_ptr<class responder> responder;
 
 static atomic<int> caught_signal;
-
-/**
- * Makes a pid file.
- * @param __name name of the pid file.
- * @return 0 if no error is detected, or non-zero error number.
- */
-static int make_pid_file(const char *__name);
 
 /**
  * Parses command-line arguments for options.
@@ -188,15 +196,6 @@ int main(const int argc, char **const argv)
 
         set_signal_handler(SIGINT, handle_signal_to_terminate, &mask);
         set_signal_handler(SIGTERM, handle_signal_to_terminate, &mask);
-
-        if (builder.pid_file) {
-            int err = make_pid_file(builder.pid_file);
-            if (err != 0) {
-                syslog(LOG_ERR, "Failed to make pid file '%s': %s",
-                        builder.pid_file, strerror(err));
-                exit_status = EX_CANTCREAT;
-            }
-        }
 
         if (exit_status == EXIT_SUCCESS) {
             responder->run();

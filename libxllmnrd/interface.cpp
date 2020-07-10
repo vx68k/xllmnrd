@@ -184,13 +184,13 @@ void interface_manager::add_interface_address(unsigned int index,
                 if (debug_level() >= 0) {
                     char ipv4[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address %s added on %s", ipv4,
+                    syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
                         interface_name);
                 }
             }
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
+            syslog(LOG_INFO, "short IPv4 address (size = %zu) on %s",
                 address_size, interface_name);
         }
         break;
@@ -205,19 +205,19 @@ void interface_manager::add_interface_address(unsigned int index,
                 if (debug_level() >= 0) {
                     char ipv6[INET6_ADDRSTRLEN];
                     inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address %s added on %s", ipv6,
+                    syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
                         interface_name);
                 }
             }
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",
+            syslog(LOG_INFO, "short IPv6 address (size = %zu) on %s",
                 address_size, interface_name);
         }
         break;
 
     default:
-        syslog(LOG_INFO, "Ignored an address of unknown family %d on %s",
+        syslog(LOG_INFO, "address of unknown family %d on %s",
             family, interface_name);
         break;
     }
@@ -242,13 +242,13 @@ void interface_manager::remove_interface_address(unsigned int index,
                 if (debug_level() >= 0) {
                     char ipv4[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address %s removed on %s", ipv4,
+                    syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
                         interface_name);
                 }
             }
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv4 address (size = %zu) on %s",
+            syslog(LOG_INFO, "short IPv4 address (size = %zu) on %s",
                 address_size, interface_name);
         }
         break;
@@ -263,19 +263,19 @@ void interface_manager::remove_interface_address(unsigned int index,
                 if (debug_level() >= 0) {
                     char ipv6[INET6_ADDRSTRLEN];
                     inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address %s removed on %s", ipv6,
+                    syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
                         interface_name);
                 }
             }
         }
         else {
-            syslog(LOG_INFO, "Ignored a short IPv6 address (size = %zu) on %s",
+            syslog(LOG_INFO, "short IPv6 address (size = %zu) on %s",
                 address_size, interface_name);
         }
         break;
 
     default:
-        syslog(LOG_INFO, "Ignored an address of unknown family %d on %s",
+        syslog(LOG_INFO, "address of unknown family %d on %s",
             family, interface_name);
         break;
     }

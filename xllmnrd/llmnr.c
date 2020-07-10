@@ -22,6 +22,4 @@
 
 #include "llmnr.h"
 
-#include <netinet/in.h>
-
 const struct in6_addr in6addr_mc_llmnr = IN6ADDR_MC_LLMNR_INIT;

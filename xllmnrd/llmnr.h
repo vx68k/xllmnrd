@@ -22,7 +22,7 @@
 #include <netinet/in.h> /* struct in6_addr */
 
 /**
- * Port number for LLMNR.
+ * UDP port for LLMNR.
  */
 #define LLMNR_PORT 5355
 
@@ -32,9 +32,8 @@
  */
 extern const struct in6_addr in6addr_mc_llmnr;
 #define IN6ADDR_MC_LLMNR_INIT { \
-    .s6_addr = {0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3} \
+    {{0xff, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3}} \
 }
 #endif
-
 
 #endif

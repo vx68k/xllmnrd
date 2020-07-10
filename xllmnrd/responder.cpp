@@ -196,7 +196,7 @@ void responder::terminate()
 void responder::process_udp6()
 {
     if (_running) {
-        ssize_t packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+        auto &&packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
         if (packet_size < 0) {
             syslog(LOG_ERR, "could not receive a packet: %s", strerror(errno));
             return;
@@ -204,11 +204,8 @@ void responder::process_udp6()
 
         unique_ptr<char []> packet {new char[packet_size]};
         sockaddr_in6 sender {};
-        in6_pktinfo pktinfo {
-            in6addr_any, // .ipi6_addr
-            0,           // .ipi6_ifindex
-        };
-        packet_size = recv_udp6(&packet[0], packet_size, sender, pktinfo);
+        in6_pktinfo ipi {};
+        packet_size = recv_udp6(&packet[0], packet_size, sender, ipi);
         if (packet_size < 0) {
             syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
             return;
@@ -216,7 +213,7 @@ void responder::process_udp6()
 
         // The sender address must not be multicast.
         if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-            log_with_sender(LOG_INFO, "packet from a multicast address", &sender);
+            log_with_sender(LOG_INFO, "invalid source packet", &sender);
             return;
         }
         if (size_t(packet_size) < sizeof (llmnr_header)) {
@@ -224,10 +221,9 @@ void responder::process_udp6()
             return;
         }
 
-        const llmnr_header *header =
-            reinterpret_cast<const llmnr_header *>(&packet[0]);
+        auto &&header = reinterpret_cast<const llmnr_header *>(&packet[0]);
         if (llmnr_is_valid_query(header)) {
-            handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
+            handle_udp6_query(header, packet_size, sender, ipi.ipi6_ifindex);
         }
         else {
             log_with_sender(LOG_INFO, "non-query packet", &sender);

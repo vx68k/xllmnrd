@@ -202,10 +202,10 @@ void responder::process_udp6()
             return;
         }
 
-        unique_ptr<char []> packet {new char[packet_size]};
+        unique_ptr<char []> buffer {new char[packet_size]};
         sockaddr_in6 sender {};
         in6_pktinfo ipi {};
-        packet_size = recv_udp6(&packet[0], packet_size, sender, ipi);
+        packet_size = recv_udp6(&buffer[0], packet_size, sender, ipi);
         if (packet_size < 0) {
             syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
             return;
@@ -221,9 +221,11 @@ void responder::process_udp6()
             return;
         }
 
-        auto &&header = reinterpret_cast<const llmnr_header *>(&packet[0]);
-        if (llmnr_is_valid_query(header)) {
-            handle_udp6_query(header, packet_size, sender, ipi.ipi6_ifindex);
+        auto &&packet = reinterpret_cast<const llmnr_header *>(&buffer[0]);
+        if (llmnr_is_valid_query(packet)) {
+            if ((packet->flags & htons(LLMNR_FLAG_C)) == 0) {
+                handle_udp6_query(packet, packet_size, sender, ipi.ipi6_ifindex);
+            }
         }
         else {
             log_with_sender(LOG_INFO, "non-query packet", &sender);
@@ -285,13 +287,8 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
         if (name != nullptr) {
-            if ((query->flags & htons(LLMNR_FLAG_C)) == 0) {
-                respond_for_name(_udp6, query, qname_end, name, sender,
-                    interface_index);
-            }
-            else {
-                // TODO: Handle conflict notifications.
-            }
+            respond_for_name(_udp6, query, qname_end, name, sender,
+                interface_index);
         }
     }
     else {

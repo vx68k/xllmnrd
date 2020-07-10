@@ -34,6 +34,7 @@
 #include <atomic>
 #include <vector>
 #include <locale>
+#include <system_error>
 #include <limits>
 #include <cstring>
 #include <cerrno>
@@ -41,12 +42,15 @@
 #include <cstdlib>
 
 using std::atomic;
+using std::exception;
 using std::fclose;
 using std::fopen;
 using std::fprintf;
+using std::generic_category;
 using std::locale;
 using std::putchar;
 using std::printf;
+using std::system_error;
 using std::runtime_error;
 using std::unique_ptr;
 
@@ -80,6 +84,11 @@ struct responder_builder
         } else {
             // In background mode, uses the daemon facility by default.
             openlog(nullptr, 0, LOG_DAEMON);
+
+            if (daemon(false, false) == -1) {
+                throw system_error(errno, generic_category(),
+                    "could not become a daemon");
+            }
         }
 
         unique_ptr<class responder> responder {new class responder()};
@@ -163,14 +172,15 @@ int main(const int argc, char **const argv)
 #endif
     textdomain(PACKAGE_TARNAME);
 
-    responder_builder builder {};
-    parse_options(argc, argv, builder);
+    try {
+        responder_builder builder {};
+        parse_options(argc, argv, builder);
 
-    responder = builder.build();
-    syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
+        responder = builder.build();
+        syslog(LOG_INFO, "%s %s started", PACKAGE_NAME, PACKAGE_VERSION);
 
-    int exit_status = EXIT_SUCCESS;
-    if (builder.foreground || daemon(false, false) == 0) {
+        int exit_status = EXIT_SUCCESS;
+
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGINT);
@@ -198,21 +208,25 @@ int main(const int argc, char **const argv)
                 }
             }
         }
-    }
 
-    responder.reset();
+        responder.reset();
 
-    if (caught_signal != 0) {
-        // Resets the handler to default and reraise the same signal.
+        if (caught_signal != 0) {
+            // Resets the handler to default and reraise the same signal.
 
-        struct sigaction default_action = {};
-        default_action.sa_handler = SIG_DFL;
-        if (sigaction(caught_signal, &default_action, 0) == 0) {
-            raise(caught_signal);
+            struct sigaction default_action = {};
+            default_action.sa_handler = SIG_DFL;
+            if (sigaction(caught_signal, &default_action, 0) == 0) {
+                raise(caught_signal);
+            }
         }
-    }
 
-    return exit_status;
+        return exit_status;
+    }
+    catch (const exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        exit(1);
+    }
 }
 
 int make_pid_file(const char *restrict name) {

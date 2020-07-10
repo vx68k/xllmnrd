@@ -77,25 +77,23 @@ static int make_pid_file(const char *__name);
 
 struct responder_builder
 {
-    bool foreground;
-    const char *pid_file;
+    bool foreground = false;
+    const char *pid_file = nullptr;
 
     /**
      * Builds a responder object.
      */
     auto build() -> unique_ptr<class responder>
     {
-        if (foreground) {
-            // In foreground mode, tries to use the standard error stream as well.
-            openlog(nullptr, LOG_PERROR, LOG_USER);
-        } else {
-            // In background mode, uses the daemon facility by default.
-            openlog(nullptr, 0, LOG_DAEMON);
+        if (not(foreground)) {
+            foreground = true;
 
             if (daemon(false, false) == -1) {
                 throw system_error(errno, generic_category(),
                     "could not become a daemon");
             }
+
+            openlog(nullptr, 0, LOG_DAEMON);
         }
 
         if (pid_file) {
@@ -179,6 +177,9 @@ int main(const int argc, char **const argv)
     bindtextdomain(PACKAGE_TARNAME, LOCALEDIR);
 #endif
     textdomain(PACKAGE_TARNAME);
+
+    // Tries to use the standard error stream as well.
+    openlog(nullptr, LOG_PERROR, LOG_USER);
 
     try {
         responder_builder builder {};

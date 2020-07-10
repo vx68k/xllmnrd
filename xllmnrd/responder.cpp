@@ -421,11 +421,11 @@ auto responder::matching_host_name(const void *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = {};
+        char interface_name[IF_NAMESIZE] {};
         if_indextoname(event.interface_index, interface_name);
 
-        const ipv6_mreq mr = {
-            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+        const ipv6_mreq mr {
+            in6addr_mc_llmnr,      // .ipv6mr_multiaddr
             event.interface_index, // .ipv6mr_interface
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
@@ -442,11 +442,11 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = {};
+        char interface_name[IF_NAMESIZE] {};
         if_indextoname(event.interface_index, interface_name);
 
-        const ipv6_mreq mr = {
-            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+        const ipv6_mreq mr {
+            in6addr_mc_llmnr,      // .ipv6mr_multiaddr
             event.interface_index, // .ipv6mr_interface
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {

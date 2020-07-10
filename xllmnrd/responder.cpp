@@ -326,65 +326,62 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         }
     }
 
-    std::vector<uint8_t> response
-        {reinterpret_cast<const uint8_t *>(query), qname_end + 4};
+    std::vector<uint8_t> buffer {
+        reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
-    auto response_header = reinterpret_cast<llmnr_header *>(response.data());
-    response_header->flags = htons(LLMNR_FLAG_QR);
-    response_header->ancount = htons(0);
-    response_header->nscount = htons(0);
-    response_header->arcount = htons(0);
+    auto &&response = reinterpret_cast<llmnr_header *>(buffer.data());
+    response->flags = htons(LLMNR_FLAG_QR);
+    response->ancount = htons(0);
+    response->nscount = htons(0);
+    response->arcount = htons(0);
 
-    auto &&answer_offset = response.size();
+    auto &&answer_offset = buffer.size();
+    auto &&buffer_back = back_inserter(buffer);
     for_each(in_addresses.begin(), in_addresses.end(), [&](const in_addr &i) {
-        auto &&response_back = back_inserter(response);
-
-        if (response_header->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, response_back);
-            response.push_back(0);
+        if (response->ancount == htons(0)) {
+            copy_n(&name[0], name[0] + 1, buffer_back);
+            buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, response_back);
+            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
         }
 
-        llmnr_put_uint16(LLMNR_TYPE_A, response_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
+        llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, response_back);
-        llmnr_put_uint16(sizeof i, response_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
+        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint16(sizeof i, buffer_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response_header = reinterpret_cast<llmnr_header *>(response.data());
-        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+        response = reinterpret_cast<llmnr_header *>(buffer.data());
+        response->ancount = htons(ntohs(response->ancount) + 1);
     });
     for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
-        auto &&response_back = back_inserter(response);
-
-        if (response_header->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, response_back);
-            response.push_back(0);
+        if (response->ancount == htons(0)) {
+            copy_n(&name[0], name[0] + 1, buffer_back);
+            buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, response_back);
+            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
         }
 
-        llmnr_put_uint16(LLMNR_TYPE_AAAA, response_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
+        llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, response_back);
-        llmnr_put_uint16(sizeof i, response_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
+        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint16(sizeof i, buffer_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response_header = reinterpret_cast<llmnr_header *>(response.data());
-        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+        response = reinterpret_cast<llmnr_header *>(buffer.data());
+        response->ancount = htons(ntohs(response->ancount) + 1);
     });
 
     // Sends the response.
-    if (sendto(fd, response.data(), response.size(), 0, &sender) == -1) {
-        if (response.size() > 512 && errno == EMSGSIZE) {
+    if (sendto(fd, buffer.data(), buffer.size(), 0, &sender) == -1) {
+        if (buffer.size() > 512 && errno == EMSGSIZE) {
             // Resends with truncation.
-            response_header->flags |= htons(LLMNR_FLAG_TC);
-            sendto(fd, response.data(), 512, 0, &sender);
+            response->flags |= htons(LLMNR_FLAG_TC);
+            sendto(fd, buffer.data(), 512, 0, &sender);
         }
     }
 }

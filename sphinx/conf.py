@@ -129,7 +129,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'xllmnrd.tex', 'xllmnrd Documentation',
+    (master_doc, 'xllmnrd.tex', 'Xenium LLMNR Responder Reference Manual',
      'Kaz Nishimura', 'manual'),
 ]
 

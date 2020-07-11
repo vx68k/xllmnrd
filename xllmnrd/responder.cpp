@@ -19,10 +19,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifndef _GNU_SOURCE
-// This definition might be required to enable RFC 3542 API.
-#define _GNU_SOURCE 1
-#endif
 
 #include "responder.h"
 

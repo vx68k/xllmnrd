@@ -1,11 +1,16 @@
 This file describes major changes and important notes for each release.
 
+# Version 4.0
+
+  - The responder code has been re-implemented in C++ and now has support for
+    IPv4 address queries (A records) on IPv6.
+
 # Version 3.0
 
   - This program has a new package name: Xenium LLMNR Responder.
 
   - The interface monitoring code has been re-implemented using C++ threads
-    and no longer has fixed limits in size of the internal tables.
+    and no longer has fixed limits in the size of the internal tables.
 
 # Version 2.0
 

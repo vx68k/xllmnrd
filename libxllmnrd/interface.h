@@ -21,11 +21,11 @@
 
 #include "posix.h"
 #include <netinet/in.h>
+#include <unistd.h>
 #include <mutex>
 #include <unordered_map>
 #include <set>
 #include <atomic>
-#include <cstddef>
 
 // Specializations of 'std::less' for address types.
 
@@ -44,8 +44,6 @@ struct std::less<in6_addr>
 
 namespace xllmnrd
 {
-    using std::size_t;
-
     class interface_manager;
 
     /**

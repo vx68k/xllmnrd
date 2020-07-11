@@ -10,7 +10,7 @@ Xenium LLMNR Responder Reference Manual
    :maxdepth: 2
    :caption: Contents:
 
-
+   internals
 
 Indices and tables
 ==================

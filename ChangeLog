@@ -1,4 +1,70 @@
+2020-07-11  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* xllmnrd/xllmnrd.cpp: Make the signal handler have "C" linkage.
+	[14e8bcb27e12]
+
+	* xllmnrd/responder.cpp, xllmnrd/xllmnrd.cpp: Remove '#define's for
+	'_GNU_SOURCE'.
+	[0ef30c104959]
+
+	* NEWS: Update for version 4.0.
+	[8065f498826d]
+
+	* xllmnrd/responder.cpp: Use 'PF_INET6' to open a UDP socket.
+	[c2bd86d1e894]
+
+	* libxllmnrd/rtnetlink.cpp: Use 'PF_NETLINK' to open a socket.
+	[49e04cc0de7f]
+
+	* .gitignore, .hgignore: Update the ignore list.
+	[5a00a25c91f1]
+
+	* README.md: Modify the introduction text.
+	[0a3221f82951]
+
+	* README.md: Update the introduction.
+	[1a88383aa90f]
+
+	* xllmnrd/Makefile.am: Use 'top_builddir' for the library paths.
+	[835f9bae540b]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/llmnr.c, xllmnrd/Makefile.am,
+	xllmnrd/llmnr.c: Move 'llmnr.c'.
+	[439924cdf1e2]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/llmnr.h, xllmnrd/Makefile.am,
+	xllmnrd/llmnr.h: Move 'llmnr.h'.
+	[e2edbef80d97]
+
 2020-07-10  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/interface.cpp: Edit log messages.
+	[44ed7d0b3909]
+
+	* xllmnrd/responder.cpp: Rewrite 'interface_enabled' and
+	'interface_disabled'.
+	[6f4078b8658f]
+
+	* xllmnrd/responder.cpp: Rewrite 'matching_host_name'.
+	[4aad41aac752]
+
+	* xllmnrd/responder.cpp: Rewrite 'respond_for_name'.
+	[de0de29dc097]
+
+	* xllmnrd/responder.cpp: Rewrite 'process_udp6'.
+	[af40c2592f73]
+
+	* xllmnrd/responder.cpp: Rewrite 'process_udp6'.
+	[f291dc2bd186]
+
+	* xllmnrd/responder.cpp: Change local variable initializations.
+	[7714a03a277c]
+
+	* xllmnrd/responder.cpp: Replace nested switch statements with one if.
+	[6db760086b99]
+
+	* ChangeLog: Update the change log.
+	[de423961251f]
 
 	* po/en.po, po/ja.po, po/xllmnrd.pot: Update translations.
 	[482656b1ca3e]

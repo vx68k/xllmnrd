@@ -102,7 +102,7 @@ inline void log_with_sender(const int pri, const char *const message,
 
 int responder::open_udp6(const in_port_t port)
 {
-    int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    int udp6 = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp6 == -1) {
         throw system_error(errno, generic_category(), "could not open a UDP socket");
     }

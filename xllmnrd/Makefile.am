@@ -12,7 +12,9 @@ noinst_HEADERS = responder.h llmnr_packet.h
 xllmnrd_SOURCES = \
 xllmnrd.cpp \
 responder.cpp
-xllmnrd_LDADD = ../libxllmnrd/libxllmnrd.a ../libgnu/libgnu.a
+xllmnrd_LDADD = \
+$(top_builddir)/libxllmnrd/libxllmnrd.a \
+$(top_builddir)/libgnu/libgnu.a
 
 EXTRA_DIST = xllmnrd.8.in xllmnrd.init.in
 

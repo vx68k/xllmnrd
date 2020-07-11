@@ -138,8 +138,8 @@ static void print_usage(const char *arg0);
  */
 static void print_version();
 
-
-static void handle_signal_to_terminate(int __sig);
+// A signal handler should have "C" linkage.
+extern "C" void handle_signal_to_terminate(int __sig);
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.

@@ -19,14 +19,14 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'xllmnrd'
-copyright = '2020, Kaz Nishimura'
+project = 'Xenium LLMNR Responder'
+copyright = '2020 Kaz Nishimura'
 author = 'Kaz Nishimura'
 
 # The short X.Y version
-version = ''
+version = '4.0'
 # The full version, including alpha/beta/rc tags
-release = '4.0'
+release = '4.0-DRAFT'
 
 
 # -- General configuration ---------------------------------------------------

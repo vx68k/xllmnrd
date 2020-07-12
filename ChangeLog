@@ -1,3 +1,26 @@
+2020-07-12  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update the translations.
+	[6447acc4a6f1]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4.0.
+	[0477a114dfd7]
+
+	* xllmnrd/responder.cpp: Remove log output when there is no interface
+	address.
+	[1b4605e96255]
+
+	* libxllmnrd/interface.cpp, xllmnrd/responder.cpp: Set the default
+	interface name.
+	[dbbb359df897]
+
+	* libxllmnrd/interface.h: Use 'size_t' from <unistd.h>.
+	[f6b31ecce82b]
+
+	* ChangeLog: Update the change log.
+	[0f7d609469d8]
+
 2020-07-11  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* xllmnrd/xllmnrd.cpp: Make the signal handler have "C" linkage.

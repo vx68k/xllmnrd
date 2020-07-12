@@ -19,10 +19,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifndef _GNU_SOURCE
-// This definition might be required to enable RFC 3542 API.
-#define _GNU_SOURCE 1
-#endif
 
 #include "responder.h"
 
@@ -102,7 +98,7 @@ inline void log_with_sender(const int pri, const char *const message,
 
 int responder::open_udp6(const in_port_t port)
 {
-    int udp6 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+    int udp6 = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp6 == -1) {
         throw system_error(errno, generic_category(), "could not open a UDP socket");
     }
@@ -196,19 +192,16 @@ void responder::terminate()
 void responder::process_udp6()
 {
     if (_running) {
-        ssize_t packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
+        auto &&packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
         if (packet_size < 0) {
             syslog(LOG_ERR, "could not receive a packet: %s", strerror(errno));
             return;
         }
 
-        unique_ptr<char []> packet {new char[packet_size]};
+        unique_ptr<char []> buffer {new char[packet_size]};
         sockaddr_in6 sender {};
-        in6_pktinfo pktinfo {
-            in6addr_any, // .ipi6_addr
-            0,           // .ipi6_ifindex
-        };
-        packet_size = recv_udp6(&packet[0], packet_size, sender, pktinfo);
+        in6_pktinfo ipi {};
+        packet_size = recv_udp6(&buffer[0], packet_size, sender, ipi);
         if (packet_size < 0) {
             syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
             return;
@@ -216,7 +209,7 @@ void responder::process_udp6()
 
         // The sender address must not be multicast.
         if (IN6_IS_ADDR_MULTICAST(&sender.sin6_addr)) {
-            log_with_sender(LOG_INFO, "packet from a multicast address", &sender);
+            log_with_sender(LOG_INFO, "invalid source packet", &sender);
             return;
         }
         if (size_t(packet_size) < sizeof (llmnr_header)) {
@@ -224,10 +217,11 @@ void responder::process_udp6()
             return;
         }
 
-        const llmnr_header *header =
-            reinterpret_cast<const llmnr_header *>(&packet[0]);
-        if (llmnr_is_valid_query(header)) {
-            handle_udp6_query(header, packet_size, sender, pktinfo.ipi6_ifindex);
+        auto &&packet = reinterpret_cast<const llmnr_header *>(&buffer[0]);
+        if (llmnr_is_valid_query(packet)) {
+            if ((packet->flags & htons(LLMNR_FLAG_C)) == 0) {
+                handle_udp6_query(packet, packet_size, sender, ipi.ipi6_ifindex);
+            }
         }
         else {
             log_with_sender(LOG_INFO, "non-query packet", &sender);
@@ -235,46 +229,40 @@ void responder::process_udp6()
     }
 }
 
-ssize_t responder::recv_udp6(void *const buffer, size_t buffer_size,
+ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
     sockaddr_in6 &sender, in6_pktinfo &pktinfo)
 {
-    iovec iov[] = {
+    iovec iov[1] {
         {
             buffer,      // .iov_base
             buffer_size, // .iov_len
         },
     };
     unsigned char control[128] = {};
-    msghdr msg = {
-        &sender,         // .msg_name
-        sizeof sender, // .msg_namelen
+    msghdr msg {
+        &sender,        // .msg_name
+        sizeof sender,  // .msg_namelen
         iov,            // .msg_iov
         1,              // .msg_iovlen
         control,        // .msg_control
         sizeof control, // .msg_controllen
         0,              // .msg_flags
     };
-    ssize_t received = recvmsg(_udp6, &msg, 0);
+    auto &&received = recvmsg(_udp6, &msg, 0);
     if (received >= 0) {
         if (msg.msg_namelen < sizeof sender) {
             errno = ENOMSG;
             return -1;
         }
 
-        cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
-        while (cmsg) {
-            switch (cmsg->cmsg_level) {
-            case IPPROTO_IPV6:
-                switch (cmsg->cmsg_type) {
-                case IPV6_PKTINFO:
-                    if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {
-                        pktinfo = *reinterpret_cast<in6_pktinfo *>
-                            (CMSG_DATA(cmsg));
-                    }
-                    break;
+        auto &&cmsg = CMSG_FIRSTHDR(&msg);
+        while (cmsg != nullptr) {
+            if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO) {
+                if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {
+                    pktinfo = *reinterpret_cast<in6_pktinfo *>(CMSG_DATA(cmsg));
                 }
-                break;
             }
+
             cmsg = CMSG_NXTHDR(&msg, cmsg);
         }
     }
@@ -295,13 +283,8 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
         if (name != nullptr) {
-            if ((query->flags & htons(LLMNR_FLAG_C)) == 0) {
-                respond_for_name(_udp6, query, qname_end, name, sender,
-                    interface_index);
-            }
-            else {
-                // TODO: Handle conflict notifications.
-            }
+            respond_for_name(_udp6, query, qname_end, name, sender,
+                interface_index);
         }
     }
     else {
@@ -318,86 +301,71 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 
     auto &&qtype = llmnr_get_uint16(qname_end);
     auto &&qclass = llmnr_get_uint16(qname_end + 2);
-    if (qtype == LLMNR_QTYPE_A || qtype == LLMNR_QTYPE_ANY) {
-        if (qclass == LLMNR_QCLASS_IN) {
+    if (qclass == LLMNR_QCLASS_IN) {
+        if (qtype == LLMNR_QTYPE_A || qtype == LLMNR_QTYPE_ANY) {
             in_addresses = _interface_manager->in_addresses(interface_index);
-            if (in_addresses.empty()) {
-                char name[IF_NAMESIZE] = {};
-                if_indextoname(interface_index, name);
-                syslog(LOG_NOTICE, "no IPv4 interface addresses for %s", name);
-            }
         }
-    }
-    if (qtype == LLMNR_QTYPE_AAAA || qtype == LLMNR_QTYPE_ANY) {
-        if (qclass == LLMNR_QCLASS_IN) {
+        if (qtype == LLMNR_QTYPE_AAAA || qtype == LLMNR_QTYPE_ANY) {
             in6_addresses = _interface_manager->in6_addresses(interface_index);
-            if (in6_addresses.empty()) {
-                char name[IF_NAMESIZE] = {};
-                if_indextoname(interface_index, name);
-                syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
-            }
         }
     }
 
-    std::vector<uint8_t> response
-        {reinterpret_cast<const uint8_t *>(query), qname_end + 4};
+    std::vector<uint8_t> buffer {
+        reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
-    auto response_header = reinterpret_cast<llmnr_header *>(response.data());
-    response_header->flags = htons(LLMNR_FLAG_QR);
-    response_header->ancount = htons(0);
-    response_header->nscount = htons(0);
-    response_header->arcount = htons(0);
+    auto &&response = reinterpret_cast<llmnr_header *>(buffer.data());
+    response->flags = htons(LLMNR_FLAG_QR);
+    response->ancount = htons(0);
+    response->nscount = htons(0);
+    response->arcount = htons(0);
 
-    auto &&answer_offset = response.size();
+    auto &&answer_offset = buffer.size();
+    auto &&buffer_back = back_inserter(buffer);
     for_each(in_addresses.begin(), in_addresses.end(), [&](const in_addr &i) {
-        auto &&response_back = back_inserter(response);
-
-        if (response_header->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, response_back);
-            response.push_back(0);
+        if (response->ancount == htons(0)) {
+            copy_n(&name[0], name[0] + 1, buffer_back);
+            buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, response_back);
+            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
         }
 
-        llmnr_put_uint16(LLMNR_TYPE_A, response_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
+        llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, response_back);
-        llmnr_put_uint16(sizeof i, response_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
+        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint16(sizeof i, buffer_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response_header = reinterpret_cast<llmnr_header *>(response.data());
-        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+        response = reinterpret_cast<llmnr_header *>(buffer.data());
+        response->ancount = htons(ntohs(response->ancount) + 1);
     });
     for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
-        auto &&response_back = back_inserter(response);
-
-        if (response_header->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, response_back);
-            response.push_back(0);
+        if (response->ancount == htons(0)) {
+            copy_n(&name[0], name[0] + 1, buffer_back);
+            buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, response_back);
+            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
         }
 
-        llmnr_put_uint16(LLMNR_TYPE_AAAA, response_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, response_back);
+        llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
+        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, response_back);
-        llmnr_put_uint16(sizeof i, response_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, response_back);
+        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint16(sizeof i, buffer_back);
+        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response_header = reinterpret_cast<llmnr_header *>(response.data());
-        response_header->ancount = htons(ntohs(response_header->ancount) + 1);
+        response = reinterpret_cast<llmnr_header *>(buffer.data());
+        response->ancount = htons(ntohs(response->ancount) + 1);
     });
 
     // Sends the response.
-    if (sendto(fd, response.data(), response.size(), 0, &sender) == -1) {
-        if (response.size() > 512 && errno == EMSGSIZE) {
+    if (sendto(fd, buffer.data(), buffer.size(), 0, &sender) == -1) {
+        if (buffer.size() > 512 && errno == EMSGSIZE) {
             // Resends with truncation.
-            response_header->flags |= htons(LLMNR_FLAG_TC);
-            sendto(fd, response.data(), 512, 0, &sender);
+            response->flags |= htons(LLMNR_FLAG_TC);
+            sendto(fd, buffer.data(), 512, 0, &sender);
         }
     }
 }
@@ -405,14 +373,14 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 auto responder::matching_host_name(const void *const qname) const
     -> unique_ptr<uint8_t []>
 {
-    char host_name[LLMNR_LABEL_MAX + 1] = {};
+    char host_name[LLMNR_LABEL_MAX + 1] {};
     gethostname(host_name, LLMNR_LABEL_MAX);
 
     auto &&host_name_length = strcspn(host_name, ".");
     host_name[host_name_length] = '\0';
 
-    const uint8_t *i = static_cast<const uint8_t *>(qname);
-    const unsigned char *j = reinterpret_cast<unsigned char *>(host_name);
+    auto &&i = static_cast<const uint8_t *>(qname);
+    auto &&j = reinterpret_cast<unsigned char *>(host_name);
     size_t length = *i++;
     if (length != host_name_length) {
         return nullptr;
@@ -437,11 +405,11 @@ auto responder::matching_host_name(const void *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = {};
+        char interface_name[IF_NAMESIZE] = "?";
         if_indextoname(event.interface_index, interface_name);
 
-        const ipv6_mreq mr = {
-            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+        const ipv6_mreq mr {
+            in6addr_mc_llmnr,      // .ipv6mr_multiaddr
             event.interface_index, // .ipv6mr_interface
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
@@ -458,11 +426,11 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = {};
+        char interface_name[IF_NAMESIZE] = "?";
         if_indextoname(event.interface_index, interface_name);
 
-        const ipv6_mreq mr = {
-            in6addr_mc_llmnr,        // .ipv6mr_multiaddr
+        const ipv6_mreq mr {
+            in6addr_mc_llmnr,      // .ipv6mr_multiaddr
             event.interface_index, // .ipv6mr_interface
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {

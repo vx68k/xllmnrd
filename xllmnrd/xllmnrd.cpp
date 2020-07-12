@@ -19,9 +19,6 @@
 #if HAVE_CONFIG_H
 #include <config.h>
 #endif
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE 1
-#endif
 
 #include "responder.h"
 #include <gettext.h>
@@ -141,8 +138,8 @@ static void print_usage(const char *arg0);
  */
 static void print_version();
 
-
-static void handle_signal_to_terminate(int __sig);
+// A signal handler should have "C" linkage.
+extern "C" void handle_signal_to_terminate(int __sig);
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.

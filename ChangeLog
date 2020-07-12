@@ -1,89 +1,913 @@
+2020-07-12  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update the translations.
+	[6447acc4a6f1]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4.0.
+	[0477a114dfd7]
+
+	* xllmnrd/responder.cpp: Remove log output when there is no interface
+	address.
+	[1b4605e96255]
+
+	* libxllmnrd/interface.cpp, xllmnrd/responder.cpp: Set the default
+	interface name.
+	[dbbb359df897]
+
+	* libxllmnrd/interface.h: Use 'size_t' from <unistd.h>.
+	[f6b31ecce82b]
+
+	* ChangeLog: Update the change log.
+	[0f7d609469d8]
+
+2020-07-11  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* xllmnrd/xllmnrd.cpp: Make the signal handler have "C" linkage.
+	[14e8bcb27e12]
+
+	* xllmnrd/responder.cpp, xllmnrd/xllmnrd.cpp: Remove '#define's for
+	'_GNU_SOURCE'.
+	[0ef30c104959]
+
+	* NEWS: Update for version 4.0.
+	[8065f498826d]
+
+	* xllmnrd/responder.cpp: Use 'PF_INET6' to open a UDP socket.
+	[c2bd86d1e894]
+
+	* libxllmnrd/rtnetlink.cpp: Use 'PF_NETLINK' to open a socket.
+	[49e04cc0de7f]
+
+	* .gitignore, .hgignore: Update the ignore list.
+	[5a00a25c91f1]
+
+	* README.md: Modify the introduction text.
+	[0a3221f82951]
+
+	* README.md: Update the introduction.
+	[1a88383aa90f]
+
+	* xllmnrd/Makefile.am: Use 'top_builddir' for the library paths.
+	[835f9bae540b]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/llmnr.c, xllmnrd/Makefile.am,
+	xllmnrd/llmnr.c: Move 'llmnr.c'.
+	[439924cdf1e2]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/llmnr.h, xllmnrd/Makefile.am,
+	xllmnrd/llmnr.h: Move 'llmnr.h'.
+	[e2edbef80d97]
+
+2020-07-10  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/interface.cpp: Edit log messages.
+	[44ed7d0b3909]
+
+	* xllmnrd/responder.cpp: Rewrite 'interface_enabled' and
+	'interface_disabled'.
+	[6f4078b8658f]
+
+	* xllmnrd/responder.cpp: Rewrite 'matching_host_name'.
+	[4aad41aac752]
+
+	* xllmnrd/responder.cpp: Rewrite 'respond_for_name'.
+	[de0de29dc097]
+
+	* xllmnrd/responder.cpp: Rewrite 'process_udp6'.
+	[af40c2592f73]
+
+	* xllmnrd/responder.cpp: Rewrite 'process_udp6'.
+	[f291dc2bd186]
+
+	* xllmnrd/responder.cpp: Change local variable initializations.
+	[7714a03a277c]
+
+	* xllmnrd/responder.cpp: Replace nested switch statements with one if.
+	[6db760086b99]
+
+	* ChangeLog: Update the change log.
+	[de423961251f]
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update translations.
+	[482656b1ca3e]
+
+	* Merge back release/4.
+	[6fe6001288c0]
+
+	* .hgtags: Added tag release/4-alpha.2 for changeset 349aacd81547.
+	[88b0e36cb222]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4-alpha.3.
+	[8aea94f91664]
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update the translations.
+	[349aacd81547] <release>
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update the translations.
+	[588b4af895d2]
+
+	* Merge master into release/4.
+	[05f555606fce] <release>
+
+	* xllmnrd/responder.cpp: Initialize arrays to zeros.
+	[20cfe11c47de]
+
+	* azure-pipelines.yml: Remove feature branches from build triggers.
+	[d78ac8d2ff69]
+
+	* xllmnrd/llmnr.c, xllmnrd/llmnr.h: Minor edit.
+	[cf941a968283]
+
+	* xllmnrd/llmnr.c, xllmnrd/llmnr.h: Update the file header comments.
+	[494e0fd32bba]
+
+	* xllmnrd/responder.cpp: Use the added templated overload.
+	[938af57373cf]
+
+	* xllmnrd/responder.cpp: Add a templated overload to
+	'log_with_sender'.
+	[ec4d38fd3c8f]
+
+	* xllmnrd/responder.cpp: Add test for the C flag to
+	'handle_udp6_query'.
+	[6388ac169c47]
+
+	* xllmnrd/llmnr_packet.h: Rewrite 'llmnr_is_valid_query' without an if
+	statement.
+	[5fb026c0435f]
+
+	* xllmnrd/llmnr_packet.h, xllmnrd/responder.cpp: Rename
+	'llmnr_query_is_valid' to 'llmnr_is_valid_query'.
+	[1df31e499383]
+
+	* xllmnrd/xllmnrd.cpp: Add function 'init' to 'responder_builder'.
+	[831880b53b96]
+
+	* xllmnrd/xllmnrd.cpp: Change the timing to call 'openlog'.
+	[1bab697a644d]
+
+	* xllmnrd/xllmnrd.cpp: Call 'make_pid_file' in 'build'.
+	[8dc4ff327ae1]
+
+	* xllmnrd/xllmnrd.cpp: Add a try block to 'main'.
+	[c78a38795256]
+
+	* xllmnrd/xllmnrd.cpp: Change parameter types of 'parse_options' and
+	rename variables.
+	[c1549280d993]
+
+	* xllmnrd/xllmnrd.cpp: Rename 'program_options' to
+	'responder_builder'.
+	[d8a687130020]
+
+	* xllmnrd/xllmnrd.cpp: Add function 'build' to 'program_options'.
+	[f425abb9569d]
+
+2020-07-09  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* xllmnrd/xllmnrd.cpp: Modify a line break.
+	[fb428965aec2]
+
+	* xllmnrd/xllmnrd.cpp: Print the message on unknown options to
+	'stderr'.
+	[5932713193c9]
+
+	* xllmnrd/xllmnrd.cpp: Modify the argument of 'main'.
+	[91fbb3e655b5]
+
+	* xllmnrd/xllmnrd.cpp: Use an atomic operation in the signal handler.
+	[848d8ef1c6ef]
+
+	* po/en.po, po/ja.po, po/xllmnrd.pot: Update translations.
+	[adbc996c7821]
+
+	* xllmnrd/xllmnrd.cpp: Remove code to set the locale to the default.
+	[5d55c67b286f]
+
+	* xllmnrd/xllmnrd.cpp: Use a 'using' declaration for each symbol.
+	[e4fc333a19f2]
+
+	* xllmnrd/xllmnrd.cpp: Modify arguments of 'main'.
+	[eb314f6054f3]
+
+	* xllmnrd/xllmnrd.cpp: Remove unused code to set the host name.
+	[e25f2f1c5904]
+
+	* libxllmnrd/rtnetlink.h: Edit code style.
+	[3c1c05ad793a]
+
+	* xllmnrd/xllmnrd.cpp: Call 'bindtextdomain' only if 'LOCALEDIR' is
+	defined.
+	[5be82e5e666a]
+
+	* xllmnrd/xllmnrd.cpp: Pass 'nullptr' to 'openlog' instead of
+	computing the command name.
+	[88f357bba746]
+
+	* libxllmnrd/rtnetlink.cpp: Merge hotfix/3.
+	[5d650ca2fbfb]
+
+	* .hgtags: Added tag release/3.1 for changeset a4a11ec00505.
+	[07adca402534]
+
+	* libxllmnrd/rtnetlink.cpp: Enable notification on RTNETLINK.
+	[5f5419c440f5] <release>
+
+	* libxllmnrd/rtnetlink.cpp: Enable notification on RTNETLINK.
+	[9288422bde0c]
+
+	* libxllmnrd/rtnetlink.cpp: Back out changeset 3902964ad49f.
+	[e1217039aace]
+
+	* test/test_rtnetlink.cpp: Remove parameter names.
+	[07cf00aeddd8]
+
+	* libxllmnrd/rtnetlink.cpp: Set flags interested when joining groups.
+	[3902964ad49f]
+
+	* libxllmnrd/rtnetlink.h: Remove member function 'running'.
+	[4920e0d7c2c0]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h,
+	test/test_rtnetlink.cpp, xllmnrd/responder.cpp, xllmnrd/responder.h:
+	Replace 'added' and 'removed' in symbols with 'enabled' and
+	'disabled'.
+	[21c044e6bd2e]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add member
+	'source' to 'interface_event'.
+	[7ff13fc054e7]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h,
+	test/test_rtnetlink.cpp, xllmnrd/responder.cpp: Remove
+	'address_family' from 'interface_event'.
+	[f180fa5c0771]
+
+	* libxllmnrd/interface.cpp: Remove code to fire events on add/remove
+	of addresses.
+	[44cbca4b8024]
+
+	* test/test_rtnetlink.cpp: Update test cases for new events.
+	[2e6a3641e2dd]
+
+	* xllmnrd/responder.cpp: Join/leave multicast groups on enable/disable
+	of devices.
+	[035ba3892dfe]
+
+	* libxllmnrd/interface.cpp: Fires events on enable/disable.
+	[d39477078786]
+
+	* libxllmnrd/interface.cpp: Output debug logs when a device is
+	enabled/disabled.
+	[8bfe4daa29eb]
+
+	* libxllmnrd/rtnetlink.cpp: Enable or disable interfaces according
+	their link flags.
+	[2b9d756be473]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add new functions
+	'enable_interface' and 'disable_interface'.
+	[f961ab9817ed]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Implement state
+	transitions in the refresh task.
+	[4d0d9571451d]
+
+	* libxllmnrd/rtnetlink.cpp: Rename local variables.
+	[0037bb27608c]
+
+	* libxllmnrd/rtnetlink.h: Make message handling functions private-
+	access.
+	[b9d8fd319fc1]
+
+	* libxllmnrd/rtnetlink.cpp: Add code to 'handle_ifinfo'.
+	[13bba99ddc79]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Add new function
+	'handle_ifinfo'.
+	[082a24a923bc]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Add new function
+	'request_ifinfos'.
+	[52b4221d1baf]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Add new function
+	'request_ifaddrs' to 'rtnetlink_interface_manager'.
+	[5a3b7ba4bc23]
+
+	* xllmnrd/responder.cpp: Fix includes.
+	[1bb5209c2c34]
+
+	* xllmnrd/responder.h: Add member initialization.
+	[9de5af4cacbd]
+
+	* xllmnrd/responder.h: Remove unnecessary 'struct' keywords.
+	[8de052974e7f]
+
+	* libxllmnrd/posix.h: Remove unnecessary 'struct' keywords.
+	[64ff62621223]
+
+	* po/ja.po: Update Japanese translations.
+	[33bd8e6466b2]
+
+	* libxllmnrd/socket_utility.h: Make parameters const-qualified.
+	[054c09e2988e]
+
+	* libxllmnrd/socket_utility.h: Update comments.
+	[52ee20ebc78b]
+
+	* libxllmnrd/posix.h: Add comments.
+	[9dbf716aec58]
+
+	* libxllmnrd/posix.cpp, libxllmnrd/posix.h: Update the file header
+	comments.
+	[db959b50fcb8]
+
+	* xllmnrd/responder.cpp: Correct 'using's.
+	[5280c07315fd]
+
+	* xllmnrd/responder.cpp: Add support for IPv4 addresses.
+	[4622e54afca5]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Put the host name as got
+	by 'gethostname' to the answer.
+	[324cd5dc1f9d]
+
+	* libxllmnrd/rtnetlink.cpp: Simplify expressions in
+	'handle_ifaddrmsg'.
+	[393c0722b765]
+
+	* libxllmnrd/rtnetlink.cpp: Rename local variables.
+	[906aef40bad7]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Remove unnecessary
+	'struct' keywords.
+	[ebcbe9d3e128]
+
+	* libxllmnrd/rtnetlink.cpp: Reduce the use of 'std::' prefixes.
+	[b4d36226b0b9]
+
+	* libxllmnrd/interface.cpp: Add 'using' declarations to reduce the use
+	of 'std::'.
+	[541e29bad064]
+
+2020-07-08  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* po/en.po: Update comments.
+	[6d492a6bf986]
+
+	* po/LINGUAS, po/en.po: Add English translations.
+	[c87bcde0d1f3]
+
+	* po/ja.po, po/xllmnrd.pot: Update the localization file.
+	[ef0f51e74bf5]
+
+	* xllmnrd/xllmnrd.cpp: Rename and rewrite 'parse_arguments'.
+	[e981f6b54f4a]
+
+	* po/ja.po, po/xllmnrd.pot: Update the localization files.
+	[504fb6413aba]
+
+	* xllmnrd/xllmnrd.cpp: Rename 'show_version'.
+	[71a79f7499dc]
+
+	* xllmnrd/xllmnrd.cpp: Rename 'show_help'.
+	[22e017667d66]
+
+	* po/ja.po, po/xllmnrd.pot: Update the localization files.
+	[e64ab6e6d638]
+
+	* xllmnrd/xllmnrd.cpp: Change the usage test construction.
+	[8bdac3737682]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Delete obsolete
+	responder functions.
+	[a2eb46366922]
+
+	* xllmnrd/responder.cpp: Refresh the interface manager synchronously.
+	[5df3acc67fe7]
+
+	* libxllmnrd/interface.h: Edit comments.
+	[f3746d8c4098]
+
+	* libxllmnrd/ascii.h: Add comments.
+	[c04129c97233]
+
+	* libxllmnrd/ascii.h, xllmnrd/responder.cpp: Remove the second '_'
+	characters from the 'ascii.h' function names.
+	[c38d4151dd2b]
+
+	* libxllmnrd/ascii.h: Update the file header comments.
+	[a3d50afba75e]
+
+	* Merge back release/4.
+	[2ce0395d7e49]
+
+	* .hgtags: Added tag release/4-alpha.1 for changeset a2284063ce45.
+	[204381791bbd]
+
+	* xllmnrd/responder.cpp: Use the new overloads to construct a response
+	packet.
+	[681d3179c042]
+
+	* xllmnrd/llmnr_packet.h: Add C++ overloads.
+	[560f27aefa2d]
+
+	* po/ja.po, po/xllmnrd.pot: Update the localization files.
+	[7e494bde56f2]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4-alpha.2.
+	[bdd0e9717ca0]
+
+	* Merge master into release/4.
+	[a2284063ce45] <release>
+
+	* bitbucket-pipelines.yml: Remove unused files.
+	[d48c9d57efd6]
+
+	* po/ja.po, po/xllmnrd.pot: Update the localization files.
+	[6a4e9d92b130]
+
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4-alpha.1.
+	[8d2a7f02af23]
+
+	* xllmnrd/llmnr_packet.h, xllmnrd/responder.cpp: Rename the
+	'LLMNR_HEADER_*' constants.
+	[1a486c2d561c]
+
+	* xllmnrd/llmnr_packet.h: Use static const for protocol constants.
+	[5089cac51c5d]
+
+	* xllmnrd/llmnr_packet.h: Update the file header comments.
+	[91c5a3530693]
+
+	* xllmnrd/responder.cpp: Use the typed overload of 'sendto'.
+	[f7361396c0d5]
+
+	* libxllmnrd/socket_utility.h: Add new overload for 'sendto'.
+	[279024a5d03b]
+
+	* libxllmnrd/rtnetlink.h: Make '_worker_mutex' mutable.
+	[c75aeae24bd1]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Use 'atomic<bool>'
+	for the running flag.
+	[f7563743a275]
+
+	* libxllmnrd/rtnetlink.h: Add '' to 'open_rtnetlink'.
+	[2870221621a1]
+
+	* libxllmnrd/rtnetlink.cpp: Remove an unused include.
+	[53da84343733]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Update the file
+	header comments.
+	[faaba0f2bc55]
+
+	* libxllmnrd/rtnetlink.cpp: Fix error reporting.
+	[fdf17a1412a0]
+
+	* libxllmnrd/interface.h: Add templated overloads to
+	'add_interface_address' and 'remove_interface_address'.
+	[00f13ec44beb]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Remove unnecessary
+	'struct' keywords.
+	[51d454386a5f]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Update the file
+	header comments.
+	[3188127eea25]
+
+	* xllmnrd/xllmnrd.cpp: Use the responder class.
+	[c2b3a31b987f]
+
+	* xllmnrd/responder.cpp: Fix the answer encoding code.
+	[651b3ee19888]
+
+	* xllmnrd/responder.cpp: Fix error reporting.
+	[0c73e28e9543]
+
+	* xllmnrd/responder.cpp: Implement the mulitcast join/leave code.
+	[4c342fc7f2c7]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add the default
+	constructor to 'responder'.
+	[91a4916486ab]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Use an atomic
+	operation to change the interface listener.
+	[a3302df96e66]
+
+	* xllmnrd/responder.h: Add comments.
+	[dd1995fbd360]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Make class 'responder' a
+	listener of interface events.
+	[b96d1d0109d7]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h,
+	test/test_rtnetlink.cpp, xllmnrd/responder.cpp: Change event
+	handling to an event listener scheme.
+	[d059e630d531]
+
+	* xllmnrd/responder.cpp: Fix arguments for a 'syslog' call.
+	[713956704f8d]
+
+2020-07-07  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* xllmnrd/responder.h: Make 'open_udp6' static.
+	[b029640501dd]
+
+	* xllmnrd/responder.cpp: Add a 'using'.
+	[bb028c519f59]
+
+	* xllmnrd/responder.cpp: Replace function 'log' with
+	'log_with_sender'.
+	[52fe696e6387]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Rename
+	'open_llmnr_udp6'.
+	[a58f45ab48f8]
+
+	* xllmnrd/responder.cpp: Remove keyword 'struct'.
+	[4cc04d8cb33d]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add new function
+	'respond_for_name' to 'responder'.
+	[1f7c90b7acf6]
+
+	* Merge master into feature/reponder-class.
+	[388e603b678b]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add new function
+	'matches_host_name'.
+	[233e613e602f]
+
+	* xllmnrd/responder.cpp: Rename 'log_in6_sender'.
+	[2e0bee3257ac]
+
+	* xllmnrd/responder.cpp: Add a priority parameter to 'log_in6_sender'.
+	[190504d97b9d]
+
+	* xllmnrd/responder.cpp: Reduce include directives.
+	[9f0819831286]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Update the file header
+	comments.
+	[1ec7e9aaea26]
+
+	* libxllmnrd/rtnetlink.cpp: Use the new overload.
+	[b492879b85b4]
+
+	* libxllmnrd/posix.h: Add an overload template for 'bind'.
+	[31fe6fce4d04]
+
+	* xllmnrd/responder.cpp: Add code to 'handle_udp6_query'.
+	[c9565ac085d4]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Change parameter types
+	of 'recv_udp6'.
+	[b1541510e3dd]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add new function
+	'handle_udp6_query' to 'responder'.
+	[fe1bbc5a2200]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add function 'recv_udp6'
+	to 'responder'.
+	[018cf71068c1]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add a default parameter
+	to the constructor of 'reponder'.
+	[76bc961c28dd]
+
+	* xllmnrd/responder.cpp: Add code to 'process_udp6'.
+	[04d1827b8138]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add new function
+	'terminate' to 'responder'.
+	[9c3792632bdd]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add new function
+	'process_udp6' to 'responder'.
+	[f834e452a32a]
+
+	* xllmnrd/responder.cpp: Use the utility overloads from
+	'socket_utility.h'.
+	[f41fbfcab611]
+
+	* xllmnrd/responder.cpp: Define function 'run' of 'responder'.
+	[0e3074179491]
+
+	* xllmnrd/responder.cpp: Use the utility overload of 'bind'.
+	[6142cfc05366]
+
+	* xllmnrd/responder.cpp: Remove a workaround for 'IPV6_DONTFRAG' on
+	Linux.
+	[83310bdf0894]
+
+	* xllmnrd/responder.cpp: Move the overload for 'setsockopt' to
+	'socket_utility.h'.
+	[4b71ec884974]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/socket_utility.h: Add new header
+	file 'socket_utility.h'.
+	[07cdad602fe0]
+
+	* libxllmnrd/Makefile.am, libxllmnrd/socket_utility.h: Add new header
+	file 'socket_utility.h'.
+	[5db62c8b3ef3]
+
+	* xllmnrd/responder.cpp: Add a utility function for 'setsockopt'.
+	[43c7b97743c6]
+
+	* xllmnrd/responder.cpp, xllmnrd/responder.h: Add code to class
+	'responder'.
+	[7e4cf18081c5]
+
+2020-07-06  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* xllmnrd/responder.h: Edit comments.
+	[0338c0b1a130]
+
+	* xllmnrd/responder.h: Rename data members.
+	[d37520ca486e]
+
+	* Merge master into feature/responder-class.
+	[d1efd0fedf35]
+
+	* xllmnrd/responder.cpp: User 'refresh' instead of 'start'.
+	[45843ad66a54]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h,
+	test/test_rtnetlink.cpp: Remove the public function 'start' from
+	'rtnetlink_interface_manager'.
+	[f3e11f8ec637]
+
+	* xllmnrd/responder.h: Add new class 'responder'.
+	[39a83731c1c5]
+
+	* xllmnrd/responder.cpp: Correct initialization of the interface
+	manager.
+	[a465c64808bd]
+
+	* xllmnrd/xllmnrd.cpp: Output version information as a log message.
+	[8b0f5b90ee74]
+
+2020-07-02  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* README.md: Add a section for the sample init script.
+	[5070ebc72361]
+
+	* libxllmnrd/Makefile.am: Split file lists into multilines.
+	[54b136e123e8]
+
+	* libxllmnrd/Makefile.am: Merge feature/remove-ifaddr.
+	[c637419ce0d7]
+
+2020-06-30  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/Makefile.am: Define macro '_LIBXLLMNRD'.
+	[3ae430db0381]
+
+	* libxllmnrd/interface.cpp: Write logs only when actually
+	inserted/erased the address.
+	[5618e2f45cf1]
+
+	* libxllmnrd/interface.cpp: Write logs before firing events.
+	[70416d26272e]
+
+	* po/ja.po, po/xllmnrd.pot: Update the message translation files.
+	[a69835051313]
+
+	* libxllmnrd/ifaddr.cpp, libxllmnrd/ifaddr.h: Remove 'ifaddr' code.
+	[ce67ee7a42db]
+
+	* test/test_ifaddr.cpp: Remove 'ifaddr' test code.
+	[0a504c526fcb]
+
+	* libxllmnrd/Makefile.am, test/Makefile.am: Remove 'ifaddr' files from
+	Makefiles.
+	[b27f7ff26cce]
+
+	* xllmnrd/xllmnrd.cpp: Remove calls to 'ifaddr' functions.
+	[5470d8e103fa]
+
+	* Merge master into feature/remove-ifaddr.
+	[e9928a938dae]
+
+	* libxllmnrd/rtnetlink.cpp: Modify debug logging.
+	[302b8242fe16]
+
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Modify
+	'dispatch_messages' so that it completes the refresh task properly.
+	[adb04f482334]
+
+2020-06-28  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* Merge back release/3.0.
+	[9300900a6120]
+
+	* .hgtags: Added tag release/3.0 for changeset 8cbada9b725b.
+	[99bed290a0f2]
+
+2020-06-24  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* .github/workflows/release.yml: Add a workflow for GitHub.
+	[73996c860d56]
+
+2020-06-23  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* test/test_rtnetlink.cpp: Rename test class 'RtnetlinkTests'.
+	[818904149e2f]
+
+	* test/test_rtnetlink.cpp: Divide test cases into smaller pieces.
+	[dd3c1ae32564]
+
+	* test/test_rtnetlink.cpp: Add a sleep in 'tearDown'.
+	[1b55701bf046]
+
+	* Merge master into feature/remove-ifaddr.
+	[c8ed6dd7c65a]
+
+	* test/test_rtnetlink.cpp: Try to get syslog messages in stderr.
+	[ff2d8bd4e024]
+
+2020-06-19  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* test/test_ifaddr.cpp: Scan for available interfaces.
+	[84ef306970d4]
+
+	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Remove method
+	'mutex' from 'interface_manager'.
+	[6e6cdc8f67bb]
+
+	* libxllmnrd/interface.h: Add method 'debug_level' and
+	'set_debug_level' to 'interface_manager'.
+	[95cee1c7647a]
+
+	* xllmnrd/responder.cpp: Replace 'ifaddr' function calls with
+	'interface_manager' calls.
+	[f902b509db9f]
+
+	* po/ja.po, po/xllmnrd.pot: Update the translation template.
+	[bf63d53954a6]
+
+	* po/ja.po, po/xllmnrd.pot: Update the translation template.
+	[3da82193c440]
+
+	* po/POTFILES.in: Fix the file list.
+	[c6529ba9a347]
+
+	* po/POTFILES.in: Fix the file list.
+	[e0f91be25e4b]
+
+	* xllmnrd/Makefile.am, xllmnrd/main.cpp, xllmnrd/xllmnrd.cpp: Rename
+	'main.cpp'.
+	[49b9ab88c70b]
+
+	* xllmnrd/Makefile.am, xllmnrd/main.cpp, xllmnrd/xllmnrd.cpp: Rename
+	'main.cpp'.
+	[878d327e3269]
+
+	* xllmnrd/responder.h: Remove an unused include directive.
+	[0edc184c4c3f]
+
+	* xllmnrd/responder.cpp: Create an 'interface_manager' object in the
+	responder.
+	[4258294e476a]
+
+	* xllmnrd/Makefile.am: Produce the manual page using 'config.status'.
+	[ada6fa3a47cc]
+
+	* po/ja.po, po/xllmnrd.pot: Update the message template for new
+	versions.
+	[15f6adb0b90c]
+
+	* configure.ac, lsb/Makefile.am, lsb/README: Remove the 'lsb'
+	directory.
+	[4100b9d0fc30]
+
+	* Makefile.am, lsb/xllmnrd.in, xllmnrd/Makefile.am,
+	xllmnrd/xllmnrd.init.in: Produce the sample init script in the
+	'xllmnrd' directory.
+	[36f871240333]
+
+	* test/Makefile.am: Add 'run-test.in' to EXTRA_DIST.
+	[2a9054d16f8b]
+
+2020-06-15  Kaz Nishimura  <kazssym@linuxfront.com>
+
+	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.h: Add more access
+	specifiers to classes.
+	[1db2f07e8239]
+
+	* README.md: Edit the README file.
+	[43d8a70ce93f]
+
 2020-06-14  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* NEWS: Update the news
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	4.0.
+	[1dcb556783c3]
+
+	* Merge master into release/3.
+	[8cbada9b725b] <release>
+
+	* ChangeLog: Update the change log.
+	[70479f20951f]
+
+	* NEWS: Update the news.
 	[79ab3faad280]
 
-	* AUTHORS: Update the email
+	* AUTHORS: Update the email.
 	[7c320c255690]
 
-	* libxllmnrd/rtnetlink.cpp: Use '_os->send'
+	* libxllmnrd/rtnetlink.cpp: Use '_os->send'.
 	[d24e29d21b56]
 
-	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Clean up members
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Clean up members.
 	[b507a6fd309b]
 
 	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.h: Modify data member
-	declarations
+	declarations.
 	[43a37102e00d]
 
 2020-06-13  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Rename
-	'finish_refresh'
+	'finish_refresh'.
 	[bcc72e994368]
 
-	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Rename a parameter
+	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Rename a
+	parameter.
 	[0c78d51715b1]
 
-	* libxllmnrd/rtnetlink.cpp: Modify code formatting
+	* libxllmnrd/rtnetlink.cpp: Modify code formatting.
 	[438b5bb6ddb8]
 
 	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.cpp,
-	libxllmnrd/rtnetlink.h: Implement asynchronous refresh
+	libxllmnrd/rtnetlink.h: Implement asynchronous refresh.
 	[2241fe31fe55]
 
-	* README.md: Update the README file
+	* README.md: Update the README file.
 	[e13f66b5e570]
 
-	* configure.ac: Add 'foreign' to the Automake options
+	* configure.ac: Add 'foreign' to the Automake options.
 	[a0f481147f88]
 
-	* README: Remove the 'README' file
+	* README: Remove the 'README' file.
 	[c73d50934ecf]
 
-	* configure.ac: Change the package name
+	* configure.ac: Change the package name.
 	[5e5137a568fb]
 
 	* lsb/Makefile.am, lsb/xllmnrd.in: Use the 'config.status' script to
-	produce the LSB init script
+	produce the LSB init script.
 	[402d8ff67153]
 
-	* po/ja.po, po/xllmnrd.pot: Update the message catalogue files
+	* po/ja.po, po/xllmnrd.pot: Update the message catalogue files.
 	[ff2ec3e11804]
 
-	* azure-pipelines.yml, configure.ac: Change the package version to 3.0
+	* azure-pipelines.yml, configure.ac: Change the package version to
+	3.0.
 	[7c6ef6758cab]
 
 2020-06-12  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Make 'refresh'
-	wait for completion
+	wait for completion.
 	[619aaae6d063]
 
 2020-06-11  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* po/ja.po, po/xllmnrd.pot: Regenerate files
+	* po/ja.po, po/xllmnrd.pot: Regenerate files.
 	[b5e83eb1fdf2]
 
-	* po/POTFILES.in: Fix file locations
+	* po/POTFILES.in: Fix file locations.
 	[2a3789249eec]
 
-	* test/test_ifaddr.cpp: Add 'sleep' calls after 'ifaddr_start'
+	* test/test_ifaddr.cpp: Add 'sleep' calls after 'ifaddr_start'.
 	[2341a377072c]
 
-	* libxllmnrd/ifaddr.cpp: Add a check for interfaces with no addresses
+	* libxllmnrd/ifaddr.cpp: Add a check for interfaces with no addresses.
 	[6b779d2d5314]
 
-	* libxllmnrd/ifaddr.cpp: Restore tests for the running state
+	* libxllmnrd/ifaddr.cpp: Restore tests for the running state.
 	[993ee2731093]
 
-	* libxllmnrd/rtnetlink.h: Add new method 'running'
+	* libxllmnrd/rtnetlink.h: Add new method 'running'.
 	[560a08ccc1e0]
 
-	* libxllmnrd/ifaddr.cpp: Add a test for the internal state
+	* libxllmnrd/ifaddr.cpp: Add a test for the internal state.
 	[0cab725861db]
 
-	* .vscode/launch.json: Update the debugging configuration
+	* .vscode/launch.json: Update the debugging configuration.
 	[691e3fda70f0]
 
 	* Makefile.am, configure.ac, src/Makefile.am, src/llmnr.c,
@@ -91,168 +915,168 @@
 	src/responder.h, src/xllmnrd.8.in, xllmnrd/Makefile.am,
 	xllmnrd/llmnr.c, xllmnrd/llmnr.h, xllmnrd/llmnr_packet.h,
 	xllmnrd/main.cpp, xllmnrd/responder.cpp, xllmnrd/responder.h,
-	xllmnrd/xllmnrd.8.in: Rename the 'src' directory to 'xllmnrd'
+	xllmnrd/xllmnrd.8.in: Rename the 'src' directory to 'xllmnrd'.
 	[4fbe35335e7c]
 
-	* libxllmnrd/ifaddr.cpp: Enabled the class-based interface manager
+	* libxllmnrd/ifaddr.cpp: Enabled the class-based interface manager.
 	[80b1feff96e0]
 
-	* src/responder.cpp: Add a test to ignore non-IPv6 addresses
+	* src/responder.cpp: Add a test to ignore non-IPv6 addresses.
 	[f11f517ab911]
 
 	* libxllmnrd/ifaddr.cpp: Revise conditionally compiled code for
-	IFADDR_CPLUSPLUS != 0
+	IFADDR_CPLUSPLUS != 0.
 	[ce71193b3f7a]
 
-	* azure-pipelines.yml: Change the directory for publishing artifacts
+	* azure-pipelines.yml: Change the directory for publishing artifacts.
 	[4a590ee2b57e]
 
 2020-06-08  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* test/test_rtnetlink.cpp: Add test assertions to compare events
-	counts
+	counts.
 	[4d787e82e8fe]
 
 	* libxllmnrd/interface.cpp: Add code to fire interface change events
-	on address changes
+	on address changes.
 	[d00ebbe2edc0]
 
-	* libxllmnrd/interface.cpp: Remove code to erase an empty interface
+	* libxllmnrd/interface.cpp: Remove code to erase an empty interface.
 	[4f6b3ccbf0bf]
 
 	* libxllmnrd/interface.cpp: Add code to fire interface change events
-	in 'remove_interfaces'
+	in 'remove_interfaces'.
 	[fb665c0b9895]
 
-	* test/test_rtnetlink.cpp: Add '' to a method parameter
+	* test/test_rtnetlink.cpp: Add '' to a method parameter.
 	[78d445a94c9a]
 
-	* libxllmnrd/interface.cpp: Change method parameters to const
+	* libxllmnrd/interface.cpp: Change method parameters to const.
 	[b022240152a7]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Rename '_mutex' to
-	'_interfaces_mutex'
+	'_interfaces_mutex'.
 	[30e8cb6cc668]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Change the new
-	methods to out-of-line
+	methods to out-of-line.
 	[138b91324218]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add new methods
-	'in_addresses' and 'in6_addresses'
+	'in_addresses' and 'in6_addresses'.
 	[f2b8c9ff33ba]
 
-	* ChangeLog: Update the change log
+	* ChangeLog: Update the change log.
 	[b7cfd786a862]
 
 2020-06-07  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* test/test_rtnetlink.cpp: Add a test for 'set_interface_change'
+	* test/test_rtnetlink.cpp: Add a test for 'set_interface_change'.
 	[219fba469edc]
 
 	* libxllmnrd/interface.h, libxllmnrd/rtnetlink.cpp,
 	libxllmnrd/rtnetlink.h: Remove the 'start' method from
-	'interface_manager'
+	'interface_manager'.
 	[e51c598d5f84]
 
-	* configure.ac: Modify configure checks
+	* configure.ac: Modify configure checks.
 	[43b91b0630b9]
 
-	* configure.ac: Remove checks for 'uintN_t'
+	* configure.ac: Remove checks for 'uintN_t'.
 	[f8321ccdf9b1]
 
-	* configure.ac: Modify library checks
+	* configure.ac: Modify library checks.
 	[2ebfbabca893]
 
 	* libxllmnrd/interface.h: Add 'address_family' to the interface change
-	event class
+	event class.
 	[c75bfd8ed223]
 
 	* libxllmnrd/interface.h, src/responder.cpp: Modify
-	'interface_change_event' with a constructor
+	'interface_change_event' with a constructor.
 	[3de0d3d8ad66]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add member
-	function 'fire_interface_change'
+	function 'fire_interface_change'.
 	[521df7cd1c0d]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Use 'std::atomic'
-	to store interface change handler
+	to store interface change handler.
 	[02ccf3bffa40]
 
-	* configure.ac: Add a check for libatomic
+	* configure.ac: Add a check for libatomic.
 	[5ad1642a05af]
 
 2020-06-06  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* libxllmnrd/ifaddr.cpp, libxllmnrd/interface.h, src/responder.cpp,
 	test/test_ifaddr.cpp: Rename 'ifaddr_change' to
-	'interface_change_event'
+	'interface_change_event'.
 	[0ebcda6ee471]
 
 	* libxllmnrd/ifaddr.cpp, libxllmnrd/ifaddr.h,
 	libxllmnrd/interface.cpp, libxllmnrd/interface.h,
 	test/test_ifaddr.cpp: Remove 'ifaddr_change_handler' in favor of
-	'interface_change_handler'
+	'interface_change_handler'.
 	[cd7c13629bc6]
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Modify
-	'rtnetlink_interface_manager' methods
+	'rtnetlink_interface_manager' methods.
 	[6b5f9d0cc38b]
 
 2020-05-28  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* libxllmnrd/interface.h: Correct the type of a data member
+	* libxllmnrd/interface.h: Correct the type of a data member.
 	[ba623c09b6f5]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Remove interface
-	when all its addresses are removed
+	when all its addresses are removed.
 	[c2fc34f8e84c]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Modify the
-	interface on the interface change handler
+	interface on the interface change handler.
 	[bb339f70b1b8]
 
 	* libxllmnrd/interface.cpp: Modify log messages to include the
-	addresses
+	addresses.
 	[6621014e7ad5]
 
-	* test/test_rtnetlink.cpp: Add a test method
+	* test/test_rtnetlink.cpp: Add a test method.
 	[249670b41c51]
 
 	* libxllmnrd/posix.cpp, libxllmnrd/posix.h: Add 'recv' and 'send' to
-	'posix'
+	'posix'.
 	[7eb2cf4d3847]
 
 	* libxllmnrd/interface.cpp: Implement
-	'interface_manager::remove_interface_address'
+	'interface_manager::remove_interface_address'.
 	[a8d3851ed525]
 
 	* libxllmnrd/interface.cpp: Implement
-	'interface_manager::add_interface_address'
+	'interface_manager::add_interface_address'.
 	[f793adbb245a]
 
 	* libxllmnrd/rtnetlink.cpp: Call 'remove_interfaces' in
-	'rtnetlink_interface_manager::refresh()'
+	'rtnetlink_interface_manager::refresh()'.
 	[33189e5ea6fd]
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Remove
-	'rtnetlink_interface_manager::addresses'
+	'rtnetlink_interface_manager::addresses'.
 	[b56499715f04]
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h,
 	test/test_rtnetlink.cpp: Define 'XLLMNRD_RTNETLINK' if the library
-	supports RTNETLINK
+	supports RTNETLINK.
 	[4df5c5c13bbc]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Remove 'constexpr'
-	from the specialized 'std::less' methods
+	from the specialized 'std::less' methods.
 	[8a7cb0dae65c]
 
-	* test/Makefile.am, test/test_rtnetlink.cpp: Add a new test suite
+	* test/Makefile.am, test/test_rtnetlink.cpp: Add a new test suite.
 	[43983bd875f2]
 
-	* test/Makefile.am: Correct the macro name for the test log compiler
+	* test/Makefile.am: Correct the macro name for the test log compiler.
 	[b0c685b83781]
 
 2020-05-24  Kaz Nishimura  <kazssym@linuxfront.com>
@@ -260,448 +1084,451 @@
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h,
 	libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Move
 	'add_interface_address' and 'remove_interface_address' to
-	'interface_manager'
+	'interface_manager'.
 	[ac7d94719bd5]
 
-	* libxllmnrd/ifaddr.cpp: Modify pre-processor conditionals
+	* libxllmnrd/ifaddr.cpp: Modify pre-processor conditionals.
 	[8d992d6b1733]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add members for
-	interfaces addresses
+	interfaces addresses.
 	[a28605a1436d]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h: Add a map member
-	to interfaces
+	to interfaces.
 	[a83274b113c2]
 
 	* libxllmnrd/interface.cpp, libxllmnrd/interface.h,
 	libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Move the operating
-	system interface to 'rtnetlink_interface_manager'
+	system interface to 'rtnetlink_interface_manager'.
 	[2cfcc99e24f9]
 
 	* libxllmnrd/ifaddr.cpp, libxllmnrd/interface.cpp,
 	libxllmnrd/interface.h, libxllmnrd/rtnetlink.cpp,
-	libxllmnrd/rtnetlink.h: Rename the interface manager classes
+	libxllmnrd/rtnetlink.h: Rename the interface manager classes.
 	[6ca687fa970f]
 
-	* libxllmnrd/ifaddr.cpp: Include "rtnetlink.h"
+	* libxllmnrd/ifaddr.cpp: Include "rtnetlink.h".
 	[45158e0517c0]
 
 	* libxllmnrd/Makefile.am, libxllmnrd/ifaddr.cpp, libxllmnrd/ifaddr.h,
 	libxllmnrd/interface.cpp, libxllmnrd/interface.h,
-	libxllmnrd/rtnetlink.h: Move 'ifaddr_manager' to a new unit
+	libxllmnrd/rtnetlink.h: Move 'ifaddr_manager' to a new unit.
 	[ffa0f86e0bd3]
 
 	* libxllmnrd/rtnetlink.h: Use 'std::size_t' without the namespace
-	prefix
+	prefix.
 	[c8c6a6c6c440]
 
 	* libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Add the 'std'
-	namespace to standard C++ identifiers
+	namespace to standard C++ identifiers.
 	[579cfa5d01dd]
 
 	* azure-pipelines.yml: Remove the '--install' option from the
-	'autoreconf' invocation
+	'autoreconf' invocation.
 	[4155d568dc09]
 
-	* Merge back release/3
+	* Merge back release/3.
 	[ae0afb4c400b]
 
-	* .hgtags: Added tag release/3-alpha.2 for changeset 4e2a9683b6ca
+	* .hgtags: Added tag release/3-alpha.2 for changeset 4e2a9683b6ca.
 	[1ecc6defc21b]
 
-	* azure-pipelines.yml, configure.ac: Change the package version
+	* azure-pipelines.yml, configure.ac: Change the package version.
 	[e090701b5076]
 
-	* Merge master into release/3
+	* Merge master into release/3.
 	[4e2a9683b6ca] <release>
 
 	* libxllmnrd/Makefile.am, libxllmnrd/ifaddr.cpp, libxllmnrd/ifaddr.h,
 	libxllmnrd/rtnetlink.cpp, libxllmnrd/rtnetlink.h: Move
-	'rtnetlink_ifaddr_manager' to its own unit
+	'rtnetlink_ifaddr_manager' to its own unit.
 	[389a25d9c1c9]
 
-	* configure.ac: Change the order of the output files
+	* configure.ac: Change the order of the output files.
 	[a0dbbc2c2ac8]
 
-	* test/Makefile.am: Correct the 'run-test' target
+	* test/Makefile.am: Correct the 'run-test' target.
 	[1bc8d8bc5947]
 
 	* Makefile.am, libxllmnrd/Makefile.am, lsb/Makefile.am,
-	src/Makefile.am, test/Makefile.am: Edit comments
+	src/Makefile.am, test/Makefile.am: Edit comments.
 	[575a54aa6709]
 
 	* test/Makefile.am: Remove the 'test-reports' directory with 'clean-
-	local'
+	local'.
 	[3f9c712cdd17]
 
-	* test/Makefile.am: Make the 'run-test' script using 'config.status'
+	* test/Makefile.am: Make the 'run-test' script using 'config.status'.
 	[7005c1894891]
 
-	* test/Makefile.am: Set 'TEST_EXTENSIONS' unconditionally
+	* test/Makefile.am: Set 'TEST_EXTENSIONS' unconditionally.
 	[58d24629b815]
 
-	* test/Makefile.am: Add an include path
+	* test/Makefile.am: Add an include path.
 	[97066c888b12]
 
 2020-05-22  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* libxllmnrd/ifaddr.cpp: Remove compound literals
+	* libxllmnrd/ifaddr.cpp: Remove compound literals.
 	[ad69f60aa4a9]
 
 	* libxllmnrd/ifaddr.cpp: Modify initialization of the
-	'ifaddr_interface' type
+	'ifaddr_interface' type.
 	[2c02a5e9a6df]
 
-	* src/main.cpp: Add member initializers
+	* src/main.cpp: Add member initializers.
 	[a922f0ba08ee]
 
-	* .vscode/c_cpp_properties.json: Add 'LOCALEDIR' to the defined macros
+	* .vscode/c_cpp_properties.json: Add 'LOCALEDIR' to the defined
+	macros.
 	[36aad6fd0fd4]
 
 	* libxllmnrd/ifaddr.cpp, src/main.cpp, src/responder.cpp: Remove
-	variable length arrays
+	variable length arrays.
 	[73207a42dde3]
 
 	* libxllmnrd/ifaddr.cpp, src/main.cpp, src/responder.cpp: Remove
-	designated initializers
+	designated initializers.
 	[b1f852d7421d]
 
-	* .vscode/c_cpp_properties.json: Set the configuration GCC-specific
+	* .vscode/c_cpp_properties.json: Set the configuration GCC-specific.
 	[54806ba7f266]
 
-	* .vscode/tasks.json: Remove the 'Rebuild' task from the 'build' group
+	* .vscode/tasks.json: Remove the 'Rebuild' task from the 'build'
+	group.
 	[2eedc9867803]
 
 2020-04-16  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* .gitignore, .hgignore: Update the ignore list
+	* .gitignore, .hgignore: Update the ignore list.
 	[d52d27f55eed]
 
 	* src/run.sh, src/testifaddr.cpp, src/testmain.cpp: Remove unused
-	files
+	files.
 	[30fb434d67cc]
 
-	* src/Makefile.am: Remove tests from 'src/Makefile'
+	* src/Makefile.am: Remove tests from 'src/Makefile'.
 	[d85f8af493b2]
 
 	* test/Makefile.am, test/test_ifaddr.cpp: Copy unit tests to the
-	'test' directory
+	'test' directory.
 	[60ee811ddc1e]
 
 	* test/main.cpp, test/xmlreport.cpp, test/xmlreport.h: Add common
-	source files for unit tests
+	source files for unit tests.
 	[f96df13e55be]
 
 2020-04-10  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* .vscode/launch.json: Add the 'launch.json' file for VS Code
+	* .vscode/launch.json: Add the 'launch.json' file for VS Code.
 	[22b577dd21d6]
 
-	* .gitignore, .hgignore: Update the ignore file list
+	* .gitignore, .hgignore: Update the ignore file list.
 	[2ca1b647e187]
 
-	* test/Makefile.am, test/run-test.in: Add a test runner script
+	* test/Makefile.am, test/run-test.in: Add a test runner script.
 	[f97f7fd5b2b1]
 
 2020-04-09  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* src/main.cpp: Hangle runtime errors in setting locale
+	* src/main.cpp: Hangle runtime errors in setting locale.
 	[c00f434ea277]
 
-	* configure.ac: Update the bug reporting address
+	* configure.ac: Update the bug reporting address.
 	[a21f75275688]
 
-	* configure.ac: Remove the definition of 'PACKAGE_REVISION'
+	* configure.ac: Remove the definition of 'PACKAGE_REVISION'.
 	[ed07fe8bd5b3]
 
 	* Makefile.am, configure.ac, test/Makefile.am: Add a new 'test'
-	directory
+	directory.
 	[c8123cc96f6d]
 
-	* configure.ac: Use 'AC_CONFIG_MACRO_DIRS'
+	* configure.ac: Use 'AC_CONFIG_MACRO_DIRS'.
 	[e854b536bef7]
 
 	* configure.ac: Remove the redundant use of 'AC_PROG_CC_STDC' and
-	'AC_PROG_RANLIB'
+	'AC_PROG_RANLIB'.
 	[fdab28800b22]
 
-	* acinclude.m4, configure.ac: Remove the 'XX_PROG_CXX_STD11' macro
+	* acinclude.m4, configure.ac: Remove the 'XX_PROG_CXX_STD11' macro.
 	[7a15472a4d3f]
 
-	* .hgtags: Added tag release/2.1 for changeset c3349e7c9aa5
+	* .hgtags: Added tag release/2.1 for changeset c3349e7c9aa5.
 	[b7b559ad6aca]
 
 2020-04-07  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* rocro.yml: Remove the 'rocro.yml' file
+	* rocro.yml: Remove the 'rocro.yml' file.
 	[3b6fe105fbc4]
 
-	* .gitignore: Add the '.gitignore' file
+	* .gitignore: Add the '.gitignore' file.
 	[f196a9012ee7]
 
-	* po/xllmnrd.pot: Regenrate the pot file
+	* po/xllmnrd.pot: Regenrate the pot file.
 	[22ccc61859ad]
 
-	* Makefile.am: Modify checksum generation
+	* Makefile.am: Modify checksum generation.
 	[c9d181379c38]
 
 2020-03-30  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* Merge back release/3
+	* Merge back release/3.
 	[0d99d7c5b742]
 
-	* .hgtags: Added tag release/3-alpha.1 for changeset 6c957b4c920f
+	* .hgtags: Added tag release/3-alpha.1 for changeset 6c957b4c920f.
 	[c703a59b21b0]
 
-	* azure-pipelines.yml, configure.ac: Change the package version
+	* azure-pipelines.yml, configure.ac: Change the package version.
 	[ca35af1885b8]
 
-	* po/xllmnrd.pot: Merge master for release management
+	* po/xllmnrd.pot: Merge master for release management.
 	[6c957b4c920f] <release>
 
-	* .vscode/tasks.json: Deconfigure the default build task
+	* .vscode/tasks.json: Deconfigure the default build task.
 	[b18d7b1b3f1f]
 
 2020-03-21  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* azure-pipelines.yml: Update 'package.distName'
+	* azure-pipelines.yml: Update 'package.distName'.
 	[814e0f9292a3]
 
-	* configure.ac: Change the package version
+	* configure.ac: Change the package version.
 	[2bac8b7af14d]
 
-	* setupkeys.sh: Add comments to the 'setupkeys.sh' script
+	* setupkeys.sh: Add comments to the 'setupkeys.sh' script.
 	[1918b94147ac]
 
-	* azure-pipelines.yml: Use the 'upload.sh' script to upload artifacts
+	* azure-pipelines.yml: Use the 'upload.sh' script to upload artifacts.
 	[e076094c4511]
 
-	* upload.sh: Generalize the 'upload.sh' script
+	* upload.sh: Generalize the 'upload.sh' script.
 	[19b91621f525]
 
-	* azure-pipelines.yml: Change the 'Publish' stage to 'Release'
+	* azure-pipelines.yml: Change the 'Publish' stage to 'Release'.
 	[bfa2bd910114]
 
-	* azure-pipelines.yml: Show compiler versions in the Configure step
+	* azure-pipelines.yml: Show compiler versions in the Configure step.
 	[fe1a9ad6f00d]
 
-	* azure-pipelines.yml: Rename a step
+	* azure-pipelines.yml: Rename a step.
 	[0666819a6b49]
 
-	* azure-pipelines.yml: Use new variable 'package.distName'
+	* azure-pipelines.yml: Use new variable 'package.distName'.
 	[d209f3c35e54]
 
-	* azure-pipelines.yml: Remove double asterisks in trigger patterns
+	* azure-pipelines.yml: Remove double asterisks in trigger patterns.
 	[b26ad6dd4c14]
 
-	* azure-pipelines.yml: Remove the Publish job
+	* azure-pipelines.yml: Remove the Publish job.
 	[246064ccc988]
 
 2020-03-10  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* setupkeys.sh: Rename the variable for signing key
+	* setupkeys.sh: Rename the variable for signing key.
 	[f0a6a1e636f5]
 
 2020-03-08  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* azure-pipelines.yml: Use 'workingDirectory' instead of 'cd' in the
-	scripts
+	scripts.
 	[9680fe2b7f4f]
 
-	* azure-pipelines.yml: Build directly in the source dir
+	* azure-pipelines.yml: Build directly in the source dir.
 	[38208b60de5f]
 
-	* azure-pipelines.yml: Add quotes
+	* azure-pipelines.yml: Add quotes.
 	[40c515f5d720]
 
 2020-03-05  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* azure-pipelines.yml: Add an 'azure-pipelines.yml' file
+	* azure-pipelines.yml: Add an 'azure-pipelines.yml' file.
 	[d5e05a7c244f]
 
-	* setupkeys.sh: Add the 'setupkeys.sh' script
+	* setupkeys.sh: Add the 'setupkeys.sh' script.
 	[dc5e4e57f2a6]
 
 2019-12-30  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* bitbucket-pipelines.yml, upload.sh: Make snapshots uploaded to the
-	repository
+	repository.
 	[8f9c4da15b9c]
 
 2019-12-26  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* bitbucket-pipelines.yml: Modify and rename step test
+	* bitbucket-pipelines.yml: Modify and rename step test.
 	[bad8773c139d]
 
 2019-12-14  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* libxllmnrd/ifaddr.cpp: Correct a message string
+	* libxllmnrd/ifaddr.cpp: Correct a message string.
 	[5829df8cf96d]
 
 2019-12-13  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* .codeclimate.yml, configure.ac, etc/builder/.dockerignore,
 	etc/builder/Dockerfile, libxllmnrd/ifaddr.c, src/Makefile.am: Merge
-	master into feature/c++11
+	master into feature/c++11.
 	[cdeecf36750c]
 
-	* m4/cppunit.m4: Merge feature/configure-cppunit (pull request #13)
+	* m4/cppunit.m4: Merge feature/configure-cppunit (pull request #13).
 	[cfd6c990247a]
 
 2019-12-12  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* gcc/Dockerfile: Update the Dockerfile for builder images
+	* gcc/Dockerfile: Update the Dockerfile for builder images.
 	[7af8293ddb41]
 
 	* docker-compose.yml, etc/gcc/.dockerignore, etc/gcc/Dockerfile,
-	gcc/.dockerignore, gcc/Dockerfile: Update the Docker builder
+	gcc/.dockerignore, gcc/Dockerfile: Update the Docker builder.
 	[43dfca16697b]
 
-	* m4/cppunit.m4: Remove 'cppunit.m4'
+	* m4/cppunit.m4: Remove 'cppunit.m4'.
 	[24e6f8a9d434]
 
-	* configure.ac: Modify the check for CppUnit
+	* configure.ac: Modify the check for CppUnit.
 	[b9bd978050ff]
 
 2019-12-11  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* Merge feature/vscode-tasks-update
+	* Merge feature/vscode-tasks-update.
 	[e1217be1d160]
 
-	* .vscode/tasks.json: Update VSCode tasks
+	* .vscode/tasks.json: Update VSCode tasks.
 	[e793034d964d]
 
-	* .vscode/tasks.json: Specify a 'problemMatcher' for the Build task
+	* .vscode/tasks.json: Specify a 'problemMatcher' for the Build task.
 	[77e798258707]
 
-	* configure.ac: Modify the check for CppUnit existence
+	* configure.ac: Modify the check for CppUnit existence.
 	[8026f8645135]
 
 2019-12-09  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* Merge master
+	* Merge master.
 	[073b6abbf58d]
 
-	* libxllmnrd/ifaddr.c: Update copyright years
+	* libxllmnrd/ifaddr.c: Update copyright years.
 	[32512b583859]
 
 2019-12-08  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* .vscode/c_cpp_properties.json: Add a newline character at the EOF
+	* .vscode/c_cpp_properties.json: Add a newline character at the EOF.
 	[025a90e32259]
 
-	* .vscode/tasks.json: Configure basic tasks for Visual Studio Code
+	* .vscode/tasks.json: Configure basic tasks for Visual Studio Code.
 	[2220112eff2a]
 
 2019-12-02  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* .github/FUNDING.yml: Add 'FUNDING.yml' for GitHub
+	* .github/FUNDING.yml: Add 'FUNDING.yml' for GitHub.
 	[43fc94bdab5d]
 
 2019-11-29  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* Merge branch feature/pipelines-git (pull request #7)
+	* Merge branch feature/pipelines-git (pull request #7).
 	[23dd2f72bfc7]
 
-	* Merge branch feature/conditional-cppunit (pull request #6)
+	* Merge branch feature/conditional-cppunit (pull request #6).
 	[82fb45823c76]
 
 2019-11-30  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* configure.ac, src/Makefile.am: Skip tests if CppUnit is not
-	available
+	available.
 	[5f8ed0a6bd36]
 
 2019-11-29  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* bitbucket-pipelines.yml: Build in a subdirectory
+	* bitbucket-pipelines.yml: Build in a subdirectory.
 	[62545c1f9561]
 
-	* Merge branch feature/pipelines-git (pull request #5)
+	* Merge branch feature/pipelines-git (pull request #5).
 	[692e15293651]
 
 2019-11-28  Kaz Nishimura  <kazssym@linuxfront.com>
 
-	* bitbucket-pipelines.yml: Run test builds for pull requests
+	* bitbucket-pipelines.yml: Run test builds for pull requests.
 	[bd740224bb89]
 
-	* libxllmnrd/ifaddr.c: Include <stdint.h>
+	* libxllmnrd/ifaddr.c: Include <stdint.h>.
 	[d4c83598ce03]
 
-	* m4/cppunit.m4: Add 'cppunit.m4'
+	* m4/cppunit.m4: Add 'cppunit.m4'.
 	[ad14fd8cd92f]
 
-	* bitbucket-pipelines.yml: Modify pipelines for Git
+	* bitbucket-pipelines.yml: Modify pipelines for Git.
 	[9139852690a6]
 
 2019-11-26  Kaz Nishimura  <kazssym@linuxfront.com>
 
 	* build-aux/compile, build-aux/config.guess, build-aux/config.sub,
 	build-aux/depcomp, build-aux/install-sh, build-aux/missing, build-
-	aux/test-driver: Refresh build scripts
+	aux/test-driver: Refresh build scripts.
 	[a791200d7ea4]
 
-	* .vscode/settings.json: Modify the 'files.exclude' entries
+	* .vscode/settings.json: Modify the 'files.exclude' entries.
 	[ddab65cc876b]
 
-	* .hgeol, .hgignore: Modify Mercurial dot files
+	* .hgeol, .hgignore: Modify Mercurial dot files.
 	[88b15e7737c2]
 
 2018-09-12  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* docker-compose.yml: Changed the default command
+	* docker-compose.yml: Changed the default command.
 	[194ba9cd74cd]
 
-	* etc/gcc/Dockerfile: Upgraded to GCC 8
+	* etc/gcc/Dockerfile: Upgraded to GCC 8.
 	[e9f625488d0b]
 
 2018-07-08  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* docker-compose.yml: Modified to run commands in subdirectory 'build'
+	* docker-compose.yml: Modified to run commands in subdirectory
+	'build'.
 	[3fa070a0fd4c]
 
-	* docker-compose.yml: Changed the service name
+	* docker-compose.yml: Changed the service name.
 	[1a7cbf858752]
 
 	* bitbucket-pipelines.yml, docker-compose.yml,
 	etc/builder/.dockerignore, etc/builder/Dockerfile,
-	etc/gcc/.dockerignore, etc/gcc/Dockerfile: Changed the image tag
+	etc/gcc/.dockerignore, etc/gcc/Dockerfile: Changed the image tag.
 	[ea353a784723]
 
-	* docker-compose.yml: Changed the Compose file version to '2.1'
+	* docker-compose.yml: Changed the Compose file version to '2.1'.
 	[da4c142dd5fd]
 
-	* bitbucket-pipelines.yml: Passed '-i' to 'autoreconf'
+	* bitbucket-pipelines.yml: Passed '-i' to 'autoreconf'.
 	[6b2e63ac2617]
 
-	* bitbucket-pipelines.yml: Added comments
+	* bitbucket-pipelines.yml: Added comments.
 	[9234eca6809a]
 
 2018-05-24  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .vscode/c_cpp_properties.json: Add VSCode IntelliSense settings
+	* .vscode/c_cpp_properties.json: Add VSCode IntelliSense settings.
 	[c2c2a2f60dc5]
 
-	* CONTRIBUTING.md: Edit the guidelines
+	* CONTRIBUTING.md: Edit the guidelines.
 	[ebc2d8c243de]
 
 2018-05-23  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* CONTRIBUTING.md: Update guidelines
+	* CONTRIBUTING.md: Update guidelines.
 	[5c004164ec63]
 
 2018-05-12  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .hgignore: Edit the ignore list
+	* .hgignore: Edit the ignore list.
 	[351720325b03]
 
 2018-04-12  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* CONTRIBUTING.md: Add guidelines
+	* CONTRIBUTING.md: Add guidelines.
 	[e2d0e2155c57]
 
-	* .vscode/settings.json: Update files to ignore
+	* .vscode/settings.json: Update files to ignore.
 	[e5cef1b0adb5]
 
 2018-03-16  Kaz Nishimura  <kazssym@vx68k.org>
@@ -878,7 +1705,7 @@
 
 2017-01-06  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* .codeclimate.yml: Add the Code Climate configuration
+	* .codeclimate.yml: Add the Code Climate configuration.
 	[fed937c6ebd6]
 
 2016-12-19  Kaz Nishimura  <kazssym@vx68k.org>
@@ -947,10 +1774,10 @@
 
 2015-07-21  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* Close branch feature/finer-tests
+	* Close branch feature/finer-tests.
 	[497bc0ec956a] <feature/finer-tests>
 
-	* Merge branch feature/finer-tests (pull request #16)
+	* Merge branch feature/finer-tests (pull request #16).
 	[2494be3e1d1e]
 
 2015-07-17  Kaz Nishimura  <kazssym@vx68k.org>
@@ -1359,7 +2186,7 @@
 	* Changed the build rule.
 	[f91078c77de3]
 
-	* .hgtags: Added tag release/2.0 for changeset 31e1a7cd0dfd
+	* .hgtags: Added tag release/2.0 for changeset 31e1a7cd0dfd.
 	[e2a829a43918]
 
 	* ChangeLog: Updated the 'ChangeLog' file.
@@ -1480,7 +2307,7 @@
 
 2014-06-18  Kaz Nishimura  <kazssym@vx68k.org>
 
-	* README.md: README.md edited online with Bitbucket
+	* README.md: README.md edited online with Bitbucket.
 	[cc3ec78389e1]
 
 	* src/ifaddr.c, src/ifaddr.h: Modified comments and inserted a missing
@@ -1535,13 +2362,13 @@
 	[f0af64f167b2] <feature/ifaddr-v6>
 
 	* src/ifaddr.c, src/ifaddr.h: Renamed and changed 'ifaddr_lookup' so
-	that it can return multiple addresses
+	that it can return multiple addresses.
 	[c18e5a008380] <feature/ifaddr-v6>
 
 2014-03-02  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* src/ifaddr.c: Changed the member for IPv6 addresses in 'struct
-	ifaddr_interface' to an array
+	ifaddr_interface' to an array.
 	[39d6a4a0f911] <feature/ifaddr-v6>
 
 2014-03-02  xgettext  <xgettext>
@@ -1579,7 +2406,7 @@
 	[bac6420078f7]
 
 	* configure.ac: Omitted 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' to fix
-	issue #43. They are not
+	issue #43. They are not.
 	[ae19876611ad]
 
 	* configure.ac: Modified a macro description.
@@ -1654,7 +2481,7 @@
 	* Modified a maintainer build rule.
 	[0a265d19e704]
 
-	* .hgtags: Added tag release-1.2.1 for changeset 6ff4c41cdf0d
+	* .hgtags: Added tag release-1.2.1 for changeset 6ff4c41cdf0d.
 	[7f8bc9e78ae7] <release>
 
 	* ChangeLog: Updated the change log from the revision history.
@@ -1692,7 +2519,7 @@
 	* Merge release into default.
 	[e9a28afd1bee]
 
-	* .hgtags: Added tag release-1.2.0 for changeset e479c8a6598e
+	* .hgtags: Added tag release-1.2.0 for changeset e479c8a6598e.
 	[b4f541c6568d] <release>
 
 	* ChangeLog: Updated the change log from the revision history.
@@ -1869,7 +2696,7 @@
 2013-12-28  Kaz Nishimura  <kazssym@vx68k.org>
 
 	* configure.ac: Merge feature/init-script into default (pull request
-	#7)
+	#7).
 	[261b385de4c5]
 
 	* lsb/xllmnrd.in: Removed the empty Description.
@@ -1900,7 +2727,7 @@
 	* Added another dependency.
 	[248d850211f8]
 
-	* Backed out changeset: 99c66b88480e
+	* Backed out changeset: 99c66b88480e.
 	[afb99b2ad814]
 
 	* Added a dependency.
@@ -2017,10 +2844,10 @@
 	of a DNS label.
 	[03100e1aab8e]
 
-	* configure.ac: Merge release back into default
+	* configure.ac: Merge release back into default.
 	[138aa1cf743f]
 
-	* .hgtags: Added tag release-1.0.1 for changeset 28d5c85bbac4
+	* .hgtags: Added tag release-1.0.1 for changeset 28d5c85bbac4.
 	[57729762a34a] <release>
 
 2013-12-08  Kaz Nishimura  <kazssym@vx68k.org>
@@ -2052,7 +2879,7 @@
 	* Merge release back into default.
 	[a63bd5ffdbeb]
 
-	* .hgtags: Added tag release-1.0.0 for changeset fab9f6db574c
+	* .hgtags: Added tag release-1.0.0 for changeset fab9f6db574c.
 	[94dd58f75330] <release>
 
 	* configure.ac: Changed the version number for next minor versions.
@@ -2111,7 +2938,7 @@
 	symbols.
 	[be76953aa933] <feature/responder>
 
-	* configure.ac: Backed out changeset: 8ce2f90aeb50
+	* configure.ac: Backed out changeset: 8ce2f90aeb50.
 	[f0d2cef24cc5] <feature/responder>
 
 	* configure.ac: Added a configure check for stddef.h.
@@ -2174,7 +3001,7 @@
 	* Merged release into default, closing issue #26.
 	[68a2934a70af]
 
-	* .hgtags: Added tag release-1.0y2 for changeset ecf618ed0e61
+	* .hgtags: Added tag release-1.0y2 for changeset ecf618ed0e61.
 	[e5d9c48e320d] <release>
 
 	* ChangeLog: Refreshed the change log from the revision history.
@@ -2399,7 +3226,7 @@
 	* Merged release into default.
 	[3a7ebd090d9c]
 
-	* .hgtags: Added tag release-1.0y1 for changeset efcb7238dabf
+	* .hgtags: Added tag release-1.0y1 for changeset efcb7238dabf.
 	[857418a3e7db] <release>
 
 	* ChangeLog: Updated the change log from the revision history and
@@ -2551,7 +3378,7 @@
 	[838603487d40] <feature/responder>
 
 	* src/llmnr_responder.c: Rewrote 'llmnr_open_udp_socket' with a rename
-	to 'open_udp6'
+	to 'open_udp6'.
 	[399a1585203e] <feature/responder>
 
 	* src/llmnr_responder.c: Defined IN6ADDR_LLMNR_INIT as a macro.
@@ -2905,7 +3732,7 @@
 
 2013-05-16  Kaz Sasa  <kazssym@vx68k.org>
 
-	* .hgignore: Added final output files to .hgignore
+	* .hgignore: Added final output files to .hgignore.
 	[5f0dc3bf173d]
 
 2013-05-11  Kaz Sasa  <kazssym@vx68k.org>
@@ -2929,7 +3756,7 @@
 
 2013-05-03  Kaz Sasa  <kazssym@vx68k.org>
 
-	* src/llmnr_responder.c: Backed out changeset: cd3934141824
+	* src/llmnr_responder.c: Backed out changeset: cd3934141824.
 	[6f93f3d6dc3b] <ifaddr>
 
 	* src/llmnr_responder.c: Changed the initialization of ifaddr to be

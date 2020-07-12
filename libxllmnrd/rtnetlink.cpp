@@ -47,7 +47,7 @@ using namespace xllmnrd;
 int rtnetlink_interface_manager::open_rtnetlink(
     const shared_ptr<posix> &os)
 {
-    int &&rtnetlink = os->socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    int &&rtnetlink = os->socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
     if (rtnetlink < 0) {
         throw system_error(errno, generic_category(), "could not open a RTNETLINK socket");
     }

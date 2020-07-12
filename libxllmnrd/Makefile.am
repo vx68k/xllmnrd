@@ -9,9 +9,11 @@ interface.h \
 rtnetlink.h \
 posix.h \
 socket_utility.h \
+llmnr.h \
 ascii.h
 
 libxllmnrd_a_SOURCES = \
 interface.cpp \
 rtnetlink.cpp \
-posix.cpp
+posix.cpp \
+llmnr.c

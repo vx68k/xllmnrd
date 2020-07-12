@@ -301,24 +301,12 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 
     auto &&qtype = llmnr_get_uint16(qname_end);
     auto &&qclass = llmnr_get_uint16(qname_end + 2);
-    if (qtype == LLMNR_QTYPE_A || qtype == LLMNR_QTYPE_ANY) {
-        if (qclass == LLMNR_QCLASS_IN) {
+    if (qclass == LLMNR_QCLASS_IN) {
+        if (qtype == LLMNR_QTYPE_A || qtype == LLMNR_QTYPE_ANY) {
             in_addresses = _interface_manager->in_addresses(interface_index);
-            if (in_addresses.empty()) {
-                char name[IF_NAMESIZE] = "?";
-                if_indextoname(interface_index, name);
-                syslog(LOG_NOTICE, "no IPv4 interface addresses for %s", name);
-            }
         }
-    }
-    if (qtype == LLMNR_QTYPE_AAAA || qtype == LLMNR_QTYPE_ANY) {
-        if (qclass == LLMNR_QCLASS_IN) {
+        if (qtype == LLMNR_QTYPE_AAAA || qtype == LLMNR_QTYPE_ANY) {
             in6_addresses = _interface_manager->in6_addresses(interface_index);
-            if (in6_addresses.empty()) {
-                char name[IF_NAMESIZE] = "?";
-                if_indextoname(interface_index, name);
-                syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
-            }
         }
     }
 

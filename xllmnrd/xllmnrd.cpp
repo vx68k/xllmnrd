@@ -146,7 +146,7 @@ extern "C" void handle_signal_to_terminate(int __sig);
  */
 static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         const sigset_t *restrict mask) {
-    struct sigaction action = {};
+    struct sigaction action {};
     action.sa_handler = handler;
     if (mask) {
         action.sa_mask = *mask;
@@ -216,7 +216,7 @@ int main(const int argc, char **const argv)
         if (caught_signal != 0) {
             // Resets the handler to default and reraise the same signal.
 
-            struct sigaction default_action = {};
+            struct sigaction default_action {};
             default_action.sa_handler = SIG_DFL;
             if (sigaction(caught_signal, &default_action, 0) == 0) {
                 raise(caught_signal);
@@ -258,7 +258,7 @@ int parse_options(const int argc, char **const argv,
         VERSION = -128,
         HELP,
     };
-    static const option options[] = {
+    static const option options[] {
         {"foreground", no_argument, 0, 'f'},
         {"pid-file", required_argument, 0, 'p'},
         {"help", no_argument, 0, HELP},

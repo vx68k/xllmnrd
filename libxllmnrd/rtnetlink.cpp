@@ -53,7 +53,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
     }
 
     try {
-        const sockaddr_nl address = {
+        const sockaddr_nl address {
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
@@ -105,7 +105,7 @@ void rtnetlink_interface_manager::run()
 
 void rtnetlink_interface_manager::request_ifinfos()
 {
-    char request[NLMSG_LENGTH(sizeof (ifinfomsg))] = {};
+    char request[NLMSG_LENGTH(sizeof (ifinfomsg))] {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifinfomsg));
@@ -123,7 +123,7 @@ void rtnetlink_interface_manager::request_ifinfos()
 
 void rtnetlink_interface_manager::request_ifaddrs()
 {
-    char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};
+    char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));

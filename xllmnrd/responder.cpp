@@ -73,7 +73,7 @@ inline void log_with_sender(const int pri, const char *const message,
         case AF_INET6:
             if (sender_size >= sizeof (sockaddr_in6)) {
                 auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
-                char addrstr[INET6_ADDRSTRLEN] = {};
+                char addrstr[INET6_ADDRSTRLEN] {};
                 inet_ntop(AF_INET6, &in6->sin6_addr, addrstr, INET6_ADDRSTRLEN);
                 syslog(pri, "%s from %s%%%" PRIu32, message, addrstr,
                     in6->sin6_scope_id);
@@ -130,7 +130,7 @@ int responder::open_udp6(const in_port_t port)
         syslog(LOG_WARNING, "socket option IPV6_DONTFRAG not defined");
 #endif
 
-        const sockaddr_in6 addr = {
+        const sockaddr_in6 addr {
             AF_INET6,    // .sin6_family
             port,        // .sin6_port
             0,           // .sin6_flowinfo
@@ -238,7 +238,7 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
             buffer_size, // .iov_len
         },
     };
-    unsigned char control[128] = {};
+    unsigned char control[128] {};
     msghdr msg {
         &sender,        // .msg_name
         sizeof sender,  // .msg_namelen

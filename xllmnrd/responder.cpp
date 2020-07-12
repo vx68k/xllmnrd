@@ -305,7 +305,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         if (qclass == LLMNR_QCLASS_IN) {
             in_addresses = _interface_manager->in_addresses(interface_index);
             if (in_addresses.empty()) {
-                char name[IF_NAMESIZE] = {};
+                char name[IF_NAMESIZE] = "?";
                 if_indextoname(interface_index, name);
                 syslog(LOG_NOTICE, "no IPv4 interface addresses for %s", name);
             }
@@ -315,7 +315,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         if (qclass == LLMNR_QCLASS_IN) {
             in6_addresses = _interface_manager->in6_addresses(interface_index);
             if (in6_addresses.empty()) {
-                char name[IF_NAMESIZE] = {};
+                char name[IF_NAMESIZE] = "?";
                 if_indextoname(interface_index, name);
                 syslog(LOG_NOTICE, "no IPv6 interface addresses for %s", name);
             }
@@ -417,7 +417,7 @@ auto responder::matching_host_name(const void *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] {};
+        char interface_name[IF_NAMESIZE] = "?";
         if_indextoname(event.interface_index, interface_name);
 
         const ipv6_mreq mr {
@@ -438,7 +438,7 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] {};
+        char interface_name[IF_NAMESIZE] = "?";
         if_indextoname(event.interface_index, interface_name);
 
         const ipv6_mreq mr {

@@ -33,7 +33,6 @@ using std::for_each;
 using std::lock_guard;
 using std::memcmp;
 using std::set;
-using std::size_t;
 using namespace xllmnrd;
 
 /*
@@ -138,7 +137,7 @@ void interface_manager::enable_interface(const unsigned int interface_index)
         interface.enabled = true;
 
         if (debug_level() >= 0) {
-            char interface_name[IF_NAMESIZE];
+            char interface_name[IF_NAMESIZE] = "?";
             if_indextoname(interface_index, interface_name);
             syslog(LOG_DEBUG, "device enabled: %s", interface_name);
         }
@@ -156,7 +155,7 @@ void interface_manager::disable_interface(const unsigned int interface_index)
         interface.enabled = false;
 
         if (debug_level() >= 0) {
-            char interface_name[IF_NAMESIZE];
+            char interface_name[IF_NAMESIZE] = "?";
             if_indextoname(interface_index, interface_name);
             syslog(LOG_DEBUG, "device disabled: %s", interface_name);
         }
@@ -168,7 +167,7 @@ void interface_manager::disable_interface(const unsigned int interface_index)
 void interface_manager::add_interface_address(unsigned int index,
     int family, const void *address, size_t address_size)
 {
-    char interface_name[IF_NAMESIZE];
+    char interface_name[IF_NAMESIZE] = "?";
     if_indextoname(index, interface_name);
 
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
@@ -226,7 +225,7 @@ void interface_manager::add_interface_address(unsigned int index,
 void interface_manager::remove_interface_address(unsigned int index,
     int family, const void *address, size_t address_size)
 {
-    char interface_name[IF_NAMESIZE];
+    char interface_name[IF_NAMESIZE] = "?";
     if_indextoname(index, interface_name);
 
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};

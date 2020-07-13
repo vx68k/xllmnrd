@@ -96,38 +96,51 @@ inline void log_with_sender(const int pri, const char *const message,
     log_with_sender(pri, message, sender, sizeof *sender);
 }
 
+// Member functions.
+
 int responder::open_udp6(const in_port_t port)
 {
     int udp6 = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (udp6 == -1) {
-        throw system_error(errno, generic_category(), "could not open a UDP socket");
+        throw system_error(errno, generic_category(),
+            "could not open an IPv6 UDP socket");
     }
 
     try {
         [[maybe_unused]]
         static const int ON = 1;
 
-        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON) == -1) {
-            throw system_error(errno, generic_category(), "could not set IPV6_V6ONLY");
-        }
+        // This option is mandatory.
+
         if (setsockopt(udp6, IPPROTO_IPV6, IPV6_RECVPKTINFO, &ON) == -1) {
-            throw system_error(errno, generic_category(), "could not set IPV6_RECVPKTINFO");
+            throw system_error(errno, generic_category(),
+                "could not set socket option 'IPV6_RECVPKTINFO'");
+        }
+
+        // Others are not.
+
+        if (setsockopt(udp6, IPPROTO_IPV6, IPV6_V6ONLY, &ON) == -1) {
+            syslog(LOG_WARNING,
+                "could not set socket option 'IPV6_V6ONLY' to %d: %s",
+                ON, strerror(errno));
         }
 
         // The unicast hop limit SHOULD be 1.
         static const int HOP_1 = 1;
         if (setsockopt(udp6, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &HOP_1) == -1) {
-            syslog(LOG_WARNING, "could not set IPV6_UNICAST_HOPS to %d: %s",
+            syslog(LOG_WARNING,
+                "could not set socket option 'IPV6_UNICAST_HOPS' to %d: %s",
                 HOP_1, strerror(errno));
         }
 
 #ifdef IPV6_DONTFRAG
         if (setsockopt(udp6, IPPROTO_IPV6, IPV6_DONTFRAG, &ON) == -1) {
-            syslog(LOG_WARNING, "could not set IPV6_DONTFRAG to %d: %s",
+            syslog(LOG_WARNING,
+                "could not set socket option 'IPV6_DONTFRAG' to %d: %s",
                 ON, strerror(errno));
         }
 #else
-        syslog(LOG_WARNING, "socket option IPV6_DONTFRAG not defined");
+        syslog(LOG_WARNING, "socket option 'IPV6_DONTFRAG' not defined");
 #endif
 
         const sockaddr_in6 addr {
@@ -138,7 +151,8 @@ int responder::open_udp6(const in_port_t port)
             0,           // .sin6_scode_id
         };
         if (bind(udp6, &addr) == -1) {
-            throw system_error(errno, generic_category(), "could not bind");
+            throw system_error(errno, generic_category(),
+                "could not bind the UDP socket");
         }
     }
     catch (...) {

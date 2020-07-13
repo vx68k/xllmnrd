@@ -219,8 +219,8 @@ void responder::process_udp6()
         vector<char> buffer(packet_size);
 
         sockaddr_in6 sender {};
-        in6_pktinfo ipi {};
-        packet_size = recv_udp6(&buffer[0], packet_size, sender, ipi);
+        unsigned int ifindex = 0;
+        packet_size = recv_udp6(&buffer[0], packet_size, sender, ifindex);
         if (packet_size == -1) {
             if (errno != EINTR) {
                 syslog(LOG_ERR,
@@ -242,7 +242,7 @@ void responder::process_udp6()
         auto &&packet = reinterpret_cast<const llmnr_header *>(&buffer[0]);
         if (llmnr_is_valid_query(packet)) {
             if ((packet->flags & htons(LLMNR_FLAG_C)) == 0) {
-                handle_udp6_query(packet, packet_size, sender, ipi.ipi6_ifindex);
+                handle_udp6_query(packet, packet_size, sender, ifindex);
             }
         }
         else {
@@ -252,7 +252,7 @@ void responder::process_udp6()
 }
 
 ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
-    sockaddr_in6 &sender, in6_pktinfo &pktinfo)
+    sockaddr_in6 &sender, unsigned int &ifindex)
 {
     iovec iov[1] {
         {
@@ -280,8 +280,9 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
         auto &&cmsg = CMSG_FIRSTHDR(&msg);
         while (cmsg != nullptr) {
             if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO) {
-                if (cmsg->cmsg_len >= CMSG_LEN(sizeof pktinfo)) {
-                    pktinfo = *reinterpret_cast<in6_pktinfo *>(CMSG_DATA(cmsg));
+                if (cmsg->cmsg_len >= CMSG_LEN(sizeof (in6_pktinfo))) {
+                    auto &&ipi6 = reinterpret_cast<in6_pktinfo *>(CMSG_DATA(cmsg));
+                    ifindex = ipi6->ipi6_ifindex;
                 }
             }
 

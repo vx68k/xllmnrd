@@ -83,8 +83,8 @@ protected:
     void process_udp6();
 
 protected:
-    ssize_t recv_udp6(void *buffer, size_t buffer_size,
-        sockaddr_in6 &sender, in6_pktinfo &pktinfo);
+    ssize_t recv_udp6(void *buffer, size_t buffer_size, sockaddr_in6 &sender,
+        unsigned int &ifindex);
 
 protected:
     void handle_udp6_query(const llmnr_header *query, size_t query_size,

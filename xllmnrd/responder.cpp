@@ -208,8 +208,11 @@ void responder::process_udp6()
 {
     if (_running) {
         auto &&packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);
-        if (packet_size < 0) {
-            syslog(LOG_ERR, "could not receive a packet: %s", strerror(errno));
+        if (packet_size == -1) {
+            if (errno != EINTR) {
+                syslog(LOG_ERR,
+                    "could not receive a packet: %s", strerror(errno));
+            }
             return;
         }
 
@@ -217,8 +220,11 @@ void responder::process_udp6()
         sockaddr_in6 sender {};
         in6_pktinfo ipi {};
         packet_size = recv_udp6(&buffer[0], packet_size, sender, ipi);
-        if (packet_size < 0) {
-            syslog(LOG_ERR, "cound not receive a packet: %s", strerror(errno));
+        if (packet_size == -1) {
+            if (errno != EINTR) {
+                syslog(LOG_ERR,
+                    "cound not receive a packet: %s", strerror(errno));
+            }
             return;
         }
 

@@ -42,6 +42,7 @@ using std::system_error;
 using std::thread;
 using std::unique_lock;
 using std::unique_ptr;
+using std::this_thread::yield;
 using namespace xllmnrd;
 
 int rtnetlink_interface_manager::open_rtnetlink(
@@ -98,6 +99,7 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::run()
 {
+    _running = true;
     while (_running) {
         process_messages();
     }
@@ -319,18 +321,21 @@ void rtnetlink_interface_manager::start_worker()
     lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
-        _running.store(true);
         _worker_thread = thread(&rtnetlink_interface_manager::run, this);
+
+        while (not(_running)) {
+            yield();
+        }
     }
 }
 
 void rtnetlink_interface_manager::stop_worker()
 {
+    _running = false;
+
     lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (_worker_thread.joinable()) {
-        _running.store(false);
-
         // This should make a blocking recv call return.
         begin_refresh();
 

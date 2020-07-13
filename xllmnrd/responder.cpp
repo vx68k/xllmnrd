@@ -192,7 +192,7 @@ responder::~responder()
 
 void responder::run()
 {
-    _running.store(true);
+    _running = true;
     while (_running) {
         process_udp6();
     }
@@ -200,7 +200,8 @@ void responder::run()
 
 void responder::terminate()
 {
-    _running.store(false);
+    _running = false;
+    // TODO: Should the recv call be interrupted?
 }
 
 void responder::process_udp6()

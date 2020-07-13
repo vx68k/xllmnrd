@@ -59,7 +59,7 @@ using std::unique_ptr;
 using std::vector;
 using namespace xllmnrd;
 
-static const uint32_t TTL = 30;
+static const uint32_t TIME_TO_LIVE = 30;
 
 /*
  * Logs a message with the sender address.
@@ -333,7 +333,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
         llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
         llmnr_put_uint16(sizeof i, buffer_back);
         copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
@@ -352,7 +352,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
         llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TTL, buffer_back);
+        llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
         llmnr_put_uint16(sizeof i, buffer_back);
         copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 

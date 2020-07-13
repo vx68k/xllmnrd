@@ -88,7 +88,7 @@ protected:
 
 protected:
     void handle_udp6_query(const llmnr_header *query, size_t query_size,
-        const sockaddr_in6 &sender, unsigned int interface_index);
+        const sockaddr_in6 &sender, unsigned int ifindex);
 
 protected:
     void respond_for_name(int fd, const llmnr_header *query,

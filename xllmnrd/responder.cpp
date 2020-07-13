@@ -293,8 +293,7 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
 }
 
 void responder::handle_udp6_query(const llmnr_header *const query,
-    const size_t query_size, const sockaddr_in6 &sender,
-    const unsigned int interface_index)
+    const size_t query_size, const sockaddr_in6 &sender, const unsigned int ifindex)
 {
     // These must already be checked.
     assert(query_size >= sizeof query);
@@ -306,8 +305,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
         if (name != nullptr) {
-            respond_for_name(_udp6, query, qname_end, name, sender,
-                interface_index);
+            respond_for_name(_udp6, query, qname_end, name, sender, ifindex);
         }
     }
     else {

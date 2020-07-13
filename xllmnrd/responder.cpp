@@ -260,7 +260,7 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
             buffer_size, // .iov_len
         },
     };
-    unsigned char control[128] {};
+    char control[128] {};
     msghdr msg {
         &sender,        // .msg_name
         sizeof sender,  // .msg_namelen

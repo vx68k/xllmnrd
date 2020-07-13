@@ -216,7 +216,8 @@ void responder::process_udp6()
             return;
         }
 
-        unique_ptr<char []> buffer {new char[packet_size]};
+        vector<char> buffer(packet_size);
+
         sockaddr_in6 sender {};
         in6_pktinfo ipi {};
         packet_size = recv_udp6(&buffer[0], packet_size, sender, ipi);

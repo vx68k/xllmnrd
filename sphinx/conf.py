@@ -172,3 +172,9 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+
+# -- Customization
+
+# A list of prefixes that should be hidden in the index.
+cpp_index_common_prefix = ["xllmnrd::"]

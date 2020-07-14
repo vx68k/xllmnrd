@@ -106,6 +106,8 @@ htmlhelp_basename = 'xllmnrddoc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
+latex_engine = 'lualatex'
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
@@ -129,7 +131,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'xllmnrd.tex', 'Xenium LLMNR Responder Reference Manual',
+    (master_doc, 'xllmnrd.tex', r'Xenium LLMNR Responder\\Reference Manual',
      'Kaz Nishimura', 'manual'),
 ]
 

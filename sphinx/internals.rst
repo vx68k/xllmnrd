@@ -28,7 +28,7 @@ Interface managers
    .. cpp:function:: int debug_level() const
 
       Returns the current debug level of the interface manager object.
-      The debug level controls the verbosity of debug logs.
+      The debug level controls the verbosity of debug logs to be emitted.
       The default debug level is 0.
 
    .. cpp:function:: void set_debug_level(int debug_level)
@@ -43,6 +43,8 @@ Interface managers
    This implementation uses an RTNETLINK socket to communicate with the kernel.
 
    .. cpp:function:: rtnetlink_interface_manager()
+
+      Constructs an RTNETLINK-based interface manager object.
 
    .. cpp:function:: virtual ~rtnetlink_interface_manager()
 

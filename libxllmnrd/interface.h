@@ -104,7 +104,7 @@ namespace xllmnrd
         };
 
     private:
-        int _debug_level {0};
+        int _debug_level = 0;
 
     private:
         std::atomic<interface_listener *> _interface_listener {nullptr};
@@ -175,7 +175,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv4 addresses of the interface
          */
-        std::set<in_addr> in_addresses(unsigned int index) const;
+        std::set<in_addr> in_addresses(unsigned int interface_index) const;
 
     public:
         /**
@@ -186,7 +186,7 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv6 addresses of the interface
          */
-        std::set<in6_addr> in6_addresses(unsigned int index) const;
+        std::set<in6_addr> in6_addresses(unsigned int interface_index) const;
 
     public:
         // Refreshes the interface addresses.
@@ -214,8 +214,8 @@ namespace xllmnrd
         /**
          * Adds an interface address.
          */
-        void add_interface_address(unsigned int index, int address_family,
-            const void *address, size_t address_size);
+        void add_interface_address(unsigned int interface_index,
+            int address_family, const void *address, size_t address_size);
 
         /**
          * Adds an interface address.
@@ -223,10 +223,10 @@ namespace xllmnrd
          * This overload takes a typed address argument.
          */
         template<class T>
-        void add_interface_address(const unsigned int index,
+        void add_interface_address(const unsigned int interface_index,
             const int address_family, T *const address)
         {
-            add_interface_address(index, address_family, address,
+            add_interface_address(interface_index, address_family, address,
                 sizeof *address);
         }
 
@@ -234,8 +234,8 @@ namespace xllmnrd
         /**
          * Removes an interface address.
          */
-        void remove_interface_address(unsigned int index, int address_family,
-            const void *address, size_t address_size);
+        void remove_interface_address(unsigned int interface_index,
+            int address_family, const void *address, size_t address_size);
 
         /**
          * Removes an interface address.
@@ -243,10 +243,10 @@ namespace xllmnrd
          * This overload takes a typed address argument.
          */
         template<class T>
-        void remove_interface_address(const unsigned int index,
+        void remove_interface_address(const unsigned int interface_index,
             const int address_family, T *const address)
         {
-            remove_interface_address(index, address_family, address,
+            remove_interface_address(interface_index, address_family, address,
                 sizeof *address);
         }
     };

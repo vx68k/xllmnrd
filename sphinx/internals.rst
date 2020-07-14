@@ -8,18 +8,16 @@ Interface managers
 
 .. cpp:class:: interface_manager
 
-.. cpp:function:: protected: \
-                  interface_manager::interface_manager()
+.. cpp:function:: interface_manager::interface_manager()
 
+   [protected]
    Constructs an interface manager object.
 
-.. cpp:function:: protected: \
-                  interface_manager::interface_manager(const interface_manager &) = delete
+.. cpp:function:: interface_manager::interface_manager(const interface_manager &) = delete
 
    The copy constructor is deleted.
 
-.. cpp:function:: protected: \
-                  void interface_manager::operator =(const interface_manager &) = delete
+.. cpp:function:: void interface_manager::operator =(const interface_manager &) = delete
 
    The copy assignment operator is deleted.
 

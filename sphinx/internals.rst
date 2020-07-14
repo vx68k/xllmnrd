@@ -8,6 +8,11 @@ Interface managers
 
 .. cpp:class:: interface_manager
 
+.. cpp:function:: protected: \
+                  interface_manager::interface_manager()
+
+.. cpp:function:: virtual interface_manager::~interface_manager()
+
 .. cpp:class:: rtnetlink_interface_manager: public interface_manager
 
    Interface managers for Linux.

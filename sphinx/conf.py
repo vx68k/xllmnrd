@@ -24,9 +24,9 @@ copyright = '2020 Kaz Nishimura'
 author = 'Kaz Nishimura'
 
 # The short X.Y version
-version = '4.0'
+version = '5.0'
 # The full version, including alpha/beta/rc tags
-release = '4.0-DRAFT'
+release = '5-alpha'
 
 
 # -- General configuration ---------------------------------------------------

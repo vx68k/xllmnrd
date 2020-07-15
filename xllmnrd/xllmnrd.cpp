@@ -257,12 +257,14 @@ int parse_options(const int argc, char **const argv,
     {
         VERSION = -128,
         HELP,
+        FOREGROUND,
+        PID_FILE,
     };
     static const option options[] {
-        {"foreground", no_argument, 0, 'f'},
-        {"pid-file", required_argument, 0, 'p'},
-        {"help", no_argument, 0, HELP},
-        {"version", no_argument, 0, VERSION},
+        {"foreground", no_argument, nullptr, FOREGROUND},
+        {"pid-file", required_argument, nullptr, PID_FILE},
+        {"help", no_argument, nullptr, HELP},
+        {"version", no_argument, nullptr, VERSION},
         {}
     };
 
@@ -271,9 +273,11 @@ int parse_options(const int argc, char **const argv,
         opt = getopt_long(argc, argv, "fp:", options, nullptr);
         switch (opt) {
         case 'f':
+        case FOREGROUND:
             builder.foreground = true;
             break;
         case 'p':
+        case PID_FILE:
             builder.pid_file = optarg;
             break;
         case HELP:

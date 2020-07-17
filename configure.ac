@@ -17,7 +17,7 @@ gl_EARLY
 AC_SEARCH_LIBS([pthread_join], [pthread])
 AC_SEARCH_LIBS([atomic_flag_test_and_set], [atomic])
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h libgen.h netinet/in.h net/if.h syslog.h sys/socket.h])
+AC_CHECK_HEADERS([arpa/inet.h netinet/in.h net/if.h syslog.h sys/socket.h])
 AC_CHECK_HEADERS([linux/rtnetlink.h])
 # Checks for typedefs, structures, and compiler characteristics.
 dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.

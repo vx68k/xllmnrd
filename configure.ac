@@ -27,7 +27,7 @@ AC_TYPE_SSIZE_T
 # Checks for library functions.
 dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
 dnl behavior is used.
-AC_CHECK_FUNCS([daemon gethostname socket])
+AC_CHECK_FUNCS([daemon gethostname])
 gl_INIT
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.19.3])

@@ -19,7 +19,6 @@ AC_SEARCH_LIBS([atomic_flag_test_and_set], [atomic])
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h libgen.h netinet/in.h net/if.h syslog.h sys/socket.h])
 AC_CHECK_HEADERS([linux/rtnetlink.h])
-gl_INIT
 # Checks for typedefs, structures, and compiler characteristics.
 dnl 'AC_C_INLINE' was omitted as 'inline' is now standard in C99 and C++.
 dnl Note: on the other hand, 'restrict' is not standard in C++ yet.
@@ -29,6 +28,7 @@ AC_TYPE_SSIZE_T
 dnl 'AC_FUNC_MALLOC' and 'AC_FUNC_REALLOC' were omitted as only the standard
 dnl behavior is used.
 AC_CHECK_FUNCS([basename daemon gethostname socket])
+gl_INIT
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.19.3])
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit=yes])

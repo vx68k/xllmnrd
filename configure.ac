@@ -6,7 +6,6 @@ AC_INIT([Xenium LLMNR Responder], [5-alpha.1],
 AC_CONFIG_SRCDIR([xllmnrd/responder.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIRS([m4])
-AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign no-define tar-ustar])
 # Checks for programs.
 AC_PROG_CC
@@ -37,4 +36,5 @@ AM_CONDITIONAL([CPPUNIT], [test "$no_cppunit" != yes])
 # Configuration actions.
 AC_CONFIG_FILES([Makefile xllmnrd/Makefile libxllmnrd/Makefile libgnu/Makefile
 test/Makefile po/Makefile.in])
+AC_CONFIG_HEADERS([config.h])
 AC_OUTPUT

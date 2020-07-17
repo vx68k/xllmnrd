@@ -10,8 +10,6 @@ AM_INIT_AUTOMAKE([foreign no-define tar-ustar])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_DEFINE([_POSIX_C_SOURCE], [200809L],
-[Define to 200809L to make the symbols required by POSIX.1-2008 visible.])dnl
 gl_EARLY
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_join], [pthread])

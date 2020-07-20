@@ -29,7 +29,7 @@ stages:
         strategy:
           matrix:
             gcc:
-              context: ../gcc
+              context: gcc
               tags: |
                 gcc
         pool:

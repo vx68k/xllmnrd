@@ -14,7 +14,6 @@ trigger:
   paths:
     include:
       - docker/*
-      - gcc/*
 schedules:
   - cron: "0 6 * * 1"
     displayName: Weekly Rebuild
@@ -29,7 +28,7 @@ stages:
         strategy:
           matrix:
             gcc:
-              context: gcc
+              context: docker/gcc
               tags: |
                 gcc
         pool:

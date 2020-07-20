@@ -1,0 +1,55 @@
+# azure-pipelines.yml - configuration for Azure Pipelines
+# Copyright (C) 2020 Kaz Nishimura
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any warranty.
+---
+variables:
+  repository: kazssym/xllmnrd-builder
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - docker/*
+      - gcc/*
+schedules:
+  - cron: "0 6 * * 1"
+    displayName: Weekly Rebuild
+    branches:
+      include:
+        - master
+    always: true
+stages:
+  - stage: Default
+    jobs:
+      - job: Build
+        strategy:
+          matrix:
+            gcc:
+              context: ../gcc
+              tags: |
+                gcc
+        pool:
+          vmImage: ubuntu-16.04
+        steps:
+          - task: Docker@2
+            displayName: Login
+            inputs:
+              command: login
+              containerRegistry: Docker Hub
+          - task: Docker@2
+            displayName: Build
+            inputs:
+              command: build
+              repository: $(repository)
+              tags: $(tags)
+              Dockerfile: $(context)/Dockerfile
+          - task: Docker@2
+            displayName: Push
+            inputs:
+              command: push
+              repository: $(repository)
+              tags: $(tags)

@@ -7,6 +7,7 @@
 ---
 variables:
   package.distName: xllmnrd-5-alpha.1
+  uploadRepository: kazssym/xllmnrd
 trigger:
   - master
   - release/*
@@ -102,12 +103,10 @@ stages:
           vmImage: ubuntu-latest
         variables:
           - group: bitbucket
-          - name: repository
-            value: kazssym/xllmnrd
         steps:
           - download: current
             artifact: dist
           - bash: |
               sh ./upload.sh -u '$(bitbucket.username):$(bitbucket.password)' \
-                  -r '$(repository)' '$(Agent.BuildDirectory)'/dist/*
+                  -r '$(uploadRepository)' '$(Agent.BuildDirectory)'/dist/*
             displayName: Upload

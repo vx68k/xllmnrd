@@ -73,7 +73,7 @@ stages:
           - download: current
             artifact: dist
           - bash: |
-              gzip -dc '$(Pipeline.Workspace)/dist/$(package.distName).tar.gz' | \
+              gzip -dc '$(Agent.BuildDirectory)/dist/$(package.distName).tar.gz' | \
               tar -x
             displayName: Unpack
           - bash: |
@@ -109,5 +109,5 @@ stages:
             artifact: dist
           - bash: |
               sh ./upload.sh -u '$(bitbucket.username):$(bitbucket.password)' \
-                  -r '$(repository)' '$(Pipeline.Workspace)'/dist/*
+                  -r '$(repository)' '$(Agent.BuildDirectory)'/dist/*
             displayName: Upload

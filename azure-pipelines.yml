@@ -92,7 +92,7 @@ stages:
             workingDirectory: $(package.distName)
   - stage: Release
     dependsOn: Default
-    condition: >-
+    condition:
       and(succeeded(),
         startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
     jobs:

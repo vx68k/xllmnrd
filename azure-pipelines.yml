@@ -65,7 +65,7 @@ stages:
             macOS:
               VM_IMAGE: macOS-latest
               CC: clang
-              CXX: clang++ -std=c++11
+              CXX: clang++ -std=c++14
         continueOnError: true
         pool:
           vmImage: $(VM_IMAGE)

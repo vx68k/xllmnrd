@@ -39,7 +39,10 @@ stages:
               autoreconf --verbose
             displayName: Bootstrap
           - bash: |
-              ./configure --disable-static
+              ./configure --disable-static \
+                CXX="g++ -std=c++14" \
+                CFLAGS="-g -O2 -fprofile-arcs -ftest-coverage" \
+                CXXFLAGS="-g -O2 -fprofile-arcs -ftest-coverage"
               status=$?
               echo "##vso[task.uploadfile]`pwd`/config.log"
               exit $status
@@ -49,6 +52,11 @@ stages:
             displayName: Build
           - task: PublishTestResults@2
             condition: succeededOrFailed()
+          - bash: |
+              for subdir in libxllmnrd xllmnrd test; do
+                (cd "$subdir" && find . -name '*.gcda' -print | xargs -r gcov -r)
+              done
+            displayName: Produce test coverage reports
           - bash: |
               make dist &&
               mkdir -p _dist &&

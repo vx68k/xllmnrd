@@ -6,6 +6,7 @@
             "type": "process",
             "command": "make",
             "args": [
+                "V=0",
                 "check"
             ],
             "group": "build",
@@ -18,6 +19,7 @@
             "type": "process",
             "command": "make",
             "args": [
+                "V=0",
                 "clean",
                 "check"
             ],
@@ -31,6 +33,7 @@
             "type": "process",
             "command": "make",
             "args": [
+                "V=0",
                 "clean"
             ],
             "group": "none",

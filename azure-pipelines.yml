@@ -50,10 +50,10 @@ stages:
           - task: PublishTestResults@2
             condition: succeededOrFailed()
           - bash: |
-              make dist || exit $?
-              mkdir -p _dist
+              make dist &&
+              mkdir -p _dist &&
               mv -f '$(package.distName)'.* _dist/
-            displayName: Make source archive
+            displayName: Make distributables
           - publish: _dist
             artifact: dist
   - stage: Test

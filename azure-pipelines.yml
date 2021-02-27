@@ -77,8 +77,8 @@ stages:
           - download: current
             artifact: dist
           - bash: |
-              gzip -dc '$(Agent.BuildDirectory)/dist/$(package.distName).tar.gz' |
-              tar -x
+              gzip -dc '$(Agent.BuildDirectory)'/dist/*.tar.gz |
+              tar -x --strip-components=1
             displayName: Unpack
           - bash: |
               $CC --version
@@ -88,15 +88,12 @@ stages:
               echo "##vso[task.uploadfile]`pwd`/config.log"
               exit $status
             displayName: Configure
-            workingDirectory: $(package.distName)
           - bash: |
               make check
             displayName: Build
-            workingDirectory: $(package.distName)
           - bash: |
               make install installcheck
             displayName: Install
-            workingDirectory: $(package.distName)
   - stage: Release
     dependsOn: Default
     condition:

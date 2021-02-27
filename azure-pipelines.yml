@@ -28,6 +28,21 @@ stages:
               echo '$(gpg.passphrase)' |
               sh ./setupkeys.sh '$(Keys.secureFilePath)'
             displayName: Set up signing keys
+          - task: SonarCloudPrepare@1
+            inputs:
+              SonarCloud: sonarcloud
+              organization: vx68k
+              scannerMode: CLI
+              extraProperties: |
+                sonar.cfamily.build-wrapper-output=build-wrapper-output
+                sonar.cfamily.gcov.reportsPath=.
+                sonar.cfamily.threads=2
+                sonar.cfamily.cache.enabled=false
+          - bash: |
+              curl -OL https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip &&
+              unzip build-wrapper-linux-x86.zip
+            displayName: Download SonarCloud build wrapper
+            workingDirectory: $(Agent.TempDirectory)
           - bash: |
               sudo apt-get install -q --no-install-recommends \
                 gettext \
@@ -48,7 +63,9 @@ stages:
               exit $status
             displayName: Configure
           - bash: |
-              make check
+              '$(Agent.TempDirectory)'/build-wrapper-linux-x86/build-wrapper-linux-x86-64 \
+                --out-dir build-wrapper-output \
+                make check
             displayName: Build
           - task: PublishTestResults@2
             condition: succeededOrFailed()
@@ -57,6 +74,7 @@ stages:
                 (cd "$subdir" && find . -name '*.gcda' -print | xargs -r gcov -r)
               done
             displayName: Produce test coverage reports
+          - task: SonarCloudAnalyze@1
           - bash: |
               make dist &&
               mkdir -p _dist &&

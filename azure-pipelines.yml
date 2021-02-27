@@ -62,11 +62,11 @@ stages:
         strategy:
           matrix:
             Ubuntu:
-              VM_IMAGE: ubuntu-latest
+              VM_IMAGE: ubuntu-18.04
               CC: gcc
               CXX: g++
             macOS:
-              VM_IMAGE: macOS-latest
+              VM_IMAGE: macOS-10.14
               CC: clang
               CXX: clang++ -std=c++14
         continueOnError: true

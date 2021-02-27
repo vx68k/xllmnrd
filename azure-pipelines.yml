@@ -25,15 +25,15 @@ stages:
             inputs:
               secureFile: keys.asc
           - bash: |
-              echo '$(gpg.passphrase)' | \
+              echo '$(gpg.passphrase)' |
               sh ./setupkeys.sh '$(Keys.secureFilePath)'
             displayName: Set up signing keys
           - bash: |
               sudo apt-get install -q --no-install-recommends \
-                  gettext \
-                  autopoint \
-                  texinfo \
-                  libcppunit-dev
+                gettext \
+                autopoint \
+                texinfo \
+                libcppunit-dev
             displayName: Install build dependencies
           - bash: |
               autoreconf
@@ -77,7 +77,7 @@ stages:
           - download: current
             artifact: dist
           - bash: |
-              gzip -dc '$(Agent.BuildDirectory)/dist/$(package.distName).tar.gz' | \
+              gzip -dc '$(Agent.BuildDirectory)/dist/$(package.distName).tar.gz' |
               tar -x
             displayName: Unpack
           - bash: |
@@ -114,5 +114,5 @@ stages:
             artifact: dist
           - bash: |
               sh ./upload.sh -u '$(bitbucket.username):$(bitbucket.password)' \
-                  -r '$(uploadRepository)' '$(Agent.BuildDirectory)'/dist/*
+                -r '$(uploadRepository)' '$(Agent.BuildDirectory)'/dist/*
             displayName: Upload

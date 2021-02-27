@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "POSIX (GCC)",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "gcc",
             "includePath": [
                 "${workspaceFolder}",
                 "${workspaceFolder}/libxllmnrd",
@@ -14,7 +14,7 @@
                 "LOCALEDIR=\"/usr/share/locale\""
             ],
             "cStandard": "c11",
-            "cppStandard": "c++11",
+            "cppStandard": "c++14",
             "browse": {
                 "path": [
                     "${workspaceFolder}"

@@ -36,7 +36,7 @@ stages:
                 libcppunit-dev
             displayName: Install build dependencies
           - bash: |
-              autoreconf
+              autoreconf --verbose
             displayName: Bootstrap
           - bash: |
               ./configure --disable-static

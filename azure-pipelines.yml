@@ -92,7 +92,8 @@ stages:
               make check
             displayName: Build
           - bash: |
-              make install installcheck
+              make install &&
+              make installcheck
             displayName: Install
   - stage: Release
     dependsOn: Default

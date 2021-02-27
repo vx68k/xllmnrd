@@ -5,5 +5,5 @@
 **/*.jpg = BIN
 **/*.png = BIN
 
-;; The default is set to LF.  This MUST be the last pattern.
-**/* = LF
+;; This is the default and MUST be the last pattern.
+**/* = native

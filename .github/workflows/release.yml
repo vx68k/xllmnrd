@@ -1,25 +1,28 @@
 # release.yml
-# Copyright (C) 2020 Kaz Nishimura
+# Copyright (C) 2020-2021 Kaz Nishimura
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and
 # this notice are preserved.  This file is offered as-is, without any warranty.
 ---
+name: Release
 on:
   push:
     tags:
       - release/*
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - id: set-version
+        run: |
+          echo "::set-output name=version::`expr '${{ github.ref }}' : '.*/\(.*\)'`"
       - uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Version ${{ github.ref }}
+          release_name: Version ${{ steps.set-version.outputs.version }}
           body: |
-            This is ...
+            This is version ${{ steps.set-version.outputs.version }} of ....
           draft: true

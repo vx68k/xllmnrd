@@ -70,15 +70,15 @@ namespace xllmnrd
     class interface_listener
     {
     protected:
+
         interface_listener() = default;
 
-    protected:
         ~interface_listener() = default;
 
     public:
+
         virtual void interface_enabled(const interface_event &event) = 0;
 
-    public:
         virtual void interface_disabled(const interface_event &event) = 0;
     };
 
@@ -90,6 +90,7 @@ namespace xllmnrd
     class interface_manager
     {
     protected:
+
         struct interface
         {
             bool enabled = false;
@@ -104,19 +105,18 @@ namespace xllmnrd
         };
 
     private:
+
         int _debug_level = 0;
 
-    private:
         std::atomic<interface_listener *> _interface_listener {nullptr};
 
-    private:
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;
 
-    private:
         mutable std::recursive_mutex _interfaces_mutex;
 
     protected:
+
         /**
          * Constructs an interface manager object.
          */
@@ -125,48 +125,49 @@ namespace xllmnrd
         // This class is not copy-constructible.
         interface_manager(const interface_manager &) = delete;
 
-        // This class is not copy-assignable.
-        void operator =(const interface_manager &) = delete;
-
     public:
+
         /**
          * Destructs an interface manager object.
          */
         virtual ~interface_manager();
 
-    public:
+
+        // This class is not copy-assignable.
+        void operator =(const interface_manager &) = delete;
+
+
         int debug_level() const
         {
             return _debug_level;
         }
 
-    public:
         void set_debug_level(const int debug_level)
         {
             _debug_level = debug_level;
         }
 
-    public:
+
         /**
          * Adds a listener for interface events.
          */
         void add_interface_listener(interface_listener *listener);
 
-    public:
         /**
          * Removes a listener for interface events.
          */
         void remove_interface_listener(interface_listener *listener);
 
     private:
+
         // Fires an event for an added interface.
         void fire_interface_enabled(const interface_event &event);
 
-    private:
         // Fires an event for a removed interface.
         void fire_interface_disabled(const interface_event &event);
 
     public:
+
         /**
          * Returns a copy of the IPv4 addresses of an interface.
          *
@@ -177,7 +178,6 @@ namespace xllmnrd
          */
         std::set<in_addr> in_addresses(unsigned int interface_index) const;
 
-    public:
         /**
          * Returns a copy of the IPv6 addresses of an interface.
          *
@@ -188,29 +188,26 @@ namespace xllmnrd
          */
         std::set<in6_addr> in6_addresses(unsigned int interface_index) const;
 
-    public:
         // Refreshes the interface addresses.
         //
         // This function is thread safe.
         virtual void refresh(bool maybe_asynchronous = false) = 0;
 
     protected:
+
         /// Removes all the interfaces.
         void remove_interfaces();
 
-    protected:
         /**
          * Enables an interface.
          */
         void enable_interface(unsigned int interface_index);
 
-    protected:
         /**
          * Disables an interface.
          */
         void disable_interface(unsigned int interface_index);
 
-    protected:
         /**
          * Adds an interface address.
          */
@@ -230,7 +227,6 @@ namespace xllmnrd
                 sizeof *address);
         }
 
-    protected:
         /**
          * Removes an interface address.
          */

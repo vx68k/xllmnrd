@@ -44,18 +44,16 @@ namespace xllmnrd
     class rtnetlink_interface_manager: public interface_manager
     {
     private:
+
         /// Operating system interface.
         std::shared_ptr<posix> _os;
 
-    private:
         /// File descriptor for the RTNETLINK socket.
         int _rtnetlink {-1};
 
-    private:
         /// Indicates if a refresh is in progress.
         bool _refreshing {false};
 
-    private:
         enum class refresh_state: char
         {
             STANDBY = 0,
@@ -64,27 +62,23 @@ namespace xllmnrd
         }
         _refresh_state = refresh_state::STANDBY;
 
-    private:
         /// Mutex for the refresh task.
         mutable std::mutex _refresh_mutex;
 
-    private:
         // Condition variable for the refresh task.
         mutable std::condition_variable _refresh_completion;
 
-    private:
         // Indicates if the interface manager loop is running.
         std::atomic<bool> _running {false};
 
-    private:
         // Worker thread.
         std::thread _worker_thread;
 
-    private:
         // Mutex for the worker.
         mutable std::mutex _worker_mutex;
 
     protected:
+
         /*
          * Opens a RTNETLINK socket.
          *
@@ -94,29 +88,29 @@ namespace xllmnrd
         static int open_rtnetlink(const std::shared_ptr<posix> &os);
 
     public:
+
         rtnetlink_interface_manager();
 
         explicit rtnetlink_interface_manager(const std::shared_ptr<posix> &os);
 
-    public:
+
         virtual ~rtnetlink_interface_manager();
 
-    public:
+
         void refresh(bool maybe_asynchronous = false) override;
 
     protected:
+
         /**
          * Begins a refresh task if not running.
          */
         void begin_refresh();
 
-    protected:
         /**
          * Ends the current refresh task if running.
          */
         void end_refresh();
 
-    protected:
         /**
          * Starts a worker thread that monitors interface changes.
          *
@@ -124,37 +118,30 @@ namespace xllmnrd
          */
         void start_worker();
 
-    protected:
         /**
          * Stops the worker thread if running.
          */
         void stop_worker();
 
-    protected:
         void run();
 
-    protected:
         void request_ifinfos();
 
-    protected:
         void request_ifaddrs();
 
-    protected:
         /// Processes NETLINK messages.
         void process_messages();
 
     private:
+
         /// Dispatches NETLINK messages.
         void dispatch_messages(const void *messages, size_t size);
 
-    private:
         /// Handles a NETLINK error message.
         void handle_error(const nlmsghdr *nlmsg);
 
-    private:
         void handle_ifinfo(const nlmsghdr *nlmsg);
 
-    private:
         // Handles a RTNETLINK message for an interface address change.
         void handle_ifaddrmsg(const nlmsghdr *nlmsg);
     };

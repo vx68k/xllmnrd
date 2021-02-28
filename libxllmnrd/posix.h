@@ -29,10 +29,12 @@ namespace xllmnrd
     class posix
     {
     public:
+
         virtual ~posix();
 
-    public:
+
         virtual int socket(int domain, int type, int protocol);
+
         virtual int bind(int fd, const sockaddr *addr, socklen_t len);
 
         template<class T>

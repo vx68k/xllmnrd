@@ -39,17 +39,16 @@ using namespace xllmnrd;
  * Methods of the 'std::less' specializations.
  */
 
-bool std::less<in_addr>::operator ()(
-    const in_addr &x, const in_addr &y) const
+bool std::less<in_addr>::operator ()(const in_addr &x, const in_addr &y) const
 {
-    return memcmp(&x, &y, sizeof (in_addr)) < 0;
+    return memcmp(&x.s_addr, &y.s_addr, 4U) < 0;
 }
 
-bool std::less<in6_addr>::operator ()(
-    const in6_addr &x, const in6_addr &y) const
+bool std::less<in6_addr>::operator ()(const in6_addr &x, const in6_addr &y) const
 {
-    return memcmp(&x, &y, sizeof (in6_addr)) < 0;
+    return memcmp(&x.s6_addr, &y.s6_addr, 16U) < 0;
 }
+
 
 interface_manager::interface_manager()
 {

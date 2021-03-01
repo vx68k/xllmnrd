@@ -286,9 +286,10 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     if (not(maybe_asynchronous)) {
         unique_lock<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
-        while (_running && _refreshing) {
-            _refresh_completion.wait(lock);
-        }
+        _refresh_completion.wait(lock,
+            [this]() {
+                return !_running || !_refreshing;
+            });
     }
 }
 

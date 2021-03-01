@@ -34,15 +34,15 @@ using namespace xllmnrd;
 class responder: public interface_listener
 {
 private:
+
     std::unique_ptr<interface_manager> _interface_manager;
 
-private:
     int _udp6 = -1;
 
-private:
     std::atomic<bool> _running {false};
 
 protected:
+
     /**
      * Opens an IPv6 UDP socket for LLMNR.
      *
@@ -52,6 +52,7 @@ protected:
     static int open_udp6(in_port_t port);
 
 public:
+
     responder();
 
     explicit responder(in_port_t port);
@@ -59,19 +60,19 @@ public:
     // This class is not copy-constructible.
     responder(const responder &) = delete;
 
+
+    virtual ~responder();
+
+
     // This class is not copy-assignable.
     void operator =(const responder &) = delete;
 
-public:
-    virtual ~responder();
 
-public:
     /**
      * Enters the responder loop.
      */
     void run();
 
-public:
     /**
      * Requests termination of the responder loop.
      *
@@ -80,22 +81,19 @@ public:
     void terminate();
 
 protected:
+
     void process_udp6();
 
-protected:
     ssize_t recv_udp6(void *buffer, size_t buffer_size, sockaddr_in6 &sender,
         unsigned int &ifindex);
 
-protected:
     void handle_udp6_query(const llmnr_header *query, size_t query_size,
         const sockaddr_in6 &sender, unsigned int ifindex);
 
-protected:
     void respond_for_name(int fd, const llmnr_header *query,
         const uint8_t *qname_end, const std::unique_ptr<uint8_t []> &name,
         const sockaddr_in6 &sender, unsigned int interface_index);
 
-protected:
     /**
      * Returns a matching host name, or 'null' if nothing matches.
      */
@@ -103,9 +101,9 @@ protected:
         -> std::unique_ptr<uint8_t []>;
 
 public:
+
     void interface_enabled(const interface_event &event) override;
 
-public:
     void interface_disabled(const interface_event &event) override;
 };
 

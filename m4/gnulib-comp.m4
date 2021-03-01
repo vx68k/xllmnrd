@@ -1,5 +1,5 @@
 # DO NOT EDIT! GENERATED AUTOMATICALLY!
-# Copyright (C) 2002-2014 Free Software Foundation, Inc.
+# Copyright (C) 2002-2020 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this file.  If not, see <http://www.gnu.org/licenses/>.
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 #
 # As a special exception to the GNU General Public License,
 # this file may be distributed as part of a program that
@@ -37,10 +37,13 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_ES$])dnl a valid locale name
   m4_pattern_allow([^gl_LIBOBJS$])dnl a variable
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
+
+  # Pre-early section.
+  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   AC_REQUIRE([gl_PROG_AR_RANLIB])
+
   # Code from module absolute-header:
   # Code from module extensions:
-  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
   # Code from module extern-inline:
   # Code from module getopt-gnu:
   # Code from module getopt-posix:
@@ -77,24 +80,18 @@ AC_DEFUN([gl_INIT],
   gl_source_base='libgnu'
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FUNC_GETOPT_GNU
-  if test $REPLACE_GETOPT = 1; then
-    AC_LIBOBJ([getopt])
-    AC_LIBOBJ([getopt1])
-    gl_PREREQ_GETOPT
-    dnl Arrange for unistd.h to include getopt.h.
-    GNULIB_GL_UNISTD_H_GETOPT=1
-  fi
-  AC_SUBST([GNULIB_GL_UNISTD_H_GETOPT])
-  gl_MODULE_INDICATOR_FOR_TESTS([getopt-gnu])
+  dnl Because of the way gl_FUNC_GETOPT_GNU is implemented (the gl_getopt_required
+  dnl mechanism), there is no need to do any AC_LIBOBJ or AC_SUBST here; they are
+  dnl done in the getopt-posix module.
   gl_FUNC_GETOPT_POSIX
   if test $REPLACE_GETOPT = 1; then
     AC_LIBOBJ([getopt])
     AC_LIBOBJ([getopt1])
-    gl_PREREQ_GETOPT
     dnl Arrange for unistd.h to include getopt.h.
     GNULIB_GL_UNISTD_H_GETOPT=1
   fi
   AC_SUBST([GNULIB_GL_UNISTD_H_GETOPT])
+  gl_UNISTD_MODULE_INDICATOR([getopt-posix])
   AC_SUBST([LIBINTL])
   AC_SUBST([LTLIBINTL])
   gt_TYPE_SSIZE_T
@@ -244,10 +241,14 @@ AC_DEFUN([gltests_LIBSOURCES], [
 # This macro records the list of files which have been installed by
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
-  build-aux/snippet/_Noreturn.h
-  build-aux/snippet/arg-nonnull.h
-  build-aux/snippet/c++defs.h
-  build-aux/snippet/warn-on-use.h
+  lib/_Noreturn.h
+  lib/arg-nonnull.h
+  lib/c++defs.h
+  lib/getopt-cdefs.in.h
+  lib/getopt-core.h
+  lib/getopt-ext.h
+  lib/getopt-pfx-core.h
+  lib/getopt-pfx-ext.h
   lib/getopt.c
   lib/getopt.in.h
   lib/getopt1.c
@@ -259,6 +260,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/sysexits.in.h
   lib/unistd.c
   lib/unistd.in.h
+  lib/warn-on-use.h
   m4/00gnulib.m4
   m4/absolute-header.m4
   m4/extensions.m4
@@ -276,4 +278,5 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/unistd_h.m4
   m4/warn-on-use.m4
   m4/wchar_t.m4
+  m4/zzgnulib.m4
 ])

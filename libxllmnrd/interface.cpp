@@ -50,10 +50,6 @@ bool std::less<in6_addr>::operator ()(const in6_addr &x, const in6_addr &y) cons
 }
 
 
-interface_manager::interface_manager()
-{
-}
-
 interface_manager::~interface_manager()
 {
     remove_interfaces();

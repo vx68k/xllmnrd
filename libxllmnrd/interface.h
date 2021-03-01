@@ -120,7 +120,7 @@ namespace xllmnrd
         /**
          * Constructs an interface manager object.
          */
-        interface_manager();
+        interface_manager() = default;
 
         // This class is not copy-constructible.
         interface_manager(const interface_manager &) = delete;

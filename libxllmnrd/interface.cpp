@@ -68,7 +68,7 @@ void interface_manager::remove_interface_listener(interface_listener *listener)
     _interface_listener.compare_exchange_weak(expected, nullptr);
 }
 
-void interface_manager::fire_interface_enabled(const interface_event &event)
+void interface_manager::fire_interface_enabled(const interface_event &event) const
 {
     auto &&listener = _interface_listener.load();
     if (listener != nullptr) {
@@ -76,7 +76,7 @@ void interface_manager::fire_interface_enabled(const interface_event &event)
     }
 }
 
-void interface_manager::fire_interface_disabled(const interface_event &event)
+void interface_manager::fire_interface_disabled(const interface_event &event) const
 {
     auto &&listener = _interface_listener.load();
     if (listener != nullptr) {

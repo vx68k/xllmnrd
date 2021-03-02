@@ -161,10 +161,10 @@ namespace xllmnrd
     private:
 
         // Fires an event for an added interface.
-        void fire_interface_enabled(const interface_event &event);
+        void fire_interface_enabled(const interface_event &event) const;
 
         // Fires an event for a removed interface.
-        void fire_interface_disabled(const interface_event &event);
+        void fire_interface_disabled(const interface_event &event) const;
 
     public:
 

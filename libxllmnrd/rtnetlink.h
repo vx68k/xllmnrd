@@ -89,10 +89,14 @@ namespace xllmnrd
 
     public:
 
+        // Constructors.
+
         rtnetlink_interface_manager();
 
         explicit rtnetlink_interface_manager(const std::shared_ptr<posix> &os);
 
+
+        // Destructor.
 
         ~rtnetlink_interface_manager() override;
 

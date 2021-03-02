@@ -94,7 +94,7 @@ namespace xllmnrd
         explicit rtnetlink_interface_manager(const std::shared_ptr<posix> &os);
 
 
-        virtual ~rtnetlink_interface_manager();
+        ~rtnetlink_interface_manager() override;
 
 
         void refresh(bool maybe_asynchronous = false) override;

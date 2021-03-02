@@ -26,9 +26,6 @@
 
 using namespace xllmnrd;
 
-posix::~posix()
-{
-}
 
 int posix::socket(int domain, int type, int protocol)
 {

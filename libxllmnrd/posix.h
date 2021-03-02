@@ -30,7 +30,7 @@ namespace xllmnrd
     {
     public:
 
-        virtual ~posix();
+        virtual ~posix() = default;
 
 
         virtual int socket(int domain, int type, int protocol);

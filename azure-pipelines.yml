@@ -35,6 +35,7 @@ stages:
               organization: vx68k
               scannerMode: CLI
               extraProperties: |
+                sonar.projectVersion=$(package.version)
                 sonar.cfamily.build-wrapper-output=build-wrapper-output
                 sonar.cfamily.gcov.reportsPath=.
                 sonar.cfamily.threads=2

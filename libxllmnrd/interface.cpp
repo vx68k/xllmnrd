@@ -30,6 +30,7 @@
 #include <cassert>
 
 using std::for_each;
+using std::get;
 using std::lock_guard;
 using std::memcmp;
 using std::set;
@@ -174,13 +175,11 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const in_addr *>(address));
 
-            if (inserted.second) {
-                if (debug_level() >= 0) {
-                    char ipv4[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
-                        interface_name);
-                }
+            if (get<1>(inserted) && debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
+                    interface_name);
             }
         }
         else {
@@ -195,13 +194,11 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const in6_addr *>(address));
 
-            if (inserted.second) {
-                if (debug_level() >= 0) {
-                    char ipv6[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
-                        interface_name);
-                }
+            if (get<1>(inserted) && debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
+                    interface_name);
             }
         }
         else {
@@ -232,13 +229,11 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const in_addr *>(address));
 
-            if (erased != 0) {
-                if (debug_level() >= 0) {
-                    char ipv4[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
-                        interface_name);
-                }
+            if (erased != 0 && debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
+                    interface_name);
             }
         }
         else {
@@ -253,13 +248,11 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const in6_addr *>(address));
 
-            if (erased != 0) {
-                if (debug_level() >= 0) {
-                    char ipv6[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
-                        interface_name);
-                }
+            if (erased != 0 && debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
+                    interface_name);
             }
         }
         else {

@@ -105,7 +105,7 @@ void rtnetlink_interface_manager::run()
     }
 }
 
-void rtnetlink_interface_manager::request_ifinfos()
+void rtnetlink_interface_manager::request_ifinfos() const
 {
     char request[NLMSG_LENGTH(sizeof (ifinfomsg))] {};
 
@@ -123,7 +123,7 @@ void rtnetlink_interface_manager::request_ifinfos()
     }
 }
 
-void rtnetlink_interface_manager::request_ifaddrs()
+void rtnetlink_interface_manager::request_ifaddrs() const
 {
     char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] {};
 

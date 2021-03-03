@@ -129,9 +129,9 @@ namespace xllmnrd
 
         void run();
 
-        void request_ifinfos();
+        void request_ifinfos() const;
 
-        void request_ifaddrs();
+        void request_ifaddrs() const;
 
         /// Processes NETLINK messages.
         void process_messages();

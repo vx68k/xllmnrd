@@ -183,7 +183,7 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             break;
         case RTM_NEWLINK:
         case RTM_DELLINK:
-            handle_ifinfo(nlmsg);
+            handle_ifinfomsg(nlmsg);
             break;
         case RTM_NEWADDR:
         case RTM_DELADDR:
@@ -227,24 +227,29 @@ void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
     }
 }
 
-void rtnetlink_interface_manager::handle_ifinfo(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_ifinfomsg(const nlmsghdr *nlmsg)
 {
-    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (ifinfomsg))) {
-        auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
-        const unsigned int flags_mask = IFF_UP | IFF_MULTICAST;
-        switch (nlmsg->nlmsg_type) {
-        case RTM_NEWLINK:
-            if ((ifi->ifi_flags & flags_mask) == flags_mask) {
-                enable_interface(ifi->ifi_index);
-            }
-            else {
-                disable_interface(ifi->ifi_index);
-            }
-            break;
-        case RTM_DELLINK:
-            disable_interface(ifi->ifi_index);
-            break;
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (ifinfomsg))) {
+        return;
+    }
+    if (nlmsg->nlmsg_type != RTM_NEWLINK && nlmsg->nlmsg_type != RTM_DELLINK) {
+        return;
+    }
+
+    auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
+    switch (nlmsg->nlmsg_type) {
+    case RTM_NEWLINK:
+        if ((ifi->ifi_flags & IFF_UP) != 0
+            && (ifi->ifi_flags & IFF_MULTICAST) != 0) {
+            enable_interface(ifi->ifi_index);
         }
+        else {
+            disable_interface(ifi->ifi_index);
+        }
+        break;
+    case RTM_DELLINK:
+        disable_interface(ifi->ifi_index);
+        break;
     }
 }
 

@@ -248,33 +248,41 @@ void rtnetlink_interface_manager::handle_ifinfo(const nlmsghdr *nlmsg)
     }
 }
 
-void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
+void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
 {
-    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (ifaddrmsg))) {
-        auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(message));
-        // Only handles non-temporary and at least link-local addresses.
-        if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
-            && ifa->ifa_scope <= RT_SCOPE_LINK) {
-            auto rta = reinterpret_cast<const rtattr *>(ifa + 1);
-            unsigned int remains =
-                message->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
-            while (RTA_OK(rta, remains)) {
-                if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
-                    switch (message->nlmsg_type) {
-                    case RTM_NEWADDR:
-                        add_interface_address(ifa->ifa_index,
-                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
-                        break;
-                    case RTM_DELADDR:
-                        remove_interface_address(ifa->ifa_index,
-                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
-                        break;
-                    }
-                }
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (ifaddrmsg))) {
+        return;
+    }
+    if (nlmsg->nlmsg_type != RTM_NEWADDR && nlmsg->nlmsg_type != RTM_DELADDR) {
+        return;
+    }
 
-                rta = RTA_NEXT(rta, remains);
+    auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
+    // Only handles non-temporary and at least link-local addresses.
+    if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) != 0) {
+        return;
+    }
+    if (ifa->ifa_scope > RT_SCOPE_LINK) {
+        return;
+    }
+
+    auto rta = reinterpret_cast<const rtattr *>(ifa + 1);
+    unsigned int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
+    while (RTA_OK(rta, len)) {
+        if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
+            switch (nlmsg->nlmsg_type) {
+            case RTM_NEWADDR:
+                add_interface_address(ifa->ifa_index, ifa->ifa_family,
+                    RTA_DATA(rta), RTA_PAYLOAD(rta));
+                break;
+            case RTM_DELADDR:
+                remove_interface_address(ifa->ifa_index, ifa->ifa_family,
+                    RTA_DATA(rta), RTA_PAYLOAD(rta));
+                break;
             }
         }
+
+        rta = RTA_NEXT(rta, len);
     }
 }
 

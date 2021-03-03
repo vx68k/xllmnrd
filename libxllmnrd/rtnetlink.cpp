@@ -35,13 +35,13 @@
 using std::generic_category;
 using std::lock_guard;
 using std::make_shared;
-using std::runtime_error;
+using std::make_unique;
 using std::shared_ptr;
 using std::size_t;
 using std::system_error;
 using std::thread;
+using std::uint8_t;
 using std::unique_lock;
-using std::unique_ptr;
 using std::this_thread::yield;
 using namespace xllmnrd;
 
@@ -107,7 +107,7 @@ void rtnetlink_interface_manager::run()
 
 void rtnetlink_interface_manager::request_ifinfos() const
 {
-    char request[NLMSG_LENGTH(sizeof (ifinfomsg))] {};
+    uint8_t request[NLMSG_LENGTH(sizeof (ifinfomsg))] = {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifinfomsg));
@@ -125,7 +125,7 @@ void rtnetlink_interface_manager::request_ifinfos() const
 
 void rtnetlink_interface_manager::request_ifaddrs() const
 {
-    char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] {};
+    uint8_t request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
@@ -149,7 +149,7 @@ void rtnetlink_interface_manager::process_messages()
         throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
     }
     if (packet_size != 0) {
-        unique_ptr<char []> buffer {new char [packet_size]};
+        auto &&buffer = make_unique<uint8_t []>(packet_size);
 
         // This must not block.
         packet_size = _os->recv(_rtnetlink, buffer.get(), packet_size, 0);

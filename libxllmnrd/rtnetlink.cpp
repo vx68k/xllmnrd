@@ -237,19 +237,13 @@ void rtnetlink_interface_manager::handle_ifinfomsg(const nlmsghdr *nlmsg)
     }
 
     auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
-    switch (nlmsg->nlmsg_type) {
-    case RTM_NEWLINK:
-        if ((ifi->ifi_flags & IFF_UP) != 0
-            && (ifi->ifi_flags & IFF_MULTICAST) != 0) {
-            enable_interface(ifi->ifi_index);
-        }
-        else {
-            disable_interface(ifi->ifi_index);
-        }
-        break;
-    case RTM_DELLINK:
+    if (nlmsg->nlmsg_type == RTM_NEWLINK
+        && (ifi->ifi_flags & IFF_UP) != 0
+        && (ifi->ifi_flags & IFF_MULTICAST) != 0) {
+        enable_interface(ifi->ifi_index);
+    }
+    else {
         disable_interface(ifi->ifi_index);
-        break;
     }
 }
 
@@ -264,7 +258,8 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
 
     auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
     // Only handles non-temporary and at least link-local addresses.
-    if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) != 0) {
+    if ((ifa->ifa_flags & IFA_F_SECONDARY) != 0
+        || (ifa->ifa_flags & IFA_F_TENTATIVE) != 0) {
         return;
     }
     if (ifa->ifa_scope > RT_SCOPE_LINK) {
@@ -275,15 +270,13 @@ void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
     unsigned int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
     while (RTA_OK(rta, len)) {
         if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
-            switch (nlmsg->nlmsg_type) {
-            case RTM_NEWADDR:
+            if (nlmsg->nlmsg_type == RTM_NEWADDR) {
                 add_interface_address(ifa->ifa_index, ifa->ifa_family,
                     RTA_DATA(rta), RTA_PAYLOAD(rta));
-                break;
-            case RTM_DELADDR:
+            }
+            else {
                 remove_interface_address(ifa->ifa_index, ifa->ifa_family,
                     RTA_DATA(rta), RTA_PAYLOAD(rta));
-                break;
             }
         }
 

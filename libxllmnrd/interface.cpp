@@ -129,7 +129,7 @@ void interface_manager::enable_interface(const unsigned int interface_index)
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     auto &interface = _interfaces[interface_index];
-    if (not(interface.enabled)) {
+    if (!interface.enabled) {
         interface.enabled = true;
 
         if (debug_level() >= 0) {

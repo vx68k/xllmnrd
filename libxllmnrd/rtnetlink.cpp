@@ -204,12 +204,12 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
 
     if (done) {
         switch (_refresh_state) {
-        case refresh_state::IFINFO:
-            _refresh_state = refresh_state::IFADDR;
+        case refresh_state::ifinfo:
+            _refresh_state = refresh_state::ifaddr;
             request_ifaddrs();
             break;
-        case refresh_state::IFADDR:
-            _refresh_state = refresh_state::STANDBY;
+        case refresh_state::ifaddr:
+            _refresh_state = refresh_state::standby;
             end_refresh();
             break;
         default:
@@ -308,7 +308,7 @@ void rtnetlink_interface_manager::begin_refresh()
 
         remove_interfaces();
 
-        _refresh_state = refresh_state::IFINFO;
+        _refresh_state = refresh_state::ifinfo;
         request_ifinfos();
     }
 }

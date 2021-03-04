@@ -45,6 +45,13 @@ namespace xllmnrd
     {
     private:
 
+        enum class refresh_state: char
+        {
+            standby,
+            ifinfo,
+            ifaddr,
+        };
+
         /// Operating system interface.
         std::shared_ptr<posix> _os;
 
@@ -54,13 +61,7 @@ namespace xllmnrd
         /// Indicates if a refresh is in progress.
         bool _refreshing {false};
 
-        enum class refresh_state: char
-        {
-            STANDBY = 0,
-            IFINFO,
-            IFADDR,
-        }
-        _refresh_state = refresh_state::STANDBY;
+        refresh_state _refresh_state = refresh_state::standby;
 
         /// Mutex for the refresh task.
         mutable std::mutex _refresh_mutex;

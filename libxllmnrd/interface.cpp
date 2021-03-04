@@ -115,8 +115,9 @@ void interface_manager::remove_interfaces()
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     for_each(_interfaces.begin(), _interfaces.end(),
-        [this](decltype(_interfaces)::reference i) {
-            if (i.second.enabled) {
+        [this](auto &&i)
+        {
+            if (get<1>(i).enabled) {
                 fire_interface_disabled({this, i.first});
             }
         });

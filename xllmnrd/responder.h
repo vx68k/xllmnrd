@@ -95,10 +95,10 @@ protected:
         const sockaddr_in6 &sender, unsigned int interface_index);
 
     /**
-     * Returns a matching host name, or 'null' if nothing matches.
+     * Returns the matching host name, or null if nothing matches.
      */
-    auto matching_host_name(const void *qname) const
-        -> std::unique_ptr<uint8_t []>;
+    auto matching_host_name(const std::uint8_t *qname) const
+        -> std::unique_ptr<std::uint8_t []>;
 
 public:
 

@@ -391,7 +391,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     }
 }
 
-auto responder::matching_host_name(const void *const qname) const
+auto responder::matching_host_name(const uint8_t *const qname) const
     -> unique_ptr<uint8_t []>
 {
     char host_name[LLMNR_LABEL_MAX + 1] {};
@@ -400,8 +400,8 @@ auto responder::matching_host_name(const void *const qname) const
     auto &&host_name_length = strcspn(host_name, ".");
     host_name[host_name_length] = '\0';
 
-    auto &&i = static_cast<const uint8_t *>(qname);
-    auto &&j = reinterpret_cast<unsigned char *>(host_name);
+    auto i = qname;
+    auto j = reinterpret_cast<unsigned char *>(host_name);
     size_t length = *i++;
     if (length != host_name_length) {
         return nullptr;

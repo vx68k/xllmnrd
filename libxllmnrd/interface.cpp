@@ -42,7 +42,7 @@ using namespace xllmnrd;
 
 bool std::less<in_addr>::operator ()(const in_addr &x, const in_addr &y) const
 {
-    return memcmp(&x.s_addr, &y.s_addr, 4U) < 0;
+    return memcmp(&x.s_addr, &y.s_addr, sizeof (in_addr_t)) < 0;
 }
 
 bool std::less<in6_addr>::operator ()(const in6_addr &x, const in6_addr &y) const

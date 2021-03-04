@@ -289,7 +289,7 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     start_worker();
     begin_refresh();
 
-    if (not(maybe_asynchronous)) {
+    if (!maybe_asynchronous) {
         unique_lock<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
         _refresh_completion.wait(lock,
@@ -303,7 +303,7 @@ void rtnetlink_interface_manager::begin_refresh()
 {
     lock_guard<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
-    if (not(_refreshing)) {
+    if (!_refreshing) {
         _refreshing = true;
 
         remove_interfaces();
@@ -330,7 +330,7 @@ void rtnetlink_interface_manager::start_worker()
     if (!_worker_thread.joinable()) {
         _worker_thread = thread(&rtnetlink_interface_manager::run, this);
 
-        while (not(_running)) {
+        while (!_running) {
             yield();
         }
     }

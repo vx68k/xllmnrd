@@ -24,18 +24,33 @@
 namespace xllmnrd
 {
     /**
-     * POSIX abstraction objects.
+     * Operating system interface.
      */
     class posix
     {
+    protected:
+
+        // Constructors.
+
+        posix() = default;
+
+        posix(const posix &) = delete;
+
     public:
+
+        // Destructor.
 
         virtual ~posix() = default;
 
 
-        virtual int socket(int domain, int type, int protocol);
+        // Assignment operators.
 
-        virtual int bind(int fd, const sockaddr *addr, socklen_t len);
+        void operator =(const posix &) = delete;
+
+
+        virtual int socket(int domain, int type, int protocol) = 0;
+
+        virtual int bind(int fd, const sockaddr *addr, socklen_t len) = 0;
 
         template<class T>
         int bind(int fd, T *addr) {
@@ -48,17 +63,36 @@ namespace xllmnrd
          *
          * @param fd a file descriptor to be closed
          */
-        virtual int close(int fd);
+        virtual int close(int fd) = 0;
 
         /// Receives a message from a socket.
         ///
         /// This implementations calls '::recv'.
-        virtual ssize_t recv(int fd, void *buf, ::size_t n, int flags);
+        virtual ::ssize_t recv(int fd, void *buf, ::size_t n, int flags) = 0;
 
         /// Send a message to a socket.
         ///
         /// This implementation calls '::send'.
-        virtual ssize_t send(int fd, const void *buf, ::size_t n, int flags);
+        virtual ::ssize_t send(int fd, const void *buf, ::size_t n, int flags) = 0;
+    };
+
+
+    /**
+     * Default POSIX implementation.
+     */
+    class default_posix: public posix
+    {
+    public:
+
+        int socket(int domain, int type, int protocol) override;
+
+        int bind(int fd, const sockaddr *addr, socklen_t len) override;
+
+        int close(int fd) override;
+
+        ::ssize_t recv(int fd, void *buf, ::size_t n, int flags) override;
+
+        ::ssize_t send(int fd, const void *buf, ::size_t n, int flags) override;
     };
 }
 

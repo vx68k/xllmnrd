@@ -75,7 +75,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
 
 rtnetlink_interface_manager::rtnetlink_interface_manager()
 :
-    rtnetlink_interface_manager(make_shared<posix>())
+    rtnetlink_interface_manager(make_shared<default_posix>())
 {
 }
 

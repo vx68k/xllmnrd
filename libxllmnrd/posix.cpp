@@ -27,27 +27,27 @@
 using namespace xllmnrd;
 
 
-int posix::socket(int domain, int type, int protocol)
+int default_posix::socket(int domain, int type, int protocol)
 {
     return ::socket(domain, type, protocol);
 }
 
-int posix::bind(int fd, const sockaddr *addr, socklen_t len)
+int default_posix::bind(int fd, const sockaddr *addr, socklen_t len)
 {
     return ::bind(fd, addr, len);
 }
 
-int posix::close(int fd)
+int default_posix::close(int fd)
 {
     return ::close(fd);
 }
 
-ssize_t posix::recv(int fd, void *buf, ::size_t n, int flags)
+ssize_t default_posix::recv(int fd, void *buf, ::size_t n, int flags)
 {
     return ::recv(fd, buf, n, flags);
 }
 
-ssize_t posix::send(int fd, const void *buf, ::size_t n, int flags)
+ssize_t default_posix::send(int fd, const void *buf, ::size_t n, int flags)
 {
     return ::send(fd, buf, n, flags);
 }

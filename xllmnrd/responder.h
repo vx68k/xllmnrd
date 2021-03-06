@@ -26,7 +26,10 @@
 #include <atomic>
 #include <memory>
 
-using namespace xllmnrd;
+using xllmnrd::interface_event;
+using xllmnrd::interface_listener;
+using xllmnrd::interface_manager;
+
 
 /**
  * LLMNR responder objects.

@@ -176,7 +176,7 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             }
             break;
         case NLMSG_ERROR:
-            handle_error(nlmsg);
+            handle_nlmsgerr(nlmsg);
             break;
         case NLMSG_DONE:
             done = true;
@@ -219,12 +219,14 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     }
 }
 
-void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
+void rtnetlink_interface_manager::handle_nlmsgerr(const nlmsghdr *const nlmsg) const
 {
-    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
-        auto &&e = static_cast<const nlmsgerr *>(NLMSG_DATA(message));
-        syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (nlmsgerr))) {
+        return;
     }
+
+    auto err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
+    syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(err->error)));
 }
 
 void rtnetlink_interface_manager::handle_ifinfomsg(const nlmsghdr *nlmsg)

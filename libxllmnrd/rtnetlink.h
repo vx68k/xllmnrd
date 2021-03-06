@@ -143,7 +143,7 @@ namespace xllmnrd
         void dispatch_messages(const void *messages, size_t size);
 
         /// Handles a NETLINK error message.
-        void handle_error(const nlmsghdr *nlmsg);
+        void handle_nlmsgerr(const nlmsghdr *nlmsg) const;
 
         void handle_ifinfomsg(const nlmsghdr *nlmsg);
 

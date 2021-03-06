@@ -305,7 +305,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
         if (name != nullptr) {
-            respond_for_name(_udp6, query, qname_end, name, sender, ifindex);
+            respond_for_name(_udp6, query, qname_end, name.get(), sender, ifindex);
         }
     }
     else {
@@ -314,7 +314,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
 }
 
 void responder::respond_for_name(const int fd, const llmnr_header *const query,
-    const uint8_t *const qname_end, const unique_ptr<uint8_t []> &name,
+    const uint8_t *const qname_end, const uint8_t *const label,
     const sockaddr_in6 &sender, const unsigned int interface_index)
 {
     set<in_addr> in_addresses;
@@ -344,7 +344,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     auto &&buffer_back = back_inserter(buffer);
     for_each(in_addresses.begin(), in_addresses.end(), [&](const in_addr &i) {
         if (response->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, buffer_back);
+            copy_n(&label[0], label[0] + 1, buffer_back);
             buffer.push_back(0);
         }
         else {
@@ -363,7 +363,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     });
     for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
         if (response->ancount == htons(0)) {
-            copy_n(&name[0], name[0] + 1, buffer_back);
+            copy_n(&label[0], label[0] + 1, buffer_back);
             buffer.push_back(0);
         }
         else {

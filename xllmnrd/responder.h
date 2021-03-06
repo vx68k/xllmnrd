@@ -94,7 +94,7 @@ protected:
         const sockaddr_in6 &sender, unsigned int ifindex);
 
     void respond_for_name(int fd, const llmnr_header *query,
-        const uint8_t *qname_end, const std::unique_ptr<uint8_t []> &name,
+        const uint8_t *qname_end, const uint8_t *label,
         const sockaddr_in6 &sender, unsigned int interface_index);
 
     /**

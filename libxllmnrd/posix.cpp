@@ -29,30 +29,30 @@ using namespace xllmnrd;
 
 // Implementation of class 'default_posix'
 
-int default_posix::socket(int domain, int type, int protocol)
+int default_posix::socket(const int domain, const int type, const int protocol)
 {
     return ::socket(domain, type, protocol);
 }
 
-int default_posix::bind(int socket, const sockaddr *address,
-    socklen_t address_len)
+int default_posix::bind(const int socket, const sockaddr *const address,
+    const socklen_t address_len)
 {
     return ::bind(socket, address, address_len);
 }
 
-int default_posix::close(int fildes)
+int default_posix::close(const int fildes)
 {
     return ::close(fildes);
 }
 
-ssize_t default_posix::recv(int socket, void *buffer, ::size_t length,
-    int flags)
+ssize_t default_posix::recv(const int socket, void *const buffer,
+    const ::size_t length, const int flags)
 {
     return ::recv(socket, buffer, length, flags);
 }
 
-ssize_t default_posix::send(int socket, const void *buffer, ::size_t length,
-    int flags)
+ssize_t default_posix::send(const int socket, const void *const buffer,
+    const ::size_t length, const int flags)
 {
     return ::send(socket, buffer, length, flags);
 }

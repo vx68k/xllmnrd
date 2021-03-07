@@ -271,23 +271,24 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
         0,              // .msg_flags
     };
     auto &&received = recvmsg(_udp6, &msg, 0);
-    if (received >= 0) {
-        if (msg.msg_namelen < sizeof sender) {
-            errno = ENOMSG;
-            return -1;
+    if (received < 0) {
+        return received;
+    }
+    if (msg.msg_namelen < sizeof sender) {
+        errno = ENOMSG;
+        return -1;
+    }
+
+    auto &&cmsg = CMSG_FIRSTHDR(&msg);
+    while (cmsg != nullptr) {
+        if (cmsg->cmsg_level == IPPROTO_IPV6
+            && cmsg->cmsg_type == IPV6_PKTINFO
+            && cmsg->cmsg_len >= CMSG_LEN(sizeof (in6_pktinfo))) {
+            auto &&ipi6 = reinterpret_cast<in6_pktinfo *>(CMSG_DATA(cmsg));
+            ifindex = ipi6->ipi6_ifindex;
         }
 
-        auto &&cmsg = CMSG_FIRSTHDR(&msg);
-        while (cmsg != nullptr) {
-            if (cmsg->cmsg_level == IPPROTO_IPV6 && cmsg->cmsg_type == IPV6_PKTINFO) {
-                if (cmsg->cmsg_len >= CMSG_LEN(sizeof (in6_pktinfo))) {
-                    auto &&ipi6 = reinterpret_cast<in6_pktinfo *>(CMSG_DATA(cmsg));
-                    ifindex = ipi6->ipi6_ifindex;
-                }
-            }
-
-            cmsg = CMSG_NXTHDR(&msg, cmsg);
-        }
+        cmsg = CMSG_NXTHDR(&msg, cmsg);
     }
     return received;
 }

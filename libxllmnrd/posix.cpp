@@ -32,22 +32,25 @@ int default_posix::socket(int domain, int type, int protocol)
     return ::socket(domain, type, protocol);
 }
 
-int default_posix::bind(int fd, const sockaddr *addr, socklen_t len)
+int default_posix::bind(int socket, const sockaddr *address,
+    socklen_t address_len)
 {
-    return ::bind(fd, addr, len);
+    return ::bind(socket, address, address_len);
 }
 
-int default_posix::close(int fd)
+int default_posix::close(int fildes)
 {
-    return ::close(fd);
+    return ::close(fildes);
 }
 
-ssize_t default_posix::recv(int fd, void *buf, ::size_t n, int flags)
+ssize_t default_posix::recv(int socket, void *buffer, ::size_t length,
+    int flags)
 {
-    return ::recv(fd, buf, n, flags);
+    return ::recv(socket, buffer, length, flags);
 }
 
-ssize_t default_posix::send(int fd, const void *buf, ::size_t n, int flags)
+ssize_t default_posix::send(int socket, const void *buffer, ::size_t length,
+    int flags)
 {
-    return ::send(fd, buf, n, flags);
+    return ::send(socket, buffer, length, flags);
 }

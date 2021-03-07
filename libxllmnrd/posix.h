@@ -50,30 +50,33 @@ namespace xllmnrd
 
         virtual int socket(int domain, int type, int protocol) = 0;
 
-        virtual int bind(int fd, const sockaddr *addr, socklen_t len) = 0;
+        virtual int bind(int socket, const sockaddr *address,
+            socklen_t address_len) = 0;
 
         template<class T>
-        int bind(int fd, T *addr) {
-            return bind(fd, reinterpret_cast<const sockaddr *>(addr),
-                sizeof *addr);
+        int bind(int socket, T *address) {
+            return bind(socket, reinterpret_cast<const sockaddr *>(address),
+                sizeof *address);
         }
 
         /**
          * Closes a file descriptor.
          *
-         * @param fd a file descriptor to be closed
+         * @param fildes a file descriptor to be closed
          */
-        virtual int close(int fd) = 0;
+        virtual int close(int fildes) = 0;
 
         /// Receives a message from a socket.
         ///
         /// This implementations calls '::recv'.
-        virtual ::ssize_t recv(int fd, void *buf, ::size_t n, int flags) = 0;
+        virtual ::ssize_t recv(int socket, void *buffer, ::size_t length,
+            int flags) = 0;
 
         /// Send a message to a socket.
         ///
         /// This implementation calls '::send'.
-        virtual ::ssize_t send(int fd, const void *buf, ::size_t n, int flags) = 0;
+        virtual ::ssize_t send(int socket, const void *buffer, ::size_t length,
+            int flags) = 0;
     };
 
 
@@ -86,13 +89,16 @@ namespace xllmnrd
 
         int socket(int domain, int type, int protocol) override;
 
-        int bind(int fd, const sockaddr *addr, socklen_t len) override;
+        int bind(int socket, const sockaddr *address,
+            socklen_t address_len) override;
 
-        int close(int fd) override;
+        int close(int fildes) override;
 
-        ::ssize_t recv(int fd, void *buf, ::size_t n, int flags) override;
+        ::ssize_t recv(int socket, void *buffer, ::size_t length,
+            int flags) override;
 
-        ::ssize_t send(int fd, const void *buf, ::size_t n, int flags) override;
+        ::ssize_t send(int socket, const void *buffer, ::size_t length,
+            int flags) override;
     };
 }
 

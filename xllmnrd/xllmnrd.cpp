@@ -133,13 +133,20 @@ static int parse_options(int argc, char **argv, responder_builder &builder);
  */
 static void print_usage(const char *arg0);
 
+// A signal handler should have "C" linkage.
+extern "C" void handle_signal_to_terminate(int __sig);
+
 /**
  * Prints the version information.
  */
-static void print_version();
-
-// A signal handler should have "C" linkage.
-extern "C" void handle_signal_to_terminate(int __sig);
+inline void print_version()
+{
+    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
+    printf(_("\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n"));
+}
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.
@@ -307,15 +314,6 @@ void print_usage(const char *const arg0)
     printf("      --version         %s\n", _("output version information and exit"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
-}
-
-void print_version()
-{
-    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
-    printf(_("\
-This is free software: you are free to change and redistribute it.\n\
-There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
 /*

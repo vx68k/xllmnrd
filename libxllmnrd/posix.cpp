@@ -27,6 +27,8 @@
 using namespace xllmnrd;
 
 
+// Implementation of class 'default_posix'
+
 int default_posix::socket(int domain, int type, int protocol)
 {
     return ::socket(domain, type, protocol);

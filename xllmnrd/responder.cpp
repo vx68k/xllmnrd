@@ -298,7 +298,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     // These must already be checked.
     assert(query_size >= sizeof query);
 
-    auto &&qname = reinterpret_cast<const uint8_t *>(llmnr_data(query));
+    auto &&qname = llmnr_data(query);
     size_t remains = query_size - LLMNR_HEADER_SIZE;
 
     auto &&qname_end = llmnr_skip_name(qname, &remains);

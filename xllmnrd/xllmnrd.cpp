@@ -56,11 +56,6 @@ using std::unique_ptr;
 #define LOG_PERROR 0
 #endif
 
-// Copyright years for printing.
-#ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013-2020"
-#endif
-
 // Marks localization strings.
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
@@ -142,7 +137,7 @@ extern "C" void handle_signal_to_terminate(int __sig);
 inline void print_version()
 {
     printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
+    printf("Copyright %s 2013-2021 Kaz Nishimura\n", _("(C)"));
     printf(_("\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n"));

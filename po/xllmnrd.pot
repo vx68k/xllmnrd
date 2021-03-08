@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: xllmnrd 4.0\n"
+"Project-Id-Version: xllmnrd 5-alpha.1\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2020-07-12 18:23+0900\n"
+"POT-Creation-Date: 2021-03-08 09:37+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,49 +17,49 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: xllmnrd/xllmnrd.cpp:286
-#, c-format
-msgid "Try '%s --help' for more information.\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:297
-#, c-format
-msgid "Usage: %s [OPTION]...\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:298
-#, c-format
-msgid "Respond to IPv6 LLMNR queries.\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:300
-msgid "run in foreground"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:301
-msgid "record the process ID in FILE"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:302
-msgid "display this help and exit"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:303
-msgid "output version information and exit"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:305
-#, c-format
-msgid "Report bugs to <%s>.\n"
-msgstr ""
-
-#: xllmnrd/xllmnrd.cpp:311
+#: xllmnrd/xllmnrd.cpp:133
 msgid "(C)"
 msgstr ""
 
-#: xllmnrd/xllmnrd.cpp:312
+#: xllmnrd/xllmnrd.cpp:134
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:146
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:147
+#, c-format
+msgid "Respond to IPv6 LLMNR queries.\n"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:149
+msgid "run in foreground"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:150
+msgid "record the process ID in FILE"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:151
+msgid "display this help and exit"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:152
+msgid "output version information and exit"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:154
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr ""
+
+#: xllmnrd/xllmnrd.cpp:303
+#, c-format
+msgid "Try '%s --help' for more information.\n"
 msgstr ""

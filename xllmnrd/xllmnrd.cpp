@@ -108,19 +108,6 @@ static unique_ptr<class responder> responder;
 
 static atomic<int> caught_signal;
 
-/**
- * Parses command-line arguments for options.
- * If an option that causes an immediate exit is used, this function does not
- * return but terminates this program with a zero exit status.
- * If an invalid option is used, this function does not return but prints a
- * diagnostic message and terminates this program with a non-zero exit status.
- *
- * @param argc number of command-line arguments.
- * @param argv pointer array of command-line arguments.
- * @param builder parsed options.
- */
-static int parse_options(int argc, char **argv, responder_builder &builder);
-
 // A signal handler should have "C" linkage.
 extern "C" void handle_signal_to_terminate(int __sig);
 
@@ -152,6 +139,63 @@ inline void print_usage(const char *const arg0)
     printf("      --version         %s\n", _("output version information and exit"));
     putchar('\n');
     printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+}
+
+/**
+ * Parses command-line arguments for options.
+ * If an option that causes an immediate exit is used, this function does not
+ * return but terminates this program with a zero exit status.
+ * If an invalid option is used, this function does not return but prints a
+ * diagnostic message and terminates this program with a non-zero exit status.
+ *
+ * @param argc number of command-line arguments.
+ * @param argv pointer array of command-line arguments.
+ * @param builder parsed options.
+ */
+inline int parse_options(const int argc, char **const argv,
+    responder_builder &builder)
+{
+    enum
+    {
+        VERSION = -128,
+        HELP,
+        FOREGROUND,
+        PID_FILE,
+    };
+    static const option options[] {
+        {"foreground", no_argument, nullptr, FOREGROUND},
+        {"pid-file", required_argument, nullptr, PID_FILE},
+        {"help", no_argument, nullptr, HELP},
+        {"version", no_argument, nullptr, VERSION},
+        {}
+    };
+
+    int opt = -1;
+    do {
+        opt = getopt_long(argc, argv, "fp:", options, nullptr);
+        switch (opt) {
+        case 'f':
+        case FOREGROUND:
+            builder.foreground = true;
+            break;
+        case 'p':
+        case PID_FILE:
+            builder.pid_file = optarg;
+            break;
+        case HELP:
+            print_usage(argv[0]);
+            exit(0);
+        case VERSION:
+            print_version();
+            exit(0);
+        case '?':
+            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
+            exit(EX_USAGE);
+        }
+    }
+    while (opt != -1);
+
+    return optind;
 }
 
 /*
@@ -261,52 +305,6 @@ int make_pid_file(const char *restrict name) {
     unlink(name);
 
     return err;
-}
-
-int parse_options(const int argc, char **const argv,
-    responder_builder &builder)
-{
-    enum
-    {
-        VERSION = -128,
-        HELP,
-        FOREGROUND,
-        PID_FILE,
-    };
-    static const option options[] {
-        {"foreground", no_argument, nullptr, FOREGROUND},
-        {"pid-file", required_argument, nullptr, PID_FILE},
-        {"help", no_argument, nullptr, HELP},
-        {"version", no_argument, nullptr, VERSION},
-        {}
-    };
-
-    int opt = -1;
-    do {
-        opt = getopt_long(argc, argv, "fp:", options, nullptr);
-        switch (opt) {
-        case 'f':
-        case FOREGROUND:
-            builder.foreground = true;
-            break;
-        case 'p':
-        case PID_FILE:
-            builder.pid_file = optarg;
-            break;
-        case HELP:
-            print_usage(argv[0]);
-            exit(0);
-        case VERSION:
-            print_version();
-            exit(0);
-        case '?':
-            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
-            exit(EX_USAGE);
-        }
-    }
-    while (opt != -1);
-
-    return optind;
 }
 
 /*

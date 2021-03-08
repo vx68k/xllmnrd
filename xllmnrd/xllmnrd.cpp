@@ -121,13 +121,6 @@ static atomic<int> caught_signal;
  */
 static int parse_options(int argc, char **argv, responder_builder &builder);
 
-/**
- * Prints the command usage.
- *
- * @param arg0 the command name
- */
-static void print_usage(const char *arg0);
-
 // A signal handler should have "C" linkage.
 extern "C" void handle_signal_to_terminate(int __sig);
 
@@ -141,6 +134,24 @@ inline void print_version()
     printf(_("\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n"));
+}
+
+/**
+ * Prints the command usage.
+ *
+ * @param arg0 the command name
+ */
+inline void print_usage(const char *const arg0)
+{
+    printf(_("Usage: %s [OPTION]...\n"), arg0);
+    printf(_("Respond to IPv6 LLMNR queries.\n"));
+    putchar('\n');
+    printf("  -f, --foreground      %s\n", _("run in foreground"));
+    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
+    printf("      --help            %s\n", _("display this help and exit"));
+    printf("      --version         %s\n", _("output version information and exit"));
+    putchar('\n');
+    printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
 /*
@@ -296,19 +307,6 @@ int parse_options(const int argc, char **const argv,
     while (opt != -1);
 
     return optind;
-}
-
-void print_usage(const char *const arg0)
-{
-    printf(_("Usage: %s [OPTION]...\n"), arg0);
-    printf(_("Respond to IPv6 LLMNR queries.\n"));
-    putchar('\n');
-    printf("  -f, --foreground      %s\n", _("run in foreground"));
-    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
-    printf("      --help            %s\n", _("display this help and exit"));
-    printf("      --version         %s\n", _("output version information and exit"));
-    putchar('\n');
-    printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }
 
 /*

@@ -182,7 +182,7 @@ int main(const int argc, char **const argv)
     try {
         locale::global(locale(""));
     }
-    catch (runtime_error &error) {
+    catch (const runtime_error &error) {
         fprintf(stderr, "error: failed to set locale: %s\n", error.what());
     }
 

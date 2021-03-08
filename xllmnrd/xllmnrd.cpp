@@ -167,7 +167,7 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         sigemptyset(&action.sa_mask);
     }
 
-    int ret = sigaction(sig, &action, 0);
+    int ret = sigaction(sig, &action, nullptr);
     if (ret != 0) {
         syslog(LOG_ERR, "Failed to set handler for %s", strsignal(sig));
     }
@@ -231,7 +231,7 @@ int main(const int argc, char **const argv)
 
             struct sigaction default_action {};
             default_action.sa_handler = SIG_DFL;
-            if (sigaction(caught_signal, &default_action, 0) == 0) {
+            if (sigaction(caught_signal, &default_action, nullptr) == 0) {
                 raise(caught_signal);
             }
         }

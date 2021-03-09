@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+using std::abort;
 using std::atomic;
 using std::exception;
 using std::fclose;
@@ -211,6 +212,10 @@ inline int parse_options(const int argc, char **const argv,
         case '?':
             fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
             exit(EX_USAGE);
+        case -1:
+            break;
+        default:
+            abort();
         }
     }
     while (opt != -1);

@@ -60,17 +60,37 @@ using std::unique_ptr;
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
-/**
- * Makes a pid file.
- * @param __name name of the pid file.
- * @return 0 if no error is detected, or non-zero error number.
- */
-static int make_pid_file(const char *__name);
 
 struct responder_builder
 {
     bool foreground = false;
     const char *pid_file = nullptr;
+
+    /**
+     * Makes a pid file.
+     *
+     * @param __name name of the pid file.
+     * @return 0 if no error is detected, or non-zero error number.
+     */
+    static int make_pid_file(const char *restrict name)
+    {
+        FILE *f = fopen(name, "w");
+        if (!f) {
+            return errno;
+        }
+
+        int written = fprintf(f, "%lu\n", (long) getpid());
+        if (written >= 0) {
+            fclose(f);
+            return 0;
+        }
+
+        int err = errno; // Any of the following functions MAY fail.
+        fclose(f);
+        unlink(name);
+
+        return err;
+    }
 
     void init()
     {
@@ -286,25 +306,6 @@ int main(const int argc, char **const argv)
         fprintf(stderr, "%s\n", e.what());
         exit(1);
     }
-}
-
-int make_pid_file(const char *restrict name) {
-    FILE *f = fopen(name, "w");
-    if (!f) {
-        return errno;
-    }
-
-    int written = fprintf(f, "%lu\n", (long) getpid());
-    if (written >= 0) {
-        fclose(f);
-        return 0;
-    }
-
-    int err = errno; // Any of the following functions MAY fail.
-    fclose(f);
-    unlink(name);
-
-    return err;
 }
 
 /*

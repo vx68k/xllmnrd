@@ -74,7 +74,7 @@ struct responder_builder
 
     void init()
     {
-        if (not(foreground)) {
+        if (!foreground) {
             foreground = true;
 
             if (daemon(false, false) == -1) {

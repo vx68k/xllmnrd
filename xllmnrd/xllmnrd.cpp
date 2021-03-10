@@ -46,6 +46,7 @@ using std::fopen;
 using std::fprintf;
 using std::generic_category;
 using std::locale;
+using std::make_unique;
 using std::putchar;
 using std::printf;
 using std::system_error;
@@ -120,8 +121,7 @@ struct responder_builder
      */
     auto build() -> unique_ptr<class responder>
     {
-        unique_ptr<class responder> responder {new class responder()};
-        return responder;
+        return make_unique<class responder>();
     }
 };
 

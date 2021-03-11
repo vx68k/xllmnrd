@@ -38,7 +38,7 @@ class responder: public interface_listener
 {
 private:
 
-    std::unique_ptr<interface_manager> _interface_manager;
+    std::shared_ptr<interface_manager> _interface_manager;
 
     int _udp6 = -1;
 
@@ -59,6 +59,9 @@ public:
     responder();
 
     explicit responder(in_port_t port);
+
+    responder(in_port_t port,
+        const std::shared_ptr<interface_manager> &interface_manager);
 
     // This class is not copy-constructible.
     responder(const responder &) = delete;

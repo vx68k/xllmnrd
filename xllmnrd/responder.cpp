@@ -46,7 +46,9 @@ using std::copy_n;
 using std::error_code;
 using std::for_each;
 using std::generic_category;
+using std::make_shared;
 using std::set;
+using std::shared_ptr;
 using std::strcspn;
 using std::strlen;
 using std::strerror;
@@ -172,7 +174,15 @@ responder::responder()
 
 responder::responder(const in_port_t port)
 :
-    _interface_manager {new rtnetlink_interface_manager()},
+    responder(port, make_shared<rtnetlink_interface_manager>())
+{
+    // Nothing to do.
+}
+
+responder::responder(const in_port_t port,
+    const shared_ptr<interface_manager> &interface_manager)
+:
+    _interface_manager {interface_manager},
     _udp6 {open_udp6(port)}
 {
     _interface_manager->add_interface_listener(this);

@@ -286,7 +286,8 @@ int main(const int argc, char **const argv)
             responder->run();
 
             if (builder.pid_file) {
-                if (unlink(builder.pid_file) != 0) {
+                auto &&result = unlink(builder.pid_file);
+                if (result != 0) {
                     syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
                             builder.pid_file, strerror(errno));
                 }

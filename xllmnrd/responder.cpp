@@ -47,6 +47,7 @@ using std::error_code;
 using std::for_each;
 using std::generic_category;
 using std::make_shared;
+using std::make_unique;
 using std::set;
 using std::shared_ptr;
 using std::strcspn;
@@ -428,7 +429,7 @@ auto responder::matching_host_name(const uint8_t *const qname) const
         return nullptr;
     }
 
-    unique_ptr<uint8_t []> name {new uint8_t [host_name_length + 2]};
+    auto name = make_unique<uint8_t []>(host_name_length + 2);
     name[0] = static_cast<uint8_t>(host_name_length);
     copy_n(host_name, host_name_length, &name[1]);
     name[host_name_length + 1] = 0;

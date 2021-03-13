@@ -304,7 +304,8 @@ ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
 }
 
 void responder::handle_udp6_query(const llmnr_header *const query,
-    const size_t query_size, const sockaddr_in6 &sender, const unsigned int ifindex)
+    const size_t query_size, const sockaddr_in6 &sender,
+    const unsigned int ifindex) const
 {
     // These must already be checked.
     assert(query_size >= sizeof query);

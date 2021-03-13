@@ -94,7 +94,7 @@ protected:
         unsigned int &ifindex) const;
 
     void handle_udp6_query(const llmnr_header *query, size_t query_size,
-        const sockaddr_in6 &sender, unsigned int ifindex);
+        const sockaddr_in6 &sender, unsigned int ifindex) const;
 
     void respond_for_name(int fd, const llmnr_header *query,
         const uint8_t *qname_end, const uint8_t *label,

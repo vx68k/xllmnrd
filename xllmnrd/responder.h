@@ -91,14 +91,14 @@ protected:
     void process_udp6();
 
     ssize_t recv_udp6(void *buffer, size_t buffer_size, sockaddr_in6 &sender,
-        unsigned int &ifindex);
+        unsigned int &ifindex) const;
 
     void handle_udp6_query(const llmnr_header *query, size_t query_size,
         const sockaddr_in6 &sender, unsigned int ifindex);
 
     void respond_for_name(int fd, const llmnr_header *query,
         const uint8_t *qname_end, const uint8_t *label,
-        const sockaddr_in6 &sender, unsigned int interface_index);
+        const sockaddr_in6 &sender, unsigned int interface_index) const;
 
     /**
      * Returns the matching host name, or null if nothing matches.

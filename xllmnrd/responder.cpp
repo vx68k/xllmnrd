@@ -262,7 +262,7 @@ void responder::process_udp6()
 }
 
 ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
-    sockaddr_in6 &sender, unsigned int &ifindex)
+    sockaddr_in6 &sender, unsigned int &ifindex) const
 {
     iovec iov[1] {
         {
@@ -326,7 +326,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
 
 void responder::respond_for_name(const int fd, const llmnr_header *const query,
     const uint8_t *const qname_end, const uint8_t *const label,
-    const sockaddr_in6 &sender, const unsigned int interface_index)
+    const sockaddr_in6 &sender, const unsigned int interface_index) const
 {
     set<in_addr> in_addresses;
     set<in6_addr> in6_addresses;

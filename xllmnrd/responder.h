@@ -88,7 +88,7 @@ public:
 
 protected:
 
-    void process_udp6();
+    void process_udp6() const;
 
     ssize_t recv_udp6(void *buffer, size_t buffer_size, sockaddr_in6 &sender,
         unsigned int &ifindex) const;

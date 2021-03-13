@@ -214,7 +214,7 @@ void responder::terminate()
     // TODO: Should the recv call be interrupted?
 }
 
-void responder::process_udp6()
+void responder::process_udp6() const
 {
     if (_running) {
         auto &&packet_size = recv(_udp6, nullptr, 0, MSG_PEEK | MSG_TRUNC);

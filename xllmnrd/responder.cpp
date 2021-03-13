@@ -399,12 +399,11 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
         });
 
     // Sends the response.
-    if (sendto(fd, buffer.data(), buffer.size(), 0, &sender) == -1) {
-        if (buffer.size() > 512 && errno == EMSGSIZE) {
-            // Resends with truncation.
-            response->flags |= htons(LLMNR_FLAG_TC);
-            sendto(fd, buffer.data(), 512, 0, &sender);
-        }
+    auto sent = sendto(fd, buffer.data(), buffer.size(), 0, &sender);
+    if (sent == -1 && errno == EMSGSIZE && buffer.size() > 512) {
+        // Resends the response with truncation.
+        response->flags |= htons(LLMNR_FLAG_TC);
+        sendto(fd, buffer.data(), 512, 0, &sender);
     }
 }
 

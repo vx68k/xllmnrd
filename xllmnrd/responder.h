@@ -23,6 +23,7 @@
 #include "interface.h"
 #include <netinet/in.h>
 #include <unistd.h>
+#include <vector>
 #include <atomic>
 #include <memory>
 
@@ -97,14 +98,14 @@ protected:
         const sockaddr_in6 &sender, unsigned int ifindex) const;
 
     void respond_for_name(int fd, const llmnr_header *query,
-        const uint8_t *qname_end, const uint8_t *label,
+        const uint8_t *qname_end, const std::vector<std::uint8_t> &name,
         const sockaddr_in6 &sender, unsigned int interface_index) const;
 
     /**
-     * Returns the matching host name, or null if nothing matches.
+     * Returns the matching host name, or an empty vector if nothing matches.
      */
     auto matching_host_name(const std::uint8_t *qname) const
-        -> std::unique_ptr<std::uint8_t []>;
+        -> std::vector<std::uint8_t>;
 
 public:
 

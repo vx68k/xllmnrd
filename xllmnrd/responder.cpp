@@ -319,8 +319,8 @@ void responder::handle_udp6_query(const llmnr_header *const query,
     auto &&qname_end = llmnr_skip_name(qname, &remains);
     if (qname_end && remains >= 4) {
         auto &&name = matching_host_name(qname);
-        if (name != nullptr) {
-            respond_for_name(_udp6, query, qname_end, name.get(), sender, ifindex);
+        if (!name.empty()) {
+            respond_for_name(_udp6, query, qname_end, name, sender, ifindex);
         }
     }
     else {
@@ -329,7 +329,7 @@ void responder::handle_udp6_query(const llmnr_header *const query,
 }
 
 void responder::respond_for_name(const int fd, const llmnr_header *const query,
-    const uint8_t *const qname_end, const uint8_t *const label,
+    const uint8_t *const qname_end, const vector<uint8_t> &name,
     const sockaddr_in6 &sender, const unsigned int interface_index) const
 {
     set<in_addr> in_addresses;
@@ -357,44 +357,46 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 
     auto &&answer_offset = buffer.size();
     auto &&buffer_back = back_inserter(buffer);
-    for_each(in_addresses.begin(), in_addresses.end(), [&](const in_addr &i) {
-        if (response->ancount == htons(0)) {
-            copy_n(&label[0], label[0] + 1, buffer_back);
-            buffer.push_back(0);
-        }
-        else {
-            llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset), buffer_back);
-        }
+    for_each(in_addresses.begin(), in_addresses.end(),
+        [&](const in_addr &i)
+        {
+            if (response->ancount == htons(0)) {
+                copy(name.begin(), name.end(), buffer_back);
+            }
+            else {
+                llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset),
+                    buffer_back);
+            }
 
-        llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
+            llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
+            llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
-        llmnr_put_uint16(sizeof i, buffer_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
+            llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
+            llmnr_put_uint16(sizeof i, buffer_back);
+            copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response = reinterpret_cast<llmnr_header *>(buffer.data());
-        response->ancount = htons(ntohs(response->ancount) + 1);
-    });
-    for_each(in6_addresses.begin(), in6_addresses.end(), [&](const in6_addr &i) {
-        if (response->ancount == htons(0)) {
-            copy_n(&label[0], label[0] + 1, buffer_back);
-            buffer.push_back(0);
-        }
-        else {
-            llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset), buffer_back);
-        }
+            response->ancount = htons(ntohs(response->ancount) + 1);
+        });
+    for_each(in6_addresses.begin(), in6_addresses.end(),
+        [&](const in6_addr &i)
+        {
+            if (response->ancount == htons(0)) {
+                copy(name.begin(), name.end(), buffer_back);
+            }
+            else {
+                llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset),
+                    buffer_back);
+            }
 
-        llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
-        llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
+            llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
+            llmnr_put_uint16(LLMNR_CLASS_IN, buffer_back);
 
-        llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
-        llmnr_put_uint16(sizeof i, buffer_back);
-        copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
+            llmnr_put_uint32(TIME_TO_LIVE, buffer_back);
+            llmnr_put_uint16(sizeof i, buffer_back);
+            copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-        response = reinterpret_cast<llmnr_header *>(buffer.data());
-        response->ancount = htons(ntohs(response->ancount) + 1);
-    });
+            response->ancount = htons(ntohs(response->ancount) + 1);
+        });
 
     // Sends the response.
     if (sendto(fd, buffer.data(), buffer.size(), 0, &sender) == -1) {
@@ -407,7 +409,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 }
 
 auto responder::matching_host_name(const uint8_t *const qname) const
-    -> unique_ptr<uint8_t []>
+    -> vector<uint8_t>
 {
     array<char, LLMNR_LABEL_MAX + 1> host_name;
     gethostname(&host_name[0], LLMNR_LABEL_MAX);
@@ -419,22 +421,22 @@ auto responder::matching_host_name(const uint8_t *const qname) const
     auto j = reinterpret_cast<const unsigned char *>(&host_name[0]);
     size_t length = *i++;
     if (length != host_name_length) {
-        return nullptr;
+        return {};
     }
     // This comparison must be case-insensitive in ASCII.
     while (length--) {
         if (ascii_toupper(*i++) != ascii_toupper(*j++)) {
-            return nullptr;
+            return {};
         }
     }
     if (*i++ != 0) {
-        return nullptr;
+        return {};
     }
 
-    auto name = make_unique<uint8_t []>(host_name_length + 2);
-    name[0] = static_cast<uint8_t>(host_name_length);
-    copy_n(host_name.begin(), host_name_length, &name[1]);
-    name[host_name_length + 1] = 0;
+    auto name = vector<uint8_t>();
+    name.push_back(static_cast<uint8_t>(host_name_length));
+    copy_n(host_name.begin(), host_name_length, back_inserter(name));
+    name.push_back(0U);
     return name;
 }
 

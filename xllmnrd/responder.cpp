@@ -360,7 +360,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
+            llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset), buffer_back);
         }
 
         llmnr_put_uint16(LLMNR_TYPE_A, buffer_back);
@@ -379,7 +379,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             buffer.push_back(0);
         }
         else {
-            llmnr_put_uint16(0xc000 + answer_offset, buffer_back);
+            llmnr_put_uint16(static_cast<uint16_t>(0xc000U + answer_offset), buffer_back);
         }
 
         llmnr_put_uint16(LLMNR_TYPE_AAAA, buffer_back);
@@ -429,7 +429,7 @@ auto responder::matching_host_name(const uint8_t *const qname) const
     }
 
     unique_ptr<uint8_t []> name {new uint8_t [host_name_length + 2]};
-    name[0] = host_name_length;
+    name[0] = static_cast<uint8_t>(host_name_length);
     copy_n(host_name, host_name_length, &name[1]);
     name[host_name_length + 1] = 0;
     return name;

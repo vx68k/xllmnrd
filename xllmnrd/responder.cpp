@@ -32,6 +32,7 @@
 #include <syslog.h>
 #include <set>
 #include <vector>
+#include <array>
 #include <algorithm>
 #include <system_error>
 #include <csignal>
@@ -41,6 +42,7 @@
 #include <cinttypes>
 #include <cassert>
 
+using std::array;
 using std::copy;
 using std::copy_n;
 using std::error_code;
@@ -407,14 +409,14 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
 auto responder::matching_host_name(const uint8_t *const qname) const
     -> unique_ptr<uint8_t []>
 {
-    char host_name[LLMNR_LABEL_MAX + 1] {};
-    gethostname(host_name, LLMNR_LABEL_MAX);
+    array<char, LLMNR_LABEL_MAX + 1> host_name;
+    gethostname(&host_name[0], LLMNR_LABEL_MAX);
 
-    auto &&host_name_length = strcspn(host_name, ".");
+    auto &&host_name_length = strcspn(&host_name[0], ".");
     host_name[host_name_length] = '\0';
 
     auto i = qname;
-    auto j = reinterpret_cast<unsigned char *>(host_name);
+    auto j = reinterpret_cast<const unsigned char *>(&host_name[0]);
     size_t length = *i++;
     if (length != host_name_length) {
         return nullptr;
@@ -431,7 +433,7 @@ auto responder::matching_host_name(const uint8_t *const qname) const
 
     auto name = make_unique<uint8_t []>(host_name_length + 2);
     name[0] = static_cast<uint8_t>(host_name_length);
-    copy_n(host_name, host_name_length, &name[1]);
+    copy_n(host_name.begin(), host_name_length, &name[1]);
     name[host_name_length + 1] = 0;
     return name;
 }

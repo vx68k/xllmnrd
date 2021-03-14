@@ -68,30 +68,35 @@ static const uint32_t TIME_TO_LIVE = 30;
 
 
 /*
- * Logs a message with the sender address.
+ * Logs a socket address.
+ *
+ * @param pri priority
+ * @param prefix prefix string
+ * @param sa address of the socket address
+ * @param sa_size size of the socket address
  */
-inline void log_with_sender(const int pri, const char *const message,
-    const void *const sender, const size_t sender_size)
+inline void log_sockaddr(const int pri, const char *const prefix,
+    const void *const sa, const size_t sa_size)
 {
-    auto &&family = static_cast<const sockaddr *>(sender)->sa_family;
+    auto &&family = static_cast<const sockaddr *>(sa)->sa_family;
     switch (family) {
     case AF_INET:
-        if (sender_size >= sizeof (sockaddr_in)) {
-            auto &&in = static_cast<const sockaddr_in *>(sender);
+        if (sa_size >= sizeof (sockaddr_in)) {
+            auto &&in = static_cast<const sockaddr_in *>(sa);
             array<char, INET_ADDRSTRLEN> addrstr;
             inet_ntop(AF_INET, &in->sin_addr, &addrstr[0], INET_ADDRSTRLEN);
-            syslog(pri, "%s from %s", message, addrstr.data());
+            syslog(pri, "%s%s", prefix, addrstr.data());
         }
         else {
             abort();
         }
         break;
     case AF_INET6:
-        if (sender_size >= sizeof (sockaddr_in6)) {
-            auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
+        if (sa_size >= sizeof (sockaddr_in6)) {
+            auto &&in6 = static_cast<const sockaddr_in6 *>(sa);
             array<char, INET6_ADDRSTRLEN> addrstr;
             inet_ntop(AF_INET6, &in6->sin6_addr, &addrstr[0], INET6_ADDRSTRLEN);
-            syslog(pri, "%s from %s%%%" PRIu32, message, addrstr.data(),
+            syslog(pri, "%s%s%%%" PRIu32, prefix, addrstr.data(),
                 in6->sin6_scope_id);
         }
         else {
@@ -99,9 +104,32 @@ inline void log_with_sender(const int pri, const char *const message,
         }
         break;
     default:
-        syslog(pri, "%s from an address of family %d", message, family);
+        syslog(pri, "%s from an address of family %d", prefix, family);
         break;
     }
+}
+
+/*
+ * Logs a socket address.
+ *
+ * @param pri priority
+ * @param prefix prefix string
+ * @param sa socket address
+ */
+template<class T>
+inline void log_sockaddr(int pri, const char *const prefix, const T &sa)
+{
+    log_sockaddr(pri, prefix, &sa, sizeof sa);
+}
+
+/*
+ * Logs a message with the sender address.
+ */
+inline void log_with_sender(const int pri, const char *const message,
+    const void *const sender, const size_t sender_size)
+{
+    syslog(pri, "%s", message);
+    log_sockaddr(pri, "  sent from ", sender, sender_size);
 }
 
 template<class T>

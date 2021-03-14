@@ -387,7 +387,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     std::vector<uint8_t> buffer {
         reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
-    auto &&response = reinterpret_cast<llmnr_header *>(buffer.data());
+    auto response = reinterpret_cast<llmnr_header *>(&buffer[0]);
     response->flags = htons(LLMNR_FLAG_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
@@ -413,6 +413,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             llmnr_put_uint16(sizeof i, buffer_back);
             copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
+            response = reinterpret_cast<llmnr_header *>(&buffer[0]);
             response->ancount = htons(ntohs(response->ancount) + 1);
         });
     for_each(in6_addresses.begin(), in6_addresses.end(),
@@ -433,6 +434,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             llmnr_put_uint16(sizeof i, buffer_back);
             copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
+            response = reinterpret_cast<llmnr_header *>(&buffer[0]);
             response->ancount = htons(ntohs(response->ancount) + 1);
         });
 

@@ -66,31 +66,41 @@ using namespace xllmnrd;
 
 static const uint32_t TIME_TO_LIVE = 30;
 
+
 /*
  * Logs a message with the sender address.
  */
 inline void log_with_sender(const int pri, const char *const message,
     const void *const sender, const size_t sender_size)
 {
-    if (sender != nullptr) {
-        int family = static_cast<const sockaddr *>(sender)->sa_family;
-        switch (family) {
-        case AF_INET6:
-            if (sender_size >= sizeof (sockaddr_in6)) {
-                auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
-                char addrstr[INET6_ADDRSTRLEN] {};
-                inet_ntop(AF_INET6, &in6->sin6_addr, addrstr, INET6_ADDRSTRLEN);
-                syslog(pri, "%s from %s%%%" PRIu32, message, addrstr,
-                    in6->sin6_scope_id);
-            }
-            break;
-        default:
-            syslog(pri, "%s from an address of family %d", message, family);
-            break;
+    auto &&family = static_cast<const sockaddr *>(sender)->sa_family;
+    switch (family) {
+    case AF_INET:
+        if (sender_size >= sizeof (sockaddr_in)) {
+            auto &&in = static_cast<const sockaddr_in *>(sender);
+            array<char, INET_ADDRSTRLEN> addrstr;
+            inet_ntop(AF_INET, &in->sin_addr, &addrstr[0], INET_ADDRSTRLEN);
+            syslog(pri, "%s from %s", message, addrstr.data());
         }
-    }
-    else {
-        syslog(pri, "%s", message);
+        else {
+            abort();
+        }
+        break;
+    case AF_INET6:
+        if (sender_size >= sizeof (sockaddr_in6)) {
+            auto &&in6 = static_cast<const sockaddr_in6 *>(sender);
+            array<char, INET6_ADDRSTRLEN> addrstr;
+            inet_ntop(AF_INET6, &in6->sin6_addr, &addrstr[0], INET6_ADDRSTRLEN);
+            syslog(pri, "%s from %s%%%" PRIu32, message, addrstr.data(),
+                in6->sin6_scope_id);
+        }
+        else {
+            abort();
+        }
+        break;
+    default:
+        syslog(pri, "%s from an address of family %d", message, family);
+        break;
     }
 }
 

@@ -473,6 +473,7 @@ auto responder::matching_host_name(const uint8_t *const qname) const
     }
 
     auto name = vector<uint8_t>();
+    assert(host_name_length <= 0x3fU);
     name.push_back(static_cast<uint8_t>(host_name_length));
     copy_n(host_name.begin(), host_name_length, back_inserter(name));
     name.push_back(0U);

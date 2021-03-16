@@ -1,5 +1,5 @@
 // posix.h -*- C++ -*-
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -24,39 +24,81 @@
 namespace xllmnrd
 {
     /**
-     * POSIX abstraction objects.
+     * Operating system interface.
      */
     class posix
     {
-    public:
-        virtual ~posix();
+    protected:
+
+        // Constructors.
+
+        posix() = default;
+
+        posix(const posix &) = delete;
 
     public:
-        virtual int socket(int domain, int type, int protocol);
-        virtual int bind(int fd, const sockaddr *addr, socklen_t len);
+
+        // Destructor.
+
+        virtual ~posix() = default;
+
+
+        // Assignment operators.
+
+        void operator =(const posix &) = delete;
+
+
+        virtual int socket(int domain, int type, int protocol) = 0;
+
+        virtual int bind(int socket, const sockaddr *address,
+            socklen_t address_len) = 0;
 
         template<class T>
-        int bind(int fd, T *addr) {
-            return bind(fd, reinterpret_cast<const sockaddr *>(addr),
-                sizeof *addr);
+        int bind(int socket, T *address) {
+            return bind(socket, reinterpret_cast<const sockaddr *>(address),
+                sizeof *address);
         }
 
         /**
          * Closes a file descriptor.
          *
-         * @param fd a file descriptor to be closed
+         * @param fildes a file descriptor to be closed
          */
-        virtual int close(int fd);
+        virtual int close(int fildes) = 0;
 
         /// Receives a message from a socket.
         ///
         /// This implementations calls '::recv'.
-        virtual ssize_t recv(int fd, void *buf, ::size_t n, int flags);
+        virtual ::ssize_t recv(int socket, void *buffer, ::size_t length,
+            int flags) = 0;
 
         /// Send a message to a socket.
         ///
         /// This implementation calls '::send'.
-        virtual ssize_t send(int fd, const void *buf, ::size_t n, int flags);
+        virtual ::ssize_t send(int socket, const void *buffer, ::size_t length,
+            int flags) = 0;
+    };
+
+
+    /**
+     * Default POSIX implementation.
+     */
+    class default_posix: public posix
+    {
+    public:
+
+        int socket(int domain, int type, int protocol) override;
+
+        int bind(int socket, const sockaddr *address,
+            socklen_t address_len) override;
+
+        int close(int fildes) override;
+
+        ::ssize_t recv(int socket, void *buffer, ::size_t length,
+            int flags) override;
+
+        ::ssize_t send(int socket, const void *buffer, ::size_t length,
+            int flags) override;
     };
 }
 

@@ -1,5 +1,5 @@
 // llmnr_packet.h -*- C++ -*-
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -110,8 +110,9 @@ static inline const uint8_t *llmnr_data(const struct llmnr_header *header) {
  * @param i [in] two octets to be read.
  * @return read value.
  */
-static inline uint16_t llmnr_get_uint16(const uint8_t *restrict i) {
-    return (i[0] << 8) | i[1];
+static inline uint16_t llmnr_get_uint16(const uint8_t *restrict i)
+{
+    return (uint16_t)((i[0] << 8) | i[1]);
 }
 
 /**
@@ -119,9 +120,10 @@ static inline uint16_t llmnr_get_uint16(const uint8_t *restrict i) {
  * @param x value to be written.
  * @param i [out] two octets where the value is written.
  */
-static inline void llmnr_put_uint16(uint16_t x, uint8_t *restrict i) {
-    i[0] = x >> 8;
-    i[1] = x;
+static inline void llmnr_put_uint16(uint16_t x, uint8_t *restrict i)
+{
+    i[0] = (uint8_t)(x >> 8);
+    i[1] = (uint8_t) x;
 }
 
 /**
@@ -129,11 +131,12 @@ static inline void llmnr_put_uint16(uint16_t x, uint8_t *restrict i) {
  * @param x value to be written.
  * @param i [out] four octets where the value is written.
  */
-static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i) {
-    i[0] = x >> 24;
-    i[1] = x >> 16;
-    i[2] = x >>  8;
-    i[3] = x;
+static inline void llmnr_put_uint32(uint32_t x, uint8_t *restrict i)
+{
+    i[0] = (uint8_t)(x >> 24);
+    i[1] = (uint8_t)(x >> 16);
+    i[2] = (uint8_t)(x >>  8);
+    i[3] = (uint8_t) x;
 }
 
 #if __cplusplus

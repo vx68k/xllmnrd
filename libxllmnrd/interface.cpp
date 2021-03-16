@@ -1,5 +1,5 @@
 // interface.cpp
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -30,6 +30,7 @@
 #include <cassert>
 
 using std::for_each;
+using std::get;
 using std::lock_guard;
 using std::memcmp;
 using std::set;
@@ -39,21 +40,16 @@ using namespace xllmnrd;
  * Methods of the 'std::less' specializations.
  */
 
-bool std::less<in_addr>::operator ()(
-    const in_addr &x, const in_addr &y) const
+bool std::less<in_addr>::operator ()(const in_addr &x, const in_addr &y) const
 {
-    return memcmp(&x, &y, sizeof (in_addr)) < 0;
+    return memcmp(&x.s_addr, &y.s_addr, sizeof (in_addr_t)) < 0;
 }
 
-bool std::less<in6_addr>::operator ()(
-    const in6_addr &x, const in6_addr &y) const
+bool std::less<in6_addr>::operator ()(const in6_addr &x, const in6_addr &y) const
 {
-    return memcmp(&x, &y, sizeof (in6_addr)) < 0;
+    return memcmp(&x.s6_addr, &y.s6_addr, 16U) < 0;
 }
 
-interface_manager::interface_manager()
-{
-}
 
 interface_manager::~interface_manager()
 {
@@ -72,7 +68,7 @@ void interface_manager::remove_interface_listener(interface_listener *listener)
     _interface_listener.compare_exchange_weak(expected, nullptr);
 }
 
-void interface_manager::fire_interface_enabled(const interface_event &event)
+void interface_manager::fire_interface_enabled(const interface_event &event) const
 {
     auto &&listener = _interface_listener.load();
     if (listener != nullptr) {
@@ -80,7 +76,7 @@ void interface_manager::fire_interface_enabled(const interface_event &event)
     }
 }
 
-void interface_manager::fire_interface_disabled(const interface_event &event)
+void interface_manager::fire_interface_disabled(const interface_event &event) const
 {
     auto &&listener = _interface_listener.load();
     if (listener != nullptr) {
@@ -119,8 +115,9 @@ void interface_manager::remove_interfaces()
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     for_each(_interfaces.begin(), _interfaces.end(),
-        [this](decltype(_interfaces)::reference i) {
-            if (i.second.enabled) {
+        [this](const auto &i)
+        {
+            if (get<1>(i).enabled) {
                 fire_interface_disabled({this, i.first});
             }
         });
@@ -133,7 +130,7 @@ void interface_manager::enable_interface(const unsigned int interface_index)
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
     auto &interface = _interfaces[interface_index];
-    if (not(interface.enabled)) {
+    if (!interface.enabled) {
         interface.enabled = true;
 
         if (debug_level() >= 0) {
@@ -179,13 +176,11 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const in_addr *>(address));
 
-            if (inserted.second) {
-                if (debug_level() >= 0) {
-                    char ipv4[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
-                        interface_name);
-                }
+            if (get<1>(inserted) && debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
+                    interface_name);
             }
         }
         else {
@@ -200,13 +195,11 @@ void interface_manager::add_interface_address(unsigned int index,
             auto &&inserted = addresses.insert(
                 *static_cast<const in6_addr *>(address));
 
-            if (inserted.second) {
-                if (debug_level() >= 0) {
-                    char ipv6[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
-                        interface_name);
-                }
+            if (get<1>(inserted) && debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
+                    interface_name);
             }
         }
         else {
@@ -237,13 +230,11 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const in_addr *>(address));
 
-            if (erased != 0) {
-                if (debug_level() >= 0) {
-                    char ipv4[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
-                        interface_name);
-                }
+            if (erased != 0 && debug_level() >= 0) {
+                char ipv4[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
+                    interface_name);
             }
         }
         else {
@@ -258,13 +249,11 @@ void interface_manager::remove_interface_address(unsigned int index,
             auto &&erased = addresses.erase(
                 *static_cast<const in6_addr *>(address));
 
-            if (erased != 0) {
-                if (debug_level() >= 0) {
-                    char ipv6[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                    syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
-                        interface_name);
-                }
+            if (erased != 0 && debug_level() >= 0) {
+                char ipv6[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
+                syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
+                    interface_name);
             }
         }
         else {

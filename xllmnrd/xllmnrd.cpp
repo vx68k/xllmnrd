@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+using std::abort;
 using std::atomic;
 using std::exception;
 using std::fclose;
@@ -45,6 +46,7 @@ using std::fopen;
 using std::fprintf;
 using std::generic_category;
 using std::locale;
+using std::make_unique;
 using std::putchar;
 using std::printf;
 using std::system_error;
@@ -56,30 +58,45 @@ using std::unique_ptr;
 #define LOG_PERROR 0
 #endif
 
-// Copyright years for printing.
-#ifndef COPYRIGHT_YEARS
-#define COPYRIGHT_YEARS "2013-2020"
-#endif
-
 // Marks localization strings.
 #define _(s) gettext(s)
 #define N_(s) gettext_noop(s)
 
-/**
- * Makes a pid file.
- * @param __name name of the pid file.
- * @return 0 if no error is detected, or non-zero error number.
- */
-static int make_pid_file(const char *__name);
 
 struct responder_builder
 {
     bool foreground = false;
     const char *pid_file = nullptr;
 
+    /**
+     * Makes a pid file.
+     *
+     * @param __name name of the pid file.
+     * @return 0 if no error is detected, or non-zero error number.
+     */
+    static int make_pid_file(const char *restrict name)
+    {
+        FILE *f = fopen(name, "w");
+        if (!f) {
+            return errno;
+        }
+
+        int written = fprintf(f, "%lu\n", (long) getpid());
+        if (written >= 0) {
+            fclose(f);
+            return 0;
+        }
+
+        int err = errno; // Any of the following functions MAY fail.
+        fclose(f);
+        unlink(name);
+
+        return err;
+    }
+
     void init()
     {
-        if (not(foreground)) {
+        if (!foreground) {
             foreground = true;
 
             if (daemon(false, false) == -1) {
@@ -104,14 +121,46 @@ struct responder_builder
      */
     auto build() -> unique_ptr<class responder>
     {
-        unique_ptr<class responder> responder {new class responder()};
-        return responder;
+        return make_unique<class responder>();
     }
 };
 
 static unique_ptr<class responder> responder;
 
 static atomic<int> caught_signal;
+
+// A signal handler should have "C" linkage.
+extern "C" void handle_signal_to_terminate(int __sig);
+
+/**
+ * Prints the version information.
+ */
+inline void print_version()
+{
+    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+    printf("Copyright %s 2013-2021 Kaz Nishimura\n", _("(C)"));
+    printf(_("\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n"));
+}
+
+/**
+ * Prints the command usage.
+ *
+ * @param arg0 the command name
+ */
+inline void print_usage(const char *const arg0)
+{
+    printf(_("Usage: %s [OPTION]...\n"), arg0);
+    printf(_("Respond to IPv6 LLMNR queries.\n"));
+    putchar('\n');
+    printf("  -f, --foreground      %s\n", _("run in foreground"));
+    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
+    printf("      --help            %s\n", _("display this help and exit"));
+    printf("      --version         %s\n", _("output version information and exit"));
+    putchar('\n');
+    printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+}
 
 /**
  * Parses command-line arguments for options.
@@ -124,29 +173,62 @@ static atomic<int> caught_signal;
  * @param argv pointer array of command-line arguments.
  * @param builder parsed options.
  */
-static int parse_options(int argc, char **argv, responder_builder &builder);
+inline int parse_options(const int argc, char **const argv,
+    responder_builder &builder)
+{
+    enum
+    {
+        VERSION = -128,
+        HELP,
+        FOREGROUND,
+        PID_FILE,
+    };
+    static const option options[] {
+        {"foreground", no_argument, nullptr, FOREGROUND},
+        {"pid-file", required_argument, nullptr, PID_FILE},
+        {"help", no_argument, nullptr, HELP},
+        {"version", no_argument, nullptr, VERSION},
+        {}
+    };
 
-/**
- * Prints the command usage.
- *
- * @param arg0 the command name
- */
-static void print_usage(const char *arg0);
+    int opt = -1;
+    do {
+        opt = getopt_long(argc, argv, "fp:", options, nullptr);
+        switch (opt) {
+        case 'f':
+        case FOREGROUND:
+            builder.foreground = true;
+            break;
+        case 'p':
+        case PID_FILE:
+            builder.pid_file = optarg;
+            break;
+        case HELP:
+            print_usage(argv[0]);
+            exit(0);
+        case VERSION:
+            print_version();
+            exit(0);
+        case '?':
+            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
+            exit(EX_USAGE);
+        case -1:
+            break;
+        default:
+            abort();
+        }
+    }
+    while (opt != -1);
 
-/**
- * Prints the version information.
- */
-static void print_version();
-
-// A signal handler should have "C" linkage.
-extern "C" void handle_signal_to_terminate(int __sig);
+    return optind;
+}
 
 /*
  * Sets the handler for a signal and makes a log entry if it failed.
  */
 static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         const sigset_t *restrict mask) {
-    struct sigaction action = {};
+    struct sigaction action {};
     action.sa_handler = handler;
     if (mask) {
         action.sa_mask = *mask;
@@ -154,7 +236,7 @@ static inline int set_signal_handler(int sig, void (*handler)(int __sig),
         sigemptyset(&action.sa_mask);
     }
 
-    int ret = sigaction(sig, &action, 0);
+    int ret = sigaction(sig, &action, nullptr);
     if (ret != 0) {
         syslog(LOG_ERR, "Failed to set handler for %s", strsignal(sig));
     }
@@ -169,7 +251,7 @@ int main(const int argc, char **const argv)
     try {
         locale::global(locale(""));
     }
-    catch (runtime_error &error) {
+    catch (const runtime_error &error) {
         fprintf(stderr, "error: failed to set locale: %s\n", error.what());
     }
 
@@ -204,7 +286,8 @@ int main(const int argc, char **const argv)
             responder->run();
 
             if (builder.pid_file) {
-                if (unlink(builder.pid_file) != 0) {
+                auto &&result = unlink(builder.pid_file);
+                if (result != 0) {
                     syslog(LOG_WARNING, "Failed to unlink pid file '%s': %s",
                             builder.pid_file, strerror(errno));
                 }
@@ -216,9 +299,9 @@ int main(const int argc, char **const argv)
         if (caught_signal != 0) {
             // Resets the handler to default and reraise the same signal.
 
-            struct sigaction default_action = {};
+            struct sigaction default_action {};
             default_action.sa_handler = SIG_DFL;
-            if (sigaction(caught_signal, &default_action, 0) == 0) {
+            if (sigaction(caught_signal, &default_action, nullptr) == 0) {
                 raise(caught_signal);
             }
         }
@@ -229,89 +312,6 @@ int main(const int argc, char **const argv)
         fprintf(stderr, "%s\n", e.what());
         exit(1);
     }
-}
-
-int make_pid_file(const char *restrict name) {
-    FILE *f = fopen(name, "w");
-    if (!f) {
-        return errno;
-    }
-
-    int written = fprintf(f, "%lu\n", (long) getpid());
-    if (written >= 0) {
-        fclose(f);
-        return 0;
-    }
-
-    int err = errno; // Any of the following functions MAY fail.
-    fclose(f);
-    unlink(name);
-
-    return err;
-}
-
-int parse_options(const int argc, char **const argv,
-    responder_builder &builder)
-{
-    enum
-    {
-        VERSION = -128,
-        HELP,
-    };
-    static const option options[] = {
-        {"foreground", no_argument, 0, 'f'},
-        {"pid-file", required_argument, 0, 'p'},
-        {"help", no_argument, 0, HELP},
-        {"version", no_argument, 0, VERSION},
-        {}
-    };
-
-    int opt = -1;
-    do {
-        opt = getopt_long(argc, argv, "fp:", options, nullptr);
-        switch (opt) {
-        case 'f':
-            builder.foreground = true;
-            break;
-        case 'p':
-            builder.pid_file = optarg;
-            break;
-        case HELP:
-            print_usage(argv[0]);
-            exit(0);
-        case VERSION:
-            print_version();
-            exit(0);
-        case '?':
-            fprintf(stderr, _("Try '%s --help' for more information.\n"), argv[0]);
-            exit(EX_USAGE);
-        }
-    }
-    while (opt != -1);
-
-    return optind;
-}
-
-void print_usage(const char *const arg0)
-{
-    printf(_("Usage: %s [OPTION]...\n"), arg0);
-    printf(_("Respond to IPv6 LLMNR queries.\n"));
-    putchar('\n');
-    printf("  -f, --foreground      %s\n", _("run in foreground"));
-    printf("  -p, --pid-file=FILE   %s\n", _("record the process ID in FILE"));
-    printf("      --help            %s\n", _("display this help and exit"));
-    printf("      --version         %s\n", _("output version information and exit"));
-    putchar('\n');
-    printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
-}
-
-void print_version()
-{
-    printf("%s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
-    printf("Copyright %s %s Kaz Nishimura\n", _("(C)"), COPYRIGHT_YEARS);
-    printf(_("\
-This is free software: you are free to change and redistribute it.\n\
-There is NO WARRANTY, to the extent permitted by law.\n"));
 }
 
 /*

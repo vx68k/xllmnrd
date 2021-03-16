@@ -1,5 +1,5 @@
 // interface.h -*- C++ -*-
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -70,15 +70,15 @@ namespace xllmnrd
     class interface_listener
     {
     protected:
+
         interface_listener() = default;
 
-    protected:
         ~interface_listener() = default;
 
     public:
+
         virtual void interface_enabled(const interface_event &event) = 0;
 
-    public:
         virtual void interface_disabled(const interface_event &event) = 0;
     };
 
@@ -90,6 +90,7 @@ namespace xllmnrd
     class interface_manager
     {
     protected:
+
         struct interface
         {
             bool enabled = false;
@@ -104,69 +105,69 @@ namespace xllmnrd
         };
 
     private:
-        int _debug_level {0};
 
-    private:
+        int _debug_level = 0;
+
         std::atomic<interface_listener *> _interface_listener {nullptr};
 
-    private:
         /// Map from interface indices to interfaces.
         std::unordered_map<unsigned int, interface> _interfaces;
 
-    private:
         mutable std::recursive_mutex _interfaces_mutex;
 
     protected:
+
         /**
          * Constructs an interface manager object.
          */
-        interface_manager();
+        interface_manager() = default;
 
         // This class is not copy-constructible.
         interface_manager(const interface_manager &) = delete;
 
-        // This class is not copy-assignable.
-        void operator =(const interface_manager &) = delete;
-
     public:
+
         /**
          * Destructs an interface manager object.
          */
         virtual ~interface_manager();
 
-    public:
+
+        // This class is not copy-assignable.
+        void operator =(const interface_manager &) = delete;
+
+
         int debug_level() const
         {
             return _debug_level;
         }
 
-    public:
         void set_debug_level(const int debug_level)
         {
             _debug_level = debug_level;
         }
 
-    public:
+
         /**
          * Adds a listener for interface events.
          */
         void add_interface_listener(interface_listener *listener);
 
-    public:
         /**
          * Removes a listener for interface events.
          */
         void remove_interface_listener(interface_listener *listener);
 
     private:
-        // Fires an event for an added interface.
-        void fire_interface_enabled(const interface_event &event);
 
-    private:
+        // Fires an event for an added interface.
+        void fire_interface_enabled(const interface_event &event) const;
+
         // Fires an event for a removed interface.
-        void fire_interface_disabled(const interface_event &event);
+        void fire_interface_disabled(const interface_event &event) const;
 
     public:
+
         /**
          * Returns a copy of the IPv4 addresses of an interface.
          *
@@ -175,9 +176,8 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv4 addresses of the interface
          */
-        std::set<in_addr> in_addresses(unsigned int index) const;
+        std::set<in_addr> in_addresses(unsigned int interface_index) const;
 
-    public:
         /**
          * Returns a copy of the IPv6 addresses of an interface.
          *
@@ -186,36 +186,33 @@ namespace xllmnrd
          * @param {unsigned int} index an interface index
          * @return a copy of the IPv6 addresses of the interface
          */
-        std::set<in6_addr> in6_addresses(unsigned int index) const;
+        std::set<in6_addr> in6_addresses(unsigned int interface_index) const;
 
-    public:
         // Refreshes the interface addresses.
         //
         // This function is thread safe.
         virtual void refresh(bool maybe_asynchronous = false) = 0;
 
     protected:
+
         /// Removes all the interfaces.
         void remove_interfaces();
 
-    protected:
         /**
          * Enables an interface.
          */
         void enable_interface(unsigned int interface_index);
 
-    protected:
         /**
          * Disables an interface.
          */
         void disable_interface(unsigned int interface_index);
 
-    protected:
         /**
          * Adds an interface address.
          */
-        void add_interface_address(unsigned int index, int address_family,
-            const void *address, size_t address_size);
+        void add_interface_address(unsigned int interface_index,
+            int address_family, const void *address, size_t address_size);
 
         /**
          * Adds an interface address.
@@ -223,19 +220,18 @@ namespace xllmnrd
          * This overload takes a typed address argument.
          */
         template<class T>
-        void add_interface_address(const unsigned int index,
+        void add_interface_address(const unsigned int interface_index,
             const int address_family, T *const address)
         {
-            add_interface_address(index, address_family, address,
+            add_interface_address(interface_index, address_family, address,
                 sizeof *address);
         }
 
-    protected:
         /**
          * Removes an interface address.
          */
-        void remove_interface_address(unsigned int index, int address_family,
-            const void *address, size_t address_size);
+        void remove_interface_address(unsigned int interface_index,
+            int address_family, const void *address, size_t address_size);
 
         /**
          * Removes an interface address.
@@ -243,10 +239,10 @@ namespace xllmnrd
          * This overload takes a typed address argument.
          */
         template<class T>
-        void remove_interface_address(const unsigned int index,
+        void remove_interface_address(const unsigned int interface_index,
             const int address_family, T *const address)
         {
-            remove_interface_address(index, address_family, address,
+            remove_interface_address(interface_index, address_family, address,
                 sizeof *address);
         }
     };

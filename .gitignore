@@ -10,9 +10,6 @@ run-test
 **/libgnu/sysexits.h
 **/libgnu/unistd.h
 **/libgnu/sys/types.h
-**/libgnu/arg-nonnull.h
-**/libgnu/c++defs.h
-**/libgnu/warn-on-use.h
 remove-potcdate.sed
 POTFILES
 Makefile

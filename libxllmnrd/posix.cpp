@@ -1,5 +1,5 @@
 // posix.cpp
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -26,31 +26,33 @@
 
 using namespace xllmnrd;
 
-posix::~posix()
-{
-}
 
-int posix::socket(int domain, int type, int protocol)
+// Implementation of class 'default_posix'
+
+int default_posix::socket(const int domain, const int type, const int protocol)
 {
     return ::socket(domain, type, protocol);
 }
 
-int posix::bind(int fd, const sockaddr *addr, socklen_t len)
+int default_posix::bind(const int socket, const sockaddr *const address,
+    const socklen_t address_len)
 {
-    return ::bind(fd, addr, len);
+    return ::bind(socket, address, address_len);
 }
 
-int posix::close(int fd)
+int default_posix::close(const int fildes)
 {
-    return ::close(fd);
+    return ::close(fildes);
 }
 
-ssize_t posix::recv(int fd, void *buf, ::size_t n, int flags)
+ssize_t default_posix::recv(const int socket, void *const buffer,
+    const ::size_t length, const int flags)
 {
-    return ::recv(fd, buf, n, flags);
+    return ::recv(socket, buffer, length, flags);
 }
 
-ssize_t posix::send(int fd, const void *buf, ::size_t n, int flags)
+ssize_t default_posix::send(const int socket, const void *const buffer,
+    const ::size_t length, const int flags)
 {
-    return ::send(fd, buf, n, flags);
+    return ::send(socket, buffer, length, flags);
 }

@@ -9,7 +9,7 @@ version: "2.4"
 services:
   builder:
     build:
-      context: gcc
+      context: docker/gcc
     image: kazssym/xllmnrd-builder:gcc
     network_mode: host
     volumes:

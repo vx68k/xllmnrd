@@ -1,5 +1,5 @@
 // rtnetlink.cpp -*- C++ -*-
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -35,13 +35,14 @@
 using std::generic_category;
 using std::lock_guard;
 using std::make_shared;
-using std::runtime_error;
+using std::make_unique;
 using std::shared_ptr;
 using std::size_t;
 using std::system_error;
 using std::thread;
+using std::uint8_t;
 using std::unique_lock;
-using std::unique_ptr;
+using std::this_thread::yield;
 using namespace xllmnrd;
 
 int rtnetlink_interface_manager::open_rtnetlink(
@@ -53,7 +54,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
     }
 
     try {
-        const sockaddr_nl address = {
+        const sockaddr_nl address {
             AF_NETLINK, // .nl_family
             0,          // .nl_pad
             0,          // .nl_pid
@@ -74,7 +75,7 @@ int rtnetlink_interface_manager::open_rtnetlink(
 
 rtnetlink_interface_manager::rtnetlink_interface_manager()
 :
-    rtnetlink_interface_manager(make_shared<posix>())
+    rtnetlink_interface_manager(make_shared<default_posix>())
 {
 }
 
@@ -98,14 +99,15 @@ rtnetlink_interface_manager::~rtnetlink_interface_manager()
 
 void rtnetlink_interface_manager::run()
 {
+    _running = true;
     while (_running) {
         process_messages();
     }
 }
 
-void rtnetlink_interface_manager::request_ifinfos()
+void rtnetlink_interface_manager::request_ifinfos() const
 {
-    char request[NLMSG_LENGTH(sizeof (ifinfomsg))] = {};
+    uint8_t request[NLMSG_LENGTH(sizeof (ifinfomsg))] = {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifinfomsg));
@@ -121,9 +123,9 @@ void rtnetlink_interface_manager::request_ifinfos()
     }
 }
 
-void rtnetlink_interface_manager::request_ifaddrs()
+void rtnetlink_interface_manager::request_ifaddrs() const
 {
-    char request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};
+    uint8_t request[NLMSG_LENGTH(sizeof (ifaddrmsg))] = {};
 
     auto nlmsg = reinterpret_cast<nlmsghdr *>(&request[0]);
     nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof (ifaddrmsg));
@@ -147,7 +149,7 @@ void rtnetlink_interface_manager::process_messages()
         throw system_error(errno, generic_category(), "could not receive from RTNETLINK");
     }
     if (packet_size != 0) {
-        unique_ptr<char []> buffer {new char [packet_size]};
+        auto &&buffer = make_unique<uint8_t []>(packet_size);
 
         // This must not block.
         packet_size = _os->recv(_rtnetlink, buffer.get(), packet_size, 0);
@@ -174,14 +176,14 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
             }
             break;
         case NLMSG_ERROR:
-            handle_error(nlmsg);
+            handle_nlmsgerr(nlmsg);
             break;
         case NLMSG_DONE:
             done = true;
             break;
         case RTM_NEWLINK:
         case RTM_DELLINK:
-            handle_ifinfo(nlmsg);
+            handle_ifinfomsg(nlmsg);
             break;
         case RTM_NEWADDR:
         case RTM_DELADDR:
@@ -202,12 +204,12 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
 
     if (done) {
         switch (_refresh_state) {
-        case refresh_state::IFINFO:
-            _refresh_state = refresh_state::IFADDR;
+        case refresh_state::ifinfo:
+            _refresh_state = refresh_state::ifaddr;
             request_ifaddrs();
             break;
-        case refresh_state::IFADDR:
-            _refresh_state = refresh_state::STANDBY;
+        case refresh_state::ifaddr:
+            _refresh_state = refresh_state::standby;
             end_refresh();
             break;
         default:
@@ -217,62 +219,70 @@ void rtnetlink_interface_manager::dispatch_messages(const void *messages,
     }
 }
 
-void rtnetlink_interface_manager::handle_error(const nlmsghdr *message)
+void rtnetlink_interface_manager::handle_nlmsgerr(const nlmsghdr *const nlmsg) const
 {
-    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (nlmsgerr))) {
-        auto &&e = static_cast<const nlmsgerr *>(NLMSG_DATA(message));
-        syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(e->error)));
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (nlmsgerr))) {
+        return;
+    }
+
+    auto err = static_cast<const nlmsgerr *>(NLMSG_DATA(nlmsg));
+    syslog(LOG_ERR, "Got NETLINK error: %s", strerror(-(err->error)));
+}
+
+void rtnetlink_interface_manager::handle_ifinfomsg(const nlmsghdr *nlmsg)
+{
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (ifinfomsg))) {
+        return;
+    }
+    if (nlmsg->nlmsg_type != RTM_NEWLINK && nlmsg->nlmsg_type != RTM_DELLINK) {
+        return;
+    }
+
+    auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
+    if (nlmsg->nlmsg_type == RTM_NEWLINK
+        && (ifi->ifi_flags & IFF_UP) != 0
+        && (ifi->ifi_flags & IFF_MULTICAST) != 0) {
+        enable_interface(ifi->ifi_index);
+    }
+    else {
+        disable_interface(ifi->ifi_index);
     }
 }
 
-void rtnetlink_interface_manager::handle_ifinfo(const nlmsghdr *nlmsg)
+void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *nlmsg)
 {
-    if (nlmsg->nlmsg_len >= NLMSG_LENGTH(sizeof (ifinfomsg))) {
-        auto ifi = static_cast<const ifinfomsg *>(NLMSG_DATA(nlmsg));
-        const unsigned int flags_mask = IFF_UP | IFF_MULTICAST;
-        switch (nlmsg->nlmsg_type) {
-        case RTM_NEWLINK:
-            if ((ifi->ifi_flags & flags_mask) == flags_mask) {
-                enable_interface(ifi->ifi_index);
+    if (nlmsg->nlmsg_len < NLMSG_LENGTH(sizeof (ifaddrmsg))) {
+        return;
+    }
+    if (nlmsg->nlmsg_type != RTM_NEWADDR && nlmsg->nlmsg_type != RTM_DELADDR) {
+        return;
+    }
+
+    auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(nlmsg));
+    // Only handles non-temporary and at least link-local addresses.
+    if ((ifa->ifa_flags & IFA_F_SECONDARY) != 0
+        || (ifa->ifa_flags & IFA_F_TENTATIVE) != 0) {
+        return;
+    }
+    if (ifa->ifa_scope > RT_SCOPE_LINK) {
+        return;
+    }
+
+    auto rta = reinterpret_cast<const rtattr *>(ifa + 1);
+    unsigned int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
+    while (RTA_OK(rta, len)) {
+        if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
+            if (nlmsg->nlmsg_type == RTM_NEWADDR) {
+                add_interface_address(ifa->ifa_index, ifa->ifa_family,
+                    RTA_DATA(rta), RTA_PAYLOAD(rta));
             }
             else {
-                disable_interface(ifi->ifi_index);
-            }
-            break;
-        case RTM_DELLINK:
-            disable_interface(ifi->ifi_index);
-            break;
-        }
-    }
-}
-
-void rtnetlink_interface_manager::handle_ifaddrmsg(const nlmsghdr *message)
-{
-    if (message->nlmsg_len >= NLMSG_LENGTH(sizeof (ifaddrmsg))) {
-        auto ifa = static_cast<const ifaddrmsg *>(NLMSG_DATA(message));
-        // Only handles non-temporary and at least link-local addresses.
-        if ((ifa->ifa_flags & (IFA_F_TEMPORARY | IFA_F_TENTATIVE)) == 0
-            && ifa->ifa_scope <= RT_SCOPE_LINK) {
-            auto rta = reinterpret_cast<const rtattr *>(ifa + 1);
-            unsigned int remains =
-                message->nlmsg_len - NLMSG_LENGTH(sizeof (ifaddrmsg));
-            while (RTA_OK(rta, remains)) {
-                if (rta->rta_type == IFA_ADDRESS && rta->rta_len >= RTA_LENGTH(0)) {
-                    switch (message->nlmsg_type) {
-                    case RTM_NEWADDR:
-                        add_interface_address(ifa->ifa_index,
-                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
-                        break;
-                    case RTM_DELADDR:
-                        remove_interface_address(ifa->ifa_index,
-                            ifa->ifa_family, RTA_DATA(rta), RTA_PAYLOAD(rta));
-                        break;
-                    }
-                }
-
-                rta = RTA_NEXT(rta, remains);
+                remove_interface_address(ifa->ifa_index, ifa->ifa_family,
+                    RTA_DATA(rta), RTA_PAYLOAD(rta));
             }
         }
+
+        rta = RTA_NEXT(rta, len);
     }
 }
 
@@ -281,12 +291,13 @@ void rtnetlink_interface_manager::refresh(bool maybe_asynchronous)
     start_worker();
     begin_refresh();
 
-    if (not(maybe_asynchronous)) {
+    if (!maybe_asynchronous) {
         unique_lock<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
-        while (_running && _refreshing) {
-            _refresh_completion.wait(lock);
-        }
+        _refresh_completion.wait(lock,
+            [this]() {
+                return !_running || !_refreshing;
+            });
     }
 }
 
@@ -294,12 +305,12 @@ void rtnetlink_interface_manager::begin_refresh()
 {
     lock_guard<decltype(_refresh_mutex)> lock(_refresh_mutex);
 
-    if (not(_refreshing)) {
+    if (!_refreshing) {
         _refreshing = true;
 
         remove_interfaces();
 
-        _refresh_state = refresh_state::IFINFO;
+        _refresh_state = refresh_state::ifinfo;
         request_ifinfos();
     }
 }
@@ -319,18 +330,21 @@ void rtnetlink_interface_manager::start_worker()
     lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (!_worker_thread.joinable()) {
-        _running.store(true);
         _worker_thread = thread(&rtnetlink_interface_manager::run, this);
+
+        while (!_running) {
+            yield();
+        }
     }
 }
 
 void rtnetlink_interface_manager::stop_worker()
 {
+    _running = false;
+
     lock_guard<decltype(_worker_mutex)> lock(_worker_mutex);
 
     if (_worker_thread.joinable()) {
-        _running.store(false);
-
         // This should make a blocking recv call return.
         begin_refresh();
 

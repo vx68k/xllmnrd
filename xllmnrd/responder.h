@@ -1,5 +1,5 @@
 // responder.h -*- C++ -*-
-// Copyright (C) 2013-2020 Kaz Nishimura
+// Copyright (C) 2013-2021 Kaz Nishimura
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -23,10 +23,14 @@
 #include "interface.h"
 #include <netinet/in.h>
 #include <unistd.h>
+#include <vector>
 #include <atomic>
 #include <memory>
 
-using namespace xllmnrd;
+using xllmnrd::interface_event;
+using xllmnrd::interface_listener;
+using xllmnrd::interface_manager;
+
 
 /**
  * LLMNR responder objects.
@@ -34,15 +38,15 @@ using namespace xllmnrd;
 class responder: public interface_listener
 {
 private:
-    std::unique_ptr<interface_manager> _interface_manager;
 
-private:
+    std::shared_ptr<interface_manager> _interface_manager;
+
     int _udp6 = -1;
 
-private:
     std::atomic<bool> _running {false};
 
 protected:
+
     /**
      * Opens an IPv6 UDP socket for LLMNR.
      *
@@ -52,26 +56,30 @@ protected:
     static int open_udp6(in_port_t port);
 
 public:
+
     responder();
 
     explicit responder(in_port_t port);
 
+    responder(in_port_t port,
+        const std::shared_ptr<interface_manager> &interface_manager);
+
     // This class is not copy-constructible.
     responder(const responder &) = delete;
+
+
+    virtual ~responder();
+
 
     // This class is not copy-assignable.
     void operator =(const responder &) = delete;
 
-public:
-    virtual ~responder();
 
-public:
     /**
      * Enters the responder loop.
      */
     void run();
 
-public:
     /**
      * Requests termination of the responder loop.
      *
@@ -80,32 +88,29 @@ public:
     void terminate();
 
 protected:
-    void process_udp6();
 
-protected:
-    ssize_t recv_udp6(void *buffer, size_t buffer_size,
-        sockaddr_in6 &sender, in6_pktinfo &pktinfo);
+    void process_udp6() const;
 
-protected:
+    ssize_t recv_udp6(void *buffer, size_t buffer_size, sockaddr_in6 &sender,
+        unsigned int &ifindex) const;
+
     void handle_udp6_query(const llmnr_header *query, size_t query_size,
-        const sockaddr_in6 &sender, unsigned int interface_index);
+        const sockaddr_in6 &sender, unsigned int ifindex) const;
 
-protected:
     void respond_for_name(int fd, const llmnr_header *query,
-        const uint8_t *qname_end, const std::unique_ptr<uint8_t []> &name,
-        const sockaddr_in6 &sender, unsigned int interface_index);
+        const uint8_t *qname_end, const std::vector<std::uint8_t> &name,
+        const sockaddr_in6 &sender, unsigned int interface_index) const;
 
-protected:
     /**
-     * Returns a matching host name, or 'null' if nothing matches.
+     * Returns the matching host name, or an empty vector if nothing matches.
      */
-    auto matching_host_name(const void *qname) const
-        -> std::unique_ptr<uint8_t []>;
+    auto matching_host_name(const std::uint8_t *qname) const
+        -> std::vector<std::uint8_t>;
 
 public:
+
     void interface_enabled(const interface_event &event) override;
 
-public:
     void interface_disabled(const interface_event &event) override;
 };
 

@@ -9,5 +9,6 @@
         "**/*.rej": true,
         "**/*.orig": true,
         "**/*~": true
-    }
+    },
+    "restructuredtext.confPath": "${workspaceFolder}/sphinx"
 }

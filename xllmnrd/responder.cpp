@@ -305,20 +305,20 @@ void responder::process_udp6() const
 ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
     sockaddr_in6 &sender, unsigned int &ifindex) const
 {
-    iovec iov[1] {
+    array<iovec, 1> iov = {
         {
             buffer,      // .iov_base
             buffer_size, // .iov_len
         },
     };
-    char control[128] {};
-    msghdr msg {
+    array<char, 128> control;
+    msghdr msg = {
         &sender,        // .msg_name
         sizeof sender,  // .msg_namelen
-        iov,            // .msg_iov
-        1,              // .msg_iovlen
-        control,        // .msg_control
-        sizeof control, // .msg_controllen
+        iov.data(),     // .msg_iov
+        iov.size(),     // .msg_iovlen
+        control.data(), // .msg_control
+        control.size(), // .msg_controllen
         0,              // .msg_flags
     };
     auto &&received = recvmsg(_udp6, &msg, 0);
@@ -483,8 +483,8 @@ auto responder::matching_host_name(const uint8_t *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = "?";
-        if_indextoname(event.interface_index, interface_name);
+        array<char, IF_NAMESIZE> interface_name = {'?'};
+        if_indextoname(event.interface_index, interface_name.data());
 
         const ipv6_mreq mr {
             in6addr_mc_llmnr,      // .ipv6mr_multiaddr
@@ -492,11 +492,11 @@ void responder::interface_enabled(const interface_event &event)
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
             syslog(LOG_NOTICE, "joined the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
         else {
             syslog(LOG_ERR, "could not join the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
     }
 }
@@ -504,8 +504,8 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = "?";
-        if_indextoname(event.interface_index, interface_name);
+        array<char, IF_NAMESIZE> interface_name = {'?'};
+        if_indextoname(event.interface_index, interface_name.data());
 
         const ipv6_mreq mr {
             in6addr_mc_llmnr,      // .ipv6mr_multiaddr
@@ -513,11 +513,11 @@ void responder::interface_disabled(const interface_event &event)
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {
             syslog(LOG_NOTICE, "left the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
         else {
             syslog(LOG_ERR, "could not leave the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
     }
 }

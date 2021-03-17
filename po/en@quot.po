@@ -1,0 +1,89 @@
+# English translations for xllmnrd package.
+# Copyright (C) 2021 Kaz Nishimura
+# This file is distributed under the same license as the xllmnrd package.
+# Automatically generated, 2021.
+#
+# All this catalog "translates" are quotation characters.
+# The msgids must be ASCII and therefore cannot contain real quotation
+# characters, only substitutes like grave accent (0x60), apostrophe (0x27)
+# and double quote (0x22). These substitutes look strange; see
+# http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html
+#
+# This catalog translates grave accent (0x60) and apostrophe (0x27) to
+# left single quotation mark (U+2018) and right single quotation mark (U+2019).
+# It also translates pairs of apostrophe (0x27) to
+# left single quotation mark (U+2018) and right single quotation mark (U+2019)
+# and pairs of quotation mark (0x22) to
+# left double quotation mark (U+201C) and right double quotation mark (U+201D).
+#
+# When output to an UTF-8 terminal, the quotation characters appear perfectly.
+# When output to an ISO-8859-1 terminal, the single quotation marks are
+# transliterated to apostrophes (by iconv in glibc 2.2 or newer) or to
+# grave/acute accent (by libiconv), and the double quotation marks are
+# transliterated to 0x22.
+# When output to an ASCII terminal, the single quotation marks are
+# transliterated to apostrophes, and the double quotation marks are
+# transliterated to 0x22.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: xllmnrd 5.0\n"
+"Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
+"POT-Creation-Date: 2021-03-18 08:47+0900\n"
+"PO-Revision-Date: 2021-03-18 08:47+0900\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en@quot\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: xllmnrd/xllmnrd.cpp:141
+msgid "(C)"
+msgstr "(C)"
+
+#: xllmnrd/xllmnrd.cpp:142
+#, c-format
+msgid ""
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+msgstr ""
+"This is free software: you are free to change and redistribute it.\n"
+"There is NO WARRANTY, to the extent permitted by law.\n"
+
+#: xllmnrd/xllmnrd.cpp:154
+#, c-format
+msgid "Usage: %s [OPTION]...\n"
+msgstr "Usage: %s [OPTION]...\n"
+
+#: xllmnrd/xllmnrd.cpp:155
+#, c-format
+msgid "Respond to IPv6 LLMNR queries.\n"
+msgstr "Respond to IPv6 LLMNR queries.\n"
+
+#: xllmnrd/xllmnrd.cpp:157
+msgid "run in foreground"
+msgstr "run in foreground"
+
+#: xllmnrd/xllmnrd.cpp:158
+msgid "record the process ID in FILE"
+msgstr "record the process ID in FILE"
+
+#: xllmnrd/xllmnrd.cpp:159
+msgid "display this help and exit"
+msgstr "display this help and exit"
+
+#: xllmnrd/xllmnrd.cpp:160
+msgid "output version information and exit"
+msgstr "output version information and exit"
+
+#: xllmnrd/xllmnrd.cpp:162
+#, c-format
+msgid "Report bugs to <%s>.\n"
+msgstr "Report bugs to <%s>.\n"
+
+#: xllmnrd/xllmnrd.cpp:213
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Try ‘%s --help’ for more information.\n"

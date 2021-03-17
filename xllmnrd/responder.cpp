@@ -452,6 +452,7 @@ auto responder::matching_host_name(const uint8_t *const qname) const
 {
     array<char, LLMNR_LABEL_MAX + 1> host_name;
     gethostname(host_name.data(), host_name.size());
+    host_name[LLMNR_LABEL_MAX] = '\0';
 
     auto &&host_name_length = strcspn(host_name.data(), ".");
     host_name[host_name_length] = '\0';

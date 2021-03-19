@@ -84,7 +84,7 @@ inline void log_sockaddr(const int pri, const char *const prefix,
         if (sa_size >= sizeof (sockaddr_in)) {
             auto &&in = static_cast<const sockaddr_in *>(sa);
             array<char, INET_ADDRSTRLEN> addrstr;
-            inet_ntop(AF_INET, &in->sin_addr, &addrstr[0], INET_ADDRSTRLEN);
+            inet_ntop(AF_INET, &in->sin_addr, addrstr.data(), addrstr.size());
             syslog(pri, "%s%s", prefix, addrstr.data());
         }
         else {
@@ -95,7 +95,7 @@ inline void log_sockaddr(const int pri, const char *const prefix,
         if (sa_size >= sizeof (sockaddr_in6)) {
             auto &&in6 = static_cast<const sockaddr_in6 *>(sa);
             array<char, INET6_ADDRSTRLEN> addrstr;
-            inet_ntop(AF_INET6, &in6->sin6_addr, &addrstr[0], INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, &in6->sin6_addr, addrstr.data(), addrstr.size());
             syslog(pri, "%s%s%%%" PRIu32, prefix, addrstr.data(),
                 in6->sin6_scope_id);
         }
@@ -271,7 +271,7 @@ void responder::process_udp6() const
 
         sockaddr_in6 sender {};
         unsigned int ifindex = 0;
-        packet_size = recv_udp6(&buffer[0], packet_size, sender, ifindex);
+        packet_size = recv_udp6(buffer.data(), buffer.size(), sender, ifindex);
         if (packet_size == -1) {
             if (errno != EINTR) {
                 syslog(LOG_ERR,
@@ -290,7 +290,7 @@ void responder::process_udp6() const
             return;
         }
 
-        auto &&packet = reinterpret_cast<const llmnr_header *>(&buffer[0]);
+        auto &&packet = reinterpret_cast<const llmnr_header *>(buffer.data());
         if (llmnr_is_valid_query(packet)) {
             if ((packet->flags & htons(LLMNR_FLAG_C)) == 0) {
                 handle_udp6_query(packet, packet_size, sender, ifindex);
@@ -305,20 +305,20 @@ void responder::process_udp6() const
 ssize_t responder::recv_udp6(void *const buffer, const size_t buffer_size,
     sockaddr_in6 &sender, unsigned int &ifindex) const
 {
-    iovec iov[1] {
+    array<iovec, 1> iov = {
         {
             buffer,      // .iov_base
             buffer_size, // .iov_len
         },
     };
-    char control[128] {};
-    msghdr msg {
+    array<char, 128> control;
+    msghdr msg = {
         &sender,        // .msg_name
         sizeof sender,  // .msg_namelen
-        iov,            // .msg_iov
-        1,              // .msg_iovlen
-        control,        // .msg_control
-        sizeof control, // .msg_controllen
+        iov.data(),     // .msg_iov
+        iov.size(),     // .msg_iovlen
+        control.data(), // .msg_control
+        control.size(), // .msg_controllen
         0,              // .msg_flags
     };
     auto &&received = recvmsg(_udp6, &msg, 0);
@@ -387,7 +387,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
     std::vector<uint8_t> buffer {
         reinterpret_cast<const uint8_t *>(query), qname_end + 4};
 
-    auto response = reinterpret_cast<llmnr_header *>(&buffer[0]);
+    auto response = reinterpret_cast<llmnr_header *>(buffer.data());
     response->flags = htons(LLMNR_FLAG_QR);
     response->ancount = htons(0);
     response->nscount = htons(0);
@@ -413,7 +413,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             llmnr_put_uint16(sizeof i, buffer_back);
             copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-            response = reinterpret_cast<llmnr_header *>(&buffer[0]);
+            response = reinterpret_cast<llmnr_header *>(buffer.data());
             response->ancount = htons(ntohs(response->ancount) + 1);
         });
     for_each(in6_addresses.begin(), in6_addresses.end(),
@@ -434,7 +434,7 @@ void responder::respond_for_name(const int fd, const llmnr_header *const query,
             llmnr_put_uint16(sizeof i, buffer_back);
             copy_n(reinterpret_cast<const uint8_t *>(&i), sizeof i, buffer_back);
 
-            response = reinterpret_cast<llmnr_header *>(&buffer[0]);
+            response = reinterpret_cast<llmnr_header *>(buffer.data());
             response->ancount = htons(ntohs(response->ancount) + 1);
         });
 
@@ -451,13 +451,14 @@ auto responder::matching_host_name(const uint8_t *const qname) const
     -> vector<uint8_t>
 {
     array<char, LLMNR_LABEL_MAX + 1> host_name;
-    gethostname(&host_name[0], LLMNR_LABEL_MAX);
+    gethostname(host_name.data(), host_name.size());
+    host_name[LLMNR_LABEL_MAX] = '\0';
 
-    auto &&host_name_length = strcspn(&host_name[0], ".");
+    auto &&host_name_length = strcspn(host_name.data(), ".");
     host_name[host_name_length] = '\0';
 
     auto i = qname;
-    auto j = reinterpret_cast<const unsigned char *>(&host_name[0]);
+    auto j = reinterpret_cast<const unsigned char *>(host_name.data());
     size_t length = *i++;
     if (length != host_name_length) {
         return {};
@@ -483,8 +484,8 @@ auto responder::matching_host_name(const uint8_t *const qname) const
 void responder::interface_enabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = "?";
-        if_indextoname(event.interface_index, interface_name);
+        array<char, IF_NAMESIZE> interface_name = {'?'};
+        if_indextoname(event.interface_index, interface_name.data());
 
         const ipv6_mreq mr {
             in6addr_mc_llmnr,      // .ipv6mr_multiaddr
@@ -492,11 +493,11 @@ void responder::interface_enabled(const interface_event &event)
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mr) == 0) {
             syslog(LOG_NOTICE, "joined the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
         else {
             syslog(LOG_ERR, "could not join the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
     }
 }
@@ -504,8 +505,8 @@ void responder::interface_enabled(const interface_event &event)
 void responder::interface_disabled(const interface_event &event)
 {
     if (event.interface_index != 0) {
-        char interface_name[IF_NAMESIZE] = "?";
-        if_indextoname(event.interface_index, interface_name);
+        array<char, IF_NAMESIZE> interface_name = {'?'};
+        if_indextoname(event.interface_index, interface_name.data());
 
         const ipv6_mreq mr {
             in6addr_mc_llmnr,      // .ipv6mr_multiaddr
@@ -513,11 +514,11 @@ void responder::interface_disabled(const interface_event &event)
         };
         if (setsockopt(_udp6, IPPROTO_IPV6, IPV6_LEAVE_GROUP, &mr) == 0) {
             syslog(LOG_NOTICE, "left the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
         else {
             syslog(LOG_ERR, "could not leave the IPv6 LLMNR multicast group on %s",
-                interface_name);
+                interface_name.data());
         }
     }
 }

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xllmnrd 3.0\n"
 "Report-Msgid-Bugs-To: <https://bitbucket.org/kazssym/xllmnrd/issues/new>\n"
-"POT-Creation-Date: 2021-03-08 09:37+0900\n"
+"POT-Creation-Date: 2021-03-18 08:47+0900\n"
 "PO-Revision-Date: 2020-07-08 11:50+0000\n"
 "Last-Translator: Kaz Nishimura <kazssym@linuxfront.com>\n"
 "Language-Team: Japanese (http://www.transifex.com/vx68k/xllmnrd/language/"
@@ -20,11 +20,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: xllmnrd/xllmnrd.cpp:133
+#: xllmnrd/xllmnrd.cpp:141
 msgid "(C)"
 msgstr "©"
 
-#: xllmnrd/xllmnrd.cpp:134
+#: xllmnrd/xllmnrd.cpp:142
 #, c-format
 msgid ""
 "This is free software: you are free to change and redistribute it.\n"
@@ -34,38 +34,38 @@ msgstr ""
 "す。\n"
 "法令で認められている範囲において、保証はありません。\n"
 
-#: xllmnrd/xllmnrd.cpp:146
+#: xllmnrd/xllmnrd.cpp:154
 #, c-format
 msgid "Usage: %s [OPTION]...\n"
 msgstr "使用法: %s [OPTION]...\n"
 
-#: xllmnrd/xllmnrd.cpp:147
+#: xllmnrd/xllmnrd.cpp:155
 #, c-format
 msgid "Respond to IPv6 LLMNR queries.\n"
 msgstr "IPv6 LLMNR クエリに応答します。\n"
 
-#: xllmnrd/xllmnrd.cpp:149
+#: xllmnrd/xllmnrd.cpp:157
 msgid "run in foreground"
 msgstr "フォアグラウンドで実行"
 
-#: xllmnrd/xllmnrd.cpp:150
+#: xllmnrd/xllmnrd.cpp:158
 msgid "record the process ID in FILE"
 msgstr "プロセス ID を FILE に記録"
 
-#: xllmnrd/xllmnrd.cpp:151
+#: xllmnrd/xllmnrd.cpp:159
 msgid "display this help and exit"
 msgstr "このヘルプを表示して終了"
 
-#: xllmnrd/xllmnrd.cpp:152
+#: xllmnrd/xllmnrd.cpp:160
 msgid "output version information and exit"
 msgstr "バージョン情報を出力して終了"
 
-#: xllmnrd/xllmnrd.cpp:154
+#: xllmnrd/xllmnrd.cpp:162
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "バグ レポートは <%s> まで。\n"
 
-#: xllmnrd/xllmnrd.cpp:303
+#: xllmnrd/xllmnrd.cpp:213
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr "詳しくは ‘%s --help’ をお試しください。\n"

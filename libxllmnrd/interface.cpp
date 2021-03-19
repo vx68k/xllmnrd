@@ -29,6 +29,7 @@
 #include <cstring>
 #include <cassert>
 
+using std::array;
 using std::for_each;
 using std::get;
 using std::lock_guard;
@@ -134,9 +135,9 @@ void interface_manager::enable_interface(const unsigned int interface_index)
         interface.enabled = true;
 
         if (debug_level() >= 0) {
-            char interface_name[IF_NAMESIZE] = "?";
-            if_indextoname(interface_index, interface_name);
-            syslog(LOG_DEBUG, "device enabled: %s", interface_name);
+            auto interface_name = array<char, IF_NAMESIZE> {'?'};
+            if_indextoname(interface_index, interface_name.data());
+            syslog(LOG_DEBUG, "device enabled: %s", interface_name.data());
         }
 
         fire_interface_enabled({this, interface_index});
@@ -152,9 +153,9 @@ void interface_manager::disable_interface(const unsigned int interface_index)
         interface.enabled = false;
 
         if (debug_level() >= 0) {
-            char interface_name[IF_NAMESIZE] = "?";
-            if_indextoname(interface_index, interface_name);
-            syslog(LOG_DEBUG, "device disabled: %s", interface_name);
+            auto interface_name = array<char, IF_NAMESIZE> {'?'};
+            if_indextoname(interface_index, interface_name.data());
+            syslog(LOG_DEBUG, "device disabled: %s", interface_name.data());
         }
 
         fire_interface_disabled({this, interface_index});
@@ -164,8 +165,8 @@ void interface_manager::disable_interface(const unsigned int interface_index)
 void interface_manager::add_interface_address(unsigned int index,
     int family, const void *address, size_t address_size)
 {
-    char interface_name[IF_NAMESIZE] = "?";
-    if_indextoname(index, interface_name);
+    auto interface_name = array<char, IF_NAMESIZE> {'?'};
+    if_indextoname(index, interface_name.data());
 
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
@@ -177,15 +178,15 @@ void interface_manager::add_interface_address(unsigned int index,
                 *static_cast<const in_addr *>(address));
 
             if (get<1>(inserted) && debug_level() >= 0) {
-                char ipv4[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "IPv4 address added: %s on %s", ipv4,
-                    interface_name);
+                auto addrstr = array<char, INET_ADDRSTRLEN> {};
+                inet_ntop(AF_INET, address, addrstr.data(), addrstr.size());
+                syslog(LOG_DEBUG, "IPv4 address added: %s on %s",
+                    addrstr.data(), interface_name.data());
             }
         }
         else {
             syslog(LOG_INFO, "short IPv4 address (size = %zu) on %s",
-                address_size, interface_name);
+                address_size, interface_name.data());
         }
         break;
 
@@ -196,21 +197,21 @@ void interface_manager::add_interface_address(unsigned int index,
                 *static_cast<const in6_addr *>(address));
 
             if (get<1>(inserted) && debug_level() >= 0) {
-                char ipv6[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "IPv6 address added: %s on %s", ipv6,
-                    interface_name);
+                auto addrstr = array<char, INET6_ADDRSTRLEN> {};
+                inet_ntop(AF_INET6, address, addrstr.data(), addrstr.size());
+                syslog(LOG_DEBUG, "IPv6 address added: %s on %s",
+                    addrstr.data(), interface_name.data());
             }
         }
         else {
             syslog(LOG_INFO, "short IPv6 address (size = %zu) on %s",
-                address_size, interface_name);
+                address_size, interface_name.data());
         }
         break;
 
     default:
         syslog(LOG_INFO, "address of unknown family %d on %s",
-            family, interface_name);
+            family, interface_name.data());
         break;
     }
 }
@@ -218,8 +219,8 @@ void interface_manager::add_interface_address(unsigned int index,
 void interface_manager::remove_interface_address(unsigned int index,
     int family, const void *address, size_t address_size)
 {
-    char interface_name[IF_NAMESIZE] = "?";
-    if_indextoname(index, interface_name);
+    auto interface_name = array<char, IF_NAMESIZE> {'?'};
+    if_indextoname(index, interface_name.data());
 
     lock_guard<decltype(_interfaces_mutex)> lock {_interfaces_mutex};
 
@@ -231,15 +232,15 @@ void interface_manager::remove_interface_address(unsigned int index,
                 *static_cast<const in_addr *>(address));
 
             if (erased != 0 && debug_level() >= 0) {
-                char ipv4[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, address, ipv4, INET_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "IPv4 address removed: %s on %s", ipv4,
-                    interface_name);
+                auto addrstr = array<char, INET_ADDRSTRLEN> {};
+                inet_ntop(AF_INET, address, addrstr.data(), addrstr.size());
+                syslog(LOG_DEBUG, "IPv4 address removed: %s on %s",
+                    addrstr.data(), interface_name.data());
             }
         }
         else {
             syslog(LOG_INFO, "short IPv4 address (size = %zu) on %s",
-                address_size, interface_name);
+                address_size, interface_name.data());
         }
         break;
 
@@ -250,21 +251,21 @@ void interface_manager::remove_interface_address(unsigned int index,
                 *static_cast<const in6_addr *>(address));
 
             if (erased != 0 && debug_level() >= 0) {
-                char ipv6[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, address, ipv6, INET6_ADDRSTRLEN);
-                syslog(LOG_DEBUG, "IPv6 address removed: %s on %s", ipv6,
-                    interface_name);
+                auto addrstr = array<char, INET6_ADDRSTRLEN> {};
+                inet_ntop(AF_INET6, address, addrstr.data(), addrstr.size());
+                syslog(LOG_DEBUG, "IPv6 address removed: %s on %s",
+                    addrstr.data(), interface_name.data());
             }
         }
         else {
             syslog(LOG_INFO, "short IPv6 address (size = %zu) on %s",
-                address_size, interface_name);
+                address_size, interface_name.data());
         }
         break;
 
     default:
         syslog(LOG_INFO, "address of unknown family %d on %s",
-            family, interface_name);
+            family, interface_name.data());
         break;
     }
 }

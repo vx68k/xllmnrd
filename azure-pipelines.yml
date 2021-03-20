@@ -7,7 +7,7 @@
 ---
 variables:
   package.name: xllmnrd
-  package.version: 5.0
+  package.version: 6.0
   upload.repository: kazssym/xllmnrd
 trigger:
   - master
